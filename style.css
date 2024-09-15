@@ -91,31 +91,31 @@ body.dark-mode nav, body.dark-mode footer {
     font-size: 1.5rem;
 }
 
-/* Projects Section */
-.projects {
+/* Proxies Section */
+.proxies {
     padding: 40px 20px;
 }
 
-.projects h2 {
+.proxies h2 {
     font-size: 2rem;
     text-align: center;
     margin-bottom: 20px;
 }
 
-.project-grid {
+.proxy-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 20px;
 }
 
-.project-item {
+.proxy-item {
     background-color: #37474f;
     padding: 20px;
     border-radius: 8px;
     transition: background-color 0.3s, transform 0.3s;
 }
 
-.project-item:hover {
+.proxy-item:hover {
     background-color: #0288d1;
     transform: translateY(-10px);
     color: white;
