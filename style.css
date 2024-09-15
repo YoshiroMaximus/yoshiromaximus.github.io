@@ -6,40 +6,75 @@
 }
 
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f0f0f0;
-    color: #333;
-    transition: background-color 0.3s, color 0.3s;
+    font-family: 'Poppins', sans-serif;
+    background-color: #121212;
+    color: #ffffff;
+    transition: background-color 0.5s, color 0.5s;
 }
 
-/* Light Mode */
-body.light-mode {
-    background-color: #ffffff;
-    color: #333;
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 20px;
 }
 
-body.light-mode .hero {
-    background-color: #e0f7fa;
+nav ul li {
+    display: inline;
 }
 
-body.light-mode nav, body.light-mode footer {
-    background-color: #0288d1;
-    color: #fff;
+nav a {
+    color: #80deea;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+nav a:hover {
+    text-decoration: underline;
+}
+
+/* Gradient Text */
+.gradient-text {
+    background: linear-gradient(to right, #80deea, #81c784);
+    -webkit-background-clip: text;
+    color: transparent;
 }
 
 /* Dark Mode */
 body.dark-mode {
-    background-color: #121212;
-    color: #ffffff;
-}
-
-body.dark-mode .hero {
-    background-color: #37474f;
+    background-color: #1e1e1e;
+    color: #e0f7fa;
 }
 
 body.dark-mode nav, body.dark-mode footer {
     background-color: #263238;
-    color: #b0bec5;
+}
+
+/* Animations */
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fade-in-delayed {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes slide-up {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-fade-in {
+    animation: fade-in 1s ease-in-out;
+}
+
+.animate-fade-in-delayed {
+    animation: fade-in-delayed 1.5s ease-in-out;
+}
+
+.animate-slide-up {
+    animation: slide-up 1s ease-in-out;
 }
 
 /* Hero Section */
@@ -49,12 +84,11 @@ body.dark-mode nav, body.dark-mode footer {
 }
 
 .hero h2 {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
+    font-size: 3rem;
 }
 
 .hero p {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
 }
 
 /* Projects Section */
@@ -75,14 +109,15 @@ body.dark-mode nav, body.dark-mode footer {
 }
 
 .project-item {
-    background-color: #eeeeee;
+    background-color: #37474f;
     padding: 20px;
     border-radius: 8px;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, transform 0.3s;
 }
 
 .project-item:hover {
     background-color: #0288d1;
+    transform: translateY(-10px);
     color: white;
 }
 
@@ -90,8 +125,7 @@ body.dark-mode nav, body.dark-mode footer {
 footer {
     text-align: center;
     padding: 20px;
-    background-color: #0288d1;
-    color: white;
+    background-color: #263238;
 }
 
 /* Dark mode button */
