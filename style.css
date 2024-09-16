@@ -45,7 +45,8 @@ body.dark-mode {
     color: #e0f7fa;
 }
 
-body.dark-mode nav, body.dark-mode footer {
+body.dark-mode nav, 
+body.dark-mode footer {
     background-color: #263238;
 }
 
@@ -121,6 +122,15 @@ body.dark-mode nav, body.dark-mode footer {
     color: white;
 }
 
+/* Dark Mode - Proxies Adjustment */
+body.dark-mode .proxy-item {
+    background-color: #455a64;
+}
+
+body.dark-mode .proxy-item:hover {
+    background-color: #0288d1;
+}
+
 /* Footer */
 footer {
     text-align: center;
@@ -141,4 +151,27 @@ footer {
 
 .theme-toggle:hover {
     background-color: #0277bd;
+}
+
+/* Adjust the proxy items for better visibility */
+.proxy-item a {
+    color: #80deea;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.proxy-item a:hover {
+    text-decoration: underline;
+}
+
+/* Flexbox layout adjustment to ensure footer sticks to the bottom */
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 100vh;
+}
+
+footer {
+    margin-top: auto;
 }
