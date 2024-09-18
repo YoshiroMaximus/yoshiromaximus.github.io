@@ -1,0 +1,148 @@
+/* Reset and basic styling */
+body {
+    font-family: 'Lora', serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+/* Header styles */
+header {
+    background-color: #0B1215;
+    color: #fff;
+    padding: 1em 0;
+    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    font-size: 2em;
+    margin: 0; /* Reset margin */
+}
+
+/* Navigation styles */
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+nav ul li {
+    margin: 0 1em;
+}
+
+nav ul li a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s;
+}
+
+nav ul li a:hover {
+    color: #f4f4f4;
+}
+
+/* Social icons styles */
+.social-icons {
+    margin-left: auto; /* Push icons to the right */
+}
+
+.social-icons a {
+    display: inline-block;
+    margin-left: 10px; /* Adjust spacing between social icons */
+}
+
+.social-icons a img {
+    width: 32px; /* Adjust icon size */
+    height: 32px; /* Adjust icon size */
+}
+
+/* Rainbow text effect */
+.rainbow-text {
+    background: linear-gradient(45deg, #f00, #ff0, #0f0, #00f, #f0f, #f00);
+    background-size: 400%;
+    color: transparent;
+    -webkit-background-clip: text; /* For older Safari/Chrome */
+    background-clip: text;
+    animation: rainbow 10s linear infinite;
+}
+
+@keyframes rainbow {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 400%;
+    }
+}
+
+/* Section styles (retain your existing section styles) */
+section {
+    padding: 2em;
+    margin: 2em auto;
+    max-width: 800px;
+    background-color: #fff;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+section:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+h2 {
+    font-size: 1.8em;
+    color: #1a1a1a;
+    margin-top: 0;
+}
+
+h3 {
+    font-size: 1.4em;
+    color: #333;
+}
+
+p {
+    line-height: 1.6;
+    margin-bottom: 1.5em;
+    font-size: 1.1em;
+}
+
+ul {
+    padding-left: 1.2em;
+}
+
+ul li {
+    margin-bottom: 0.5em;
+    font-size: 1.1em;
+}
+
+a {
+    color: #1a73e8;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive adjustments (retain your existing media queries) */
+@media (max-width: 768px) {
+    h2 {
+        font-size: 1.5em;
+    }
+
+    h3 {
+        font-size: 1.2em;
+    }
+
+    p {
+        font-size: 1em;
+    }
+}

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<!--  This site was created by Yoshiro  -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio : Web Design and JavaScript</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Welcome to Yoshiro's portfolio website showcasing web design and JavaScript projects. Explore my work, background, and get in touch with me.">
+    <meta name="keywords" content="Yoshiro, Portfolio, Web Design, JavaScript, Projects">
+    <meta name="author" content="Yoshiro">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Yoshiro's Portfolio">
+    <meta property="og:description" content="Showcasing web design and JavaScript projects by Yoshiro.">
+    <meta property="og:image" content="assets/og-image.png">
+    <meta property="og:url" content="https://yourwebsite.com">
+    <meta property="og:type" content="website">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Yoshiro's Portfolio">
+    <meta name="twitter:description" content="Showcasing web design and JavaScript projects by Yoshiro.">
+    <meta name="twitter:image" content="assets/og-image.png">
+    
+    <!-- Critical CSS styles -->
+    <style>
+        /* Reset and basic styling */
+        body {
+            font-family: 'Lora', serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        /* Header styles */
+        header {
+            background-color: #0B1215;
+            color: #fff;
+            padding: 1em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        header.sticky {
+            background-color: rgba(0, 0, 0, 0.9);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            width: 150px; /* Adjust logo size */
+            height: 150px; /* Adjust logo size */
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 1em;
+            padding: 0;
+            margin: 0;
+        }
+
+        nav ul li {
+            margin: 0;
+        }
+
+        nav ul li a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        nav ul li a:hover {
+            text-decoration: underline;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .social-icons a {
+            text-decoration: none;
+            color: #fff;
+        }
+
+        .social-icons a:hover {
+            opacity: 0.8;
+        }
+
+        /* CSS styles for rainbow text */
+        .rainbow-text {
+            background-image: linear-gradient(to right, violet, indigo, blue, green, yellow, orange, red);
+            -webkit-background-clip: text;
+            color: transparent;
+            font-size: 2em; /* Adjust font size */
+            font-weight: bold;
+        }
+    </style>
+    
+    <!-- Stylesheets and Fonts -->
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/webp" href="assets/icon.webp">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    
+    <!-- Performance Optimization -->
+    <link rel="preload" href="styles.css" as="style">
+    <link rel="preload" href="scripts.js" as="script">
+    <link rel="preload" href="assets/icon.png" as="image">
+</head>
+<body>
+    <!-- Header section -->
+    <header>
+        <!-- Rainbow text -->
+        <h1 class="rainbow-text">🎨 Yoshiro</h1>
+        
+        <!-- Navigation -->
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="projects.html">Projects</a></li>
+                <li><a href="edit.html">Editing</a></li>
+                <li><a href="deploy.html">Deploying</a></li>
+            </ul>
+        </nav>
+        
+        <!-- Social icons -->
+        <div class="social-icons">
+            <a href="https://discord.gg/uCA94eKGWs" target="_blank">
+                <img src="https://www.svgrepo.com/show/353655/discord-icon.svg" alt="Discord" width="75" height="75">
+            </a>
+        </div>
+    </header>
+
+    <!-- Marquee at the top -->
+    <marquee class="css1"> It seems you have stumbled upon my website! 🌐</marquee>
+
+    <!-- Main content section -->
+    <section id="about">
+        <h2>🌟 Welcome to My Portfolio</h2>
+        <p>Welcome to my personal portfolio website! Here, you'll find a showcase of my work, a bit about my background, and how to get in touch with me. I believe in the power of art and design to transform the world. Explore the links above to learn more about my projects and the principles that guide my creative process.</p>
+        
+        <h3>🎨 Principles of Art and Design</h3>
+        <ul>
+            <li><strong>Balance ⚖️:</strong> Achieving visual harmony by distributing elements evenly across the canvas. Every component plays a crucial role in the overall composition.</li>
+            <li><strong>Contrast 🎨:</strong> Utilizing differences in color, shape, and size to highlight important elements and create visual interest.</li>
+            <li><strong>Emphasis 🔍:</strong> Drawing attention to key areas of my designs, ensuring that the viewer's eye is guided smoothly across the page.</li>
+            <li><strong>Movement 🚶‍♂️:</strong> Creating a sense of motion to lead viewers through my work seamlessly, making the experience dynamic and engaging.</li>
+            <li><strong>Pattern 🌀:</strong> Incorporating repeating elements to build consistency and rhythm, enhancing the aesthetic appeal.</li>
+            <li><strong>Unity 🌐:</strong> Ensuring all parts of my design work together cohesively to create a harmonious and functional whole.</li>
+        </ul>
+        
+        <h3>🚀 Featured Projects</h3>
+        <ul>
+            <li><strong>Portfolio Website 🌐</strong>
+                <p>A personal portfolio to showcase my work, skills, and experience. Features a clean design, interactive elements, and a user-friendly interface.</p>
+                <p><strong>Technologies used:</strong> HTML, CSS, JavaScript, GitHub Pages.</p>
+            </li>
+            <li><strong>E-Commerce Store 🛒</strong>
+                <p>An online store for a fictional brand. Includes a shopping cart, product pages, and a secure checkout process.</p>
+                <p><strong>Technologies used:</strong> React, Node.js, Express, MongoDB.</p>
+            </li>
+        </ul>
+        
+        <p>For more projects, visit the <a href="projects.html">Projects</a> page.</p>
+        
+        <h3>🔧 Other Notable Projects</h3>
+        <ul>
+            <li><strong>Blog Platform ✍️</strong>
+                <p>A blogging platform with user authentication, post creation, and commenting features.</p>
+                <p><strong>Technologies used:</strong> Django, Python, PostgreSQL.</p>
+            </li>
+            <li><strong>Weather App 🌦️</strong>
+                <p>A weather forecasting app that provides real-time weather data and predictions based on user location.</p>
+                <p><strong>Technologies used:</strong> JavaScript, HTML, CSS, OpenWeatherMap API.</p>
+            </li>
+        </ul>
+    </section>
+
+    <!-- Marquee at the bottom -->
+    <marquee class="css2"> Thanks for visiting my website! Have a great day! 😊</marquee>
+</body>
+</html>
