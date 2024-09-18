@@ -1,1 +1,0 @@
-# yoshiromaximus.github.io
