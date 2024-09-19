@@ -92,11 +92,14 @@
 
         // Toggle dark mode on click and update button label
         toggle.addEventListener('click', function() {
+            console.log("Toggle button clicked"); // Debugging log
             body.classList.toggle('dark');
             if (body.classList.contains('dark')) {
+                console.log("Dark mode enabled"); // Debugging log
                 toggle.innerHTML = '🌙 Dark Mode';
                 localStorage.setItem('theme', 'dark');
             } else {
+                console.log("Light mode enabled"); // Debugging log
                 toggle.innerHTML = '🌞 Light Mode';
                 localStorage.setItem('theme', 'light');
             }
