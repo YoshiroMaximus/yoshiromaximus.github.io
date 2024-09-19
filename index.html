@@ -13,7 +13,17 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #f3f4f6;
+            background-color: #f3f4f6; /* Light gray background */
+        }
+        .bottom-left {
+            position: absolute;
+            left: 20px;
+            bottom: 20px;
+        }
+        .github-logo {
+            width: 24px; /* Adjust size to match emoji */
+            height: 24px; /* Adjust size to match emoji */
+            vertical-align: middle; /* Align with text */
         }
     </style>
 </head>
@@ -25,12 +35,20 @@
         <a href="dnd-char-generator.html" class="bg-blue-500 text-white font-bold py-2 px-4 rounded shadow hover:bg-blue-600 transition duration-300">
             D&D Character Generator
         </a>
-        <a href="yoshiromaximus.html" class="bg-blue-500 text-white font-bold py-2 px-4 rounded shadow hover:bg-blue-600 transition duration-300">
-            Old Project
-        </a>
+        <button class="bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded shadow cursor-not-allowed">
+            Coming Soon
+        </button>
         <button class="bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded shadow cursor-not-allowed">
             Coming Soon
         </button>
     </div>
+    <div class="bottom-left flex items-center">
+        <a href="yoshiromaximus.html" class="text-blue-500 font-bold text-lg hover:text-blue-600 transition duration-300">
+            🚀 
+        </a>
+        <a href="https://github.com/YoshiroMaximus" target="_blank" class="ml-2">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" alt="GitHub Logo" class="github-logo">
+        </a>
+    </div>
 </body>
-</html>
+</html> 
