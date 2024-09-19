@@ -15,9 +15,27 @@
             justify-content: center;
             background-color: #f3f4f6; /* Light gray background */
         }
+        .top-left {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+        .back-button {
+            width: 40px; /* Adjust size of the back button */
+            height: 40px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
+    <!-- Back button at the top left -->
+    <div class="top-left">
+        <a href="index.html">
+            <img src="back-button.png" alt="Back Button" class="back-button">
+        </a>
+    </div>
+
+    <!-- Main content: game buttons -->
     <div class="flex flex-col space-y-4">
         <a href="totm.html" target="_blank" class="bg-blue-500 text-white font-bold py-2 px-4 rounded shadow hover:bg-blue-600 transition duration-300">
             Play Tomb of the Mask
