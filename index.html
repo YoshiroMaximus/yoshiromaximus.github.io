@@ -38,10 +38,11 @@
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 transition duration-300">
+
     <!-- Dark Mode Toggle -->
     <div class="top-right">
-        <button id="darkModeToggle" class="bg-gray-300 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold py-2 px-4 rounded shadow hover:bg-gray-400 dark:hover:bg-gray-700 transition duration-300">
-            Toggle Dark Mode
+        <button id="darkModeToggle" class="bg-gray-300 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold py-2 px-4 rounded shadow hover:bg-gray-400 dark:hover:bg-gray-700 transition duration-300" aria-label="Toggle dark mode">
+            🌞 Light Mode
         </button>
     </div>
 
@@ -77,22 +78,42 @@
         const toggle = document.getElementById('darkModeToggle');
         const body = document.body;
 
-        // Check for saved user preference, if any, on page load
-        if (localStorage.getItem('theme') === 'dark') {
+        // Detect user's system-wide preference
+        const userPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const savedTheme = localStorage.getItem('theme');
+
+        // Apply saved theme or system preference
+        if (savedTheme === 'dark' || (!savedTheme && userPrefersDark)) {
             body.classList.add('dark');
+            toggle.innerHTML = '🌙 Dark Mode';
+        } else {
+            toggle.innerHTML = '🌞 Light Mode';
         }
 
-        // Toggle dark mode on click
+        // Toggle dark mode on click and update button label
         toggle.addEventListener('click', function() {
             body.classList.toggle('dark');
-            
-            // Save user preference
             if (body.classList.contains('dark')) {
+                toggle.innerHTML = '🌙 Dark Mode';
                 localStorage.setItem('theme', 'dark');
             } else {
-                localStorage.removeItem('theme');
+                toggle.innerHTML = '🌞 Light Mode';
+                localStorage.setItem('theme', 'light');
+            }
+        });
+
+        // Listen for system preference changes and update accordingly
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            const newColorScheme = e.matches ? 'dark' : 'light';
+            if (newColorScheme === 'dark') {
+                body.classList.add('dark');
+                toggle.innerHTML = '🌙 Dark Mode';
+            } else {
+                body.classList.remove('dark');
+                toggle.innerHTML = '🌞 Light Mode';
             }
         });
     </script>
+
 </body>
 </html>
