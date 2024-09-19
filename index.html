@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Website 🔥</title>
-    <link rel="icon" href="logo.png" type="image/png"> <!-- Add this line for the favicon -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         body, html {
@@ -21,6 +20,11 @@
             left: 20px;
             bottom: 20px;
         }
+        .top-right {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+        }
         .logo {
             width: 24px; /* Adjust size to match emoji */
             height: 24px; /* Adjust size to match emoji */
@@ -33,7 +37,14 @@
         }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 dark:bg-gray-900 transition duration-300">
+    <!-- Dark Mode Toggle -->
+    <div class="top-right">
+        <button id="darkModeToggle" class="bg-gray-300 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold py-2 px-4 rounded shadow hover:bg-gray-400 dark:hover:bg-gray-700 transition duration-300">
+            Toggle Dark Mode
+        </button>
+    </div>
+
     <div class="flex flex-col space-y-4">
         <a href="tetris.html" class="bg-blue-500 text-white font-bold py-2 px-4 rounded shadow hover:bg-blue-600 transition duration-300">
             Play Tetris
@@ -48,6 +59,7 @@
             Coming Soon
         </button>
     </div>
+
     <div class="bottom-left flex items-center">
         <a href="yoshiromaximus.html" class="text-blue-500 font-bold text-lg hover:text-blue-600 transition duration-300">
             🚀 
@@ -58,7 +70,29 @@
         <a href="https://forms.gle/Qj2VZMxZX1p9e3AG8" target="_blank" class="ml-2">
             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Google_Forms_2020_Logo.svg/70px-Google_Forms_2020_Logo.svg.png" alt="Google Forms Logo" class="forms">
         </a>
-        <span class="ml-2 text-gray-700">← give recc plz</span>
+        <span class="ml-2 text-gray-700 dark:text-gray-300">← give recc plz</span>
     </div>
+
+    <script>
+        const toggle = document.getElementById('darkModeToggle');
+        const body = document.body;
+
+        // Check for saved user preference, if any, on page load
+        if (localStorage.getItem('theme') === 'dark') {
+            body.classList.add('dark');
+        }
+
+        // Toggle dark mode on click
+        toggle.addEventListener('click', function() {
+            body.classList.toggle('dark');
+            
+            // Save user preference
+            if (body.classList.contains('dark')) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.removeItem('theme');
+            }
+        });
+    </script>
 </body>
 </html>
