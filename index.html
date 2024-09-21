@@ -13,12 +13,10 @@
     <meta name="theme-color" content="#ffffff">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        /* Ensure both html and body have the same dark background */
         html, body {
             margin: 0;
             padding: 0;
             height: 100%;
-            background-color: #1e293b; /* Dark blue background */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -31,28 +29,20 @@
             bottom: 20px;
         }
 
-        .logo {
-            width: 24px; /* Adjust size to match emoji */
-            height: 24px; /* Adjust size to match emoji */
-            vertical-align: middle; /* Align with text */
+        .logo, .forms {
+            width: 24px;
+            height: 24px;
+            vertical-align: middle;
         }
 
-        .forms {
-            width: 20px; /* Adjust size to match emoji */
-            height: 24px; /* Adjust size to match emoji */
-            vertical-align: middle; /* Align with text */
-        }
-
-        /* Gradient hover effect for buttons */
         .hover-gradient {
-            background-color: #6366f1; /* Original blue button */
+            background-color: #6366f1;
         }
 
         .hover-gradient:hover {
             background: linear-gradient(90deg, lightorange, lightblue, lightgreen);
         }
 
-        /* Color toggle button */
         .toggle-button {
             position: absolute;
             top: 20px;
@@ -69,25 +59,14 @@
 <body>
 
     <div class="flex flex-col space-y-4">
-        <a href="tetris.html" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">
-            Play Tetris
-        </a>
-        <a href="dnd-char-generator.html" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">
-            D&D Character Generator
-        </a>
-        <a href="games.html" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">
-            Games
-        </a>
-        <button class="bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded shadow cursor-not-allowed">
-            Coming Soon
-        </button>
+        <a href="tetris.html" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">Play Tetris</a>
+        <a href="dnd-char-generator.html" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">D&D Character Generator</a>
+        <a href="games.html" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">Games</a>
+        <button class="bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded shadow cursor-not-allowed">Coming Soon</button>
     </div>
 
     <div class="bottom-left flex items-center">
-        <a href="yoshiromaximus.html" class="text-blue-500 font-bold text-lg hover:text-blue-600 transition duration-300">
-            🚀 
-        </a>
-        <!-- GitHub icon that will switch based on mode -->
+        <a href="yoshiromaximus.html" class="text-blue-500 font-bold text-lg hover:text-blue-600 transition duration-300">🚀</a>
         <a href="https://github.com/YoshiroMaximus" target="_blank" class="ml-2">
             <img id="githubIcon" src="/images/github-dark.svg" alt="GitHub Logo" class="logo">
         </a>
@@ -97,35 +76,57 @@
         <span class="ml-2 text-gray-300">← give recc plz</span>
     </div>
 
-    <!-- Button to Toggle Color Modes -->
     <button id="colorToggle" class="toggle-button">☀️</button>
 
     <script>
+        function setCookie(name, value, days) {
+            const expires = new Date(Date.now() + days * 864e5).toUTCString();
+            document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/';
+        }
+
+        function getCookie(name) {
+            return document.cookie.split('; ').reduce((r, v) => {
+                const parts = v.split('=');
+                return parts[0] === name ? decodeURIComponent(parts[1]) : r;
+            }, '');
+        }
+
         const html = document.documentElement;
         const body = document.body;
         const colorToggle = document.getElementById('colorToggle');
         const githubIcon = document.getElementById('githubIcon');
 
-        let darkMode = true; // Default to dark mode
+        let darkMode = getCookie('theme') === 'dark'; // Check cookie
+
+        // Set initial theme based on cookie
+        if (darkMode) {
+            html.style.backgroundColor = '#1e293b';
+            body.style.backgroundColor = '#1e293b';
+            colorToggle.textContent = '☀️';
+            githubIcon.src = '/images/github-light.svg';
+        } else {
+            html.style.backgroundColor = '#f3f4f6';
+            body.style.backgroundColor = '#f3f4f6';
+            colorToggle.textContent = '🌙';
+            githubIcon.src = '/images/github-dark.svg';
+        }
 
         colorToggle.addEventListener('click', function() {
             if (darkMode) {
-                // Switch to light mode
-                html.style.backgroundColor = '#f3f4f6'; // Light background color for html
-                body.style.backgroundColor = '#f3f4f6'; // Light background color for body
+                html.style.backgroundColor = '#f3f4f6';
+                body.style.backgroundColor = '#f3f4f6';
                 colorToggle.textContent = '🌙';
-                githubIcon.src = '/images/github-dark.svg'; // Switch to dark GitHub icon
-                darkMode = false;
+                githubIcon.src = '/images/github-dark.svg';
+                setCookie('theme', 'light', 7); // Set light mode cookie
             } else {
-                // Switch to dark mode
-                html.style.backgroundColor = '#1e293b'; // Dark background color for html
-                body.style.backgroundColor = '#1e293b'; // Dark background color for body
+                html.style.backgroundColor = '#1e293b';
+                body.style.backgroundColor = '#1e293b';
                 colorToggle.textContent = '☀️';
-                githubIcon.src = '/images/github-light.svg'; // Switch to light GitHub icon
-                darkMode = true;
+                githubIcon.src = '/images/github-light.svg';
+                setCookie('theme', 'dark', 7); // Set dark mode cookie
             }
+            darkMode = !darkMode; // Toggle mode
         });
     </script>
-
 </body>
 </html>
