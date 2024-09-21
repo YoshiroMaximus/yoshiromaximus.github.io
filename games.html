@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Website 🔥</title>
+    <title>Games</title>
+
+    <!-- Favicon links -->
     <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
@@ -11,7 +13,10 @@
     <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="theme-color" content="#ffffff">
+
+    <!-- Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
     <style>
         html, body {
             margin: 0;
@@ -22,17 +27,15 @@
             justify-content: center;
             transition: background-color 0.3s ease;
         }
-
-        .bottom-left {
+        .top-left {
             position: absolute;
+            top: 20px;
             left: 20px;
-            bottom: 20px;
         }
-
-        .logo, .forms {
-            width: 24px;
-            height: 24px;
-            vertical-align: middle;
+        .back-button {
+            width: 90px;
+            height: 90px;
+            cursor: pointer;
         }
 
         .hover-gradient {
@@ -58,26 +61,43 @@
 </head>
 <body>
 
-    <div class="flex flex-col space-y-4">
-        <a href="tetris.html" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">Play Tetris</a>
-        <a href="dnd-char-generator.html" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">D&D Character Generator</a>
-        <a href="games.html" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">Games</a>
-        <button class="bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded shadow cursor-not-allowed">Coming Soon</button>
+    <!-- Back button at the top left -->
+    <div class="top-left">
+        <a href="index.html">
+            <img src="images/back-button.png" alt="Back Button" class="back-button">
+        </a>
     </div>
 
-    <div class="bottom-left flex items-center">
-        <a href="yoshiromaximus.html" class="text-blue-500 font-bold text-lg hover:text-blue-600 transition duration-300">🚀</a>
-        <a href="https://github.com/YoshiroMaximus" target="_blank" class="ml-2">
-            <img id="githubIcon" src="/images/github-dark.svg" alt="GitHub Logo" class="logo">
-        </a>
-        <a href="https://forms.gle/Qj2VZMxZX1p9e3AG8" target="_blank" class="ml-2">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Google_Forms_2020_Logo.svg/70px-Google_Forms_2020_Logo.svg.png" alt="Google Forms Logo" class="forms">
-        </a>
-        <span class="ml-2 text-gray-300">← give recc plz</span>
-    </div>
-
+    <!-- Button to Toggle Color Modes -->
     <button id="colorToggle" class="toggle-button">☀️</button>
 
+    <!-- Main content: game buttons -->
+    <div class="flex flex-col space-y-4">
+        <a href="totm.html" target="_blank" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">
+            Play Tomb of the Mask
+        </a>
+        <a href="slope.html" target="_blank" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">
+            Play Slope 
+        </a>
+        <a href="hsmc.html" target="_blank" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">
+            Play Henry Stickmin
+        </a>
+        <button class="bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded shadow cursor-not-allowed">
+            Coming Soon
+        </button>
+        <button class="bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded shadow cursor-not-allowed">
+            Coming Soon
+        </button>
+    </div>
+
+    <!-- GitHub Icon -->
+    <div class="absolute bottom-5 right-5">
+        <a href="https://github.com/YoshiroMaximus" target="_blank">
+            <img id="githubIcon" src="/images/github-dark.svg" alt="GitHub Logo" class="logo">
+        </a>
+    </div>
+
+    <!-- Dark Mode Toggle Script -->
     <script>
         function setCookie(name, value, days) {
             const expires = new Date(Date.now() + days * 864e5).toUTCString();
@@ -100,25 +120,27 @@
 
         // Set initial theme based on cookie
         if (darkMode) {
-            html.style.backgroundColor = '#1e293b';
-            body.style.backgroundColor = '#1e293b';
-            colorToggle.textContent = '☀️';
-            githubIcon.src = '/images/github-light.svg';
+            html.style.backgroundColor = '#1e293b'; // Dark mode background
+            body.style.backgroundColor = '#1e293b'; // Dark mode body
+            colorToggle.textContent = '☀️'; // Switch to light mode icon
+            githubIcon.src = '/images/github-light.svg'; // Change GitHub icon for dark mode
         } else {
-            html.style.backgroundColor = '#f3f4f6';
-            body.style.backgroundColor = '#f3f4f6';
-            colorToggle.textContent = '🌙';
-            githubIcon.src = '/images/github-dark.svg';
+            html.style.backgroundColor = '#f3f4f6'; // Light mode background
+            body.style.backgroundColor = '#f3f4f6'; // Light mode body
+            colorToggle.textContent = '🌙'; // Switch to dark mode icon
+            githubIcon.src = '/images/github-dark.svg'; // Change GitHub icon for light mode
         }
 
         colorToggle.addEventListener('click', function() {
             if (darkMode) {
+                // Switch to light mode
                 html.style.backgroundColor = '#f3f4f6';
                 body.style.backgroundColor = '#f3f4f6';
                 colorToggle.textContent = '🌙';
                 githubIcon.src = '/images/github-dark.svg';
                 setCookie('theme', 'light', 7); // Set light mode cookie
             } else {
+                // Switch to dark mode
                 html.style.backgroundColor = '#1e293b';
                 body.style.backgroundColor = '#1e293b';
                 colorToggle.textContent = '☀️';
