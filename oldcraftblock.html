@@ -1,0 +1,147 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Play - ClassiCube.net</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#9873ac">
+<meta name="canonical-url" content="https://www.classicube.net/server/play/?warned=true">
+<meta name="description" content="Free multiplayer sandbox block game">
+<meta name="keywords" content="Free,Multiplayer,ClassiCube,Classic Cube,video games,play.jsp">
+<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700" rel="stylesheet" type="text/css">
+<link href="/scss/v2/style/scss/style.scss?v=30" rel="stylesheet" type="text/css">
+<link href="/static/v2/style/foundation-icons.css" rel="stylesheet" type="text/css">
+<style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+    }
+    #logmsg {
+        font-size: 18px;
+        font-family: 'Source Sans Pro', sans-serif;
+        text-shadow: 1px 1px 5px rgba(0, 0, 0, .5);
+        font-weight: bold;
+        text-align: center;
+        white-space: pre-wrap;
+        color: #F67;
+        position: absolute;
+        top: 10px;
+        width: 100%;
+    }
+    #canvas {
+        display: block;
+        box-sizing: border-box;
+        border-width: 0px !important;
+        padding: 0 !important;
+        margin: 0 auto;
+        box-shadow: 0 3px 5px rgba(0, 0, 0, .4);
+        width: 100vw;
+        height: 100vh;
+    }
+</style>
+<script type="text/javascript" src="/static/v2/js/jquery.js"></script>
+<script type="text/javascript" src="/static/v2/js/foundation.min.js"></script>
+<script type="text/javascript" src="/static/v2/js/ih.playerCards.js?v=30"></script>
+<script async crossorigin defer data-website-id="7461a7f5-8f46-4842-baaa-d1ee84ff8a51" src="https://stats.andrewph.org/eat-your-yeeties.js"></script>
+<meta name="referrer" content="no-referrer-when-downgrade" />
+</head>
+<body>
+<div id="body">
+<div class="sec">
+<div class="row">
+<canvas class="emscripten" id="canvas" style="background-color: black;" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+<span id="logmsg"></span>
+</div>
+</div>
+<script type="text/javascript" referrerpolicy="no-referrer-when-downgrade">
+    function logText(text) { 
+        console.log(text);
+        var logElement = document.getElementById('logmsg');
+        logElement.innerHTML = text;
+    }
+
+    var idb = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+    if (!idb) { 
+        alert('IndexedDB unsupported, therefore\nmaps and settings will not save');
+        window.mozIndexedDB = {}; 
+    }
+
+    function preloadIndexedDB() { _interop_LoadIndexedDB(); }
+    
+    function resizeGameCanvas() {
+        var cc_canv = document.getElementById('canvas');
+        var dpi = window.devicePixelRatio;
+        var aspect_ratio = 16 / 9;
+
+        var viewport_w = window.innerWidth;
+        var viewport_h = window.innerHeight;
+
+        var canv_w = Math.round(viewport_w);
+        var canv_h = Math.round(viewport_h);
+
+        if (canv_h % 2) { canv_h -= 1; }
+        if (canv_w % 2) { canv_w -= 1; }
+
+        cc_canv.width = canv_w * dpi;
+        cc_canv.height = canv_h * dpi;
+    }
+    
+    function logFatal(event) {
+        Module.setStatus('Skibidi Slziers');
+        Module.setStatus = function(text) {
+            if (event) Module.printErr('[post-exception status] ' + event);
+        };
+    }
+    
+    var Module = {
+        preRun: [ preloadIndexedDB, resizeGameCanvas ],
+        postRun: [],
+        arguments: ['Singleplayer'],
+        print: function(text) {
+            if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+            console.log(text);
+        },
+        printErr: function(text) {
+            if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+            console.error(text);
+        },
+        canvas: (function() {
+            return document.getElementById('canvas');
+        })(),
+        setStatus: logText,
+        totalDependencies: 0,
+        monitorRunDependencies: function(left) {
+            this.totalDependencies = Math.max(this.totalDependencies, left);
+            Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
+        },
+        onAbort: function(why) { logFatal('abort: ' + why); }
+    };
+
+    Module.setStatus('Downloading...');
+    window.onerror = function(event) { logFatal(event); };
+    
+    function onDownloadFailed(src) {
+        logText('Failed to download ClassiCube.js, retrying..');
+        var root = src.parentNode;
+        root.removeChild(src);
+
+        var elem = document.createElement('script');
+        elem.setAttribute('async', '');
+        elem.setAttribute('src', '//cdn.classicube.net/client/latest/ClassiCube.js?v=20');
+        root.appendChild(elem);
+    }
+
+    window.addEventListener('resize', resizeGameCanvas);
+    window.addEventListener('load', resizeGameCanvas);
+</script>
+<script async crossorigin type="text/javascript" src="//cdn.classicube.net/client/latest/ClassiCube.js?v=20" onerror="onDownloadFailed(this)" referrerpolicy="no-referrer-when-downgrade"></script>
+</div>
+<script>
+    $(document).ready(function() {
+        $(document).foundation();
+    });
+</script>
+</body>
+</html>
