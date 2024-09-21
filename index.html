@@ -13,6 +13,13 @@
     <meta name="theme-color" content="#ffffff">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
+        :root {
+            --dark-bg: #1e293b; /* Dark mode background */
+            --light-bg: #f3f4f6; /* Light mode background */
+            --text-dark: #ffffff; /* Text color for dark mode */
+            --text-light: #1e293b; /* Text color for light mode */
+        }
+
         html, body {
             margin: 0;
             padding: 0;
@@ -20,15 +27,17 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         body {
-            background-color: #1e293b; /* Default to dark mode */
+            background-color: var(--dark-bg); /* Default to dark mode */
+            color: var(--text-light); /* Default text color */
         }
 
         .light-mode {
-            background-color: #f3f4f6; /* Light mode background */
+            background-color: var(--light-bg); /* Light mode background */
+            color: var(--text-dark); /* Light mode text color */
         }
 
         .bottom-left {
@@ -107,7 +116,6 @@
             }, '');
         }
 
-        const html = document.documentElement;
         const body = document.body;
         const colorToggle = document.getElementById('colorToggle');
         const githubIcon = document.getElementById('githubIcon');
@@ -135,6 +143,13 @@
                 setCookie('theme', 'light', 7); // Set light mode cookie
                 colorToggle.textContent = '🌙'; // Switch to dark mode icon
                 githubIcon.src = '/images/github-dark.svg'; // Change GitHub icon for light mode
+            }
+        });
+
+        // Keyboard event listener for toggling dark/light mode
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 't') { // Press 't' to toggle theme
+                colorToggle.click();
             }
         });
     </script>
