@@ -57,7 +57,7 @@
             right: 20px;
             background-color: #6366f1;
             color: white;
-            font-bold;
+            font-weight: bold;
             padding: 10px 20px;
             border-radius: 8px;
             cursor: pointer;
@@ -85,8 +85,16 @@
     </div>
 
     <button id="colorToggle" class="toggle-button">☀️</button>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <script>
+        // Anime.js example animation
+        anime({
+            targets: 'div.box',
+            translateX: 250,
+            duration: 2000,
+            loop: true
+        });
+
         function setCookie(name, value, days) {
             const expires = new Date(Date.now() + days * 864e5).toUTCString();
             document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/';
