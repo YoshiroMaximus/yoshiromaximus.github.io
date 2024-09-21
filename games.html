@@ -27,6 +27,12 @@
             justify-content: center;
             transition: background-color 0.3s ease;
         }
+        body {
+            background-color: #1e293b; /* Default to dark mode */
+        }
+        .light-mode {
+            background-color: #f3f4f6; /* Light mode background */
+        }
         .top-left {
             position: absolute;
             top: 20px;
@@ -117,37 +123,29 @@
         const githubIcon = document.getElementById('githubIcon');
 
         let darkMode = getCookie('theme') === 'dark'; // Check cookie
+        body.classList.toggle('light-mode', !darkMode); // Set initial theme based on cookie
 
-        // Set initial theme based on cookie
         if (darkMode) {
-            html.style.backgroundColor = '#1e293b'; // Dark mode background
-            body.style.backgroundColor = '#1e293b'; // Dark mode body
             colorToggle.textContent = '☀️'; // Switch to light mode icon
             githubIcon.src = '/images/github-light.svg'; // Change GitHub icon for dark mode
         } else {
-            html.style.backgroundColor = '#f3f4f6'; // Light mode background
-            body.style.backgroundColor = '#f3f4f6'; // Light mode body
             colorToggle.textContent = '🌙'; // Switch to dark mode icon
             githubIcon.src = '/images/github-dark.svg'; // Change GitHub icon for light mode
         }
 
         colorToggle.addEventListener('click', function() {
-            if (darkMode) {
-                // Switch to light mode
-                html.style.backgroundColor = '#f3f4f6';
-                body.style.backgroundColor = '#f3f4f6';
-                colorToggle.textContent = '🌙';
-                githubIcon.src = '/images/github-dark.svg';
-                setCookie('theme', 'light', 7); // Set light mode cookie
-            } else {
-                // Switch to dark mode
-                html.style.backgroundColor = '#1e293b';
-                body.style.backgroundColor = '#1e293b';
-                colorToggle.textContent = '☀️';
-                githubIcon.src = '/images/github-light.svg';
-                setCookie('theme', 'dark', 7); // Set dark mode cookie
-            }
             darkMode = !darkMode; // Toggle mode
+            body.classList.toggle('light-mode', !darkMode); // Toggle light mode class
+
+            if (darkMode) {
+                setCookie('theme', 'dark', 7); // Set dark mode cookie
+                colorToggle.textContent = '☀️'; // Switch to light mode icon
+                githubIcon.src = '/images/github-light.svg'; // Change GitHub icon for dark mode
+            } else {
+                setCookie('theme', 'light', 7); // Set light mode cookie
+                colorToggle.textContent = '🌙'; // Switch to dark mode icon
+                githubIcon.src = '/images/github-dark.svg'; // Change GitHub icon for light mode
+            }
         });
     </script>
 </body>
