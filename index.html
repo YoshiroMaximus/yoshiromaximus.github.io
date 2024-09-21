@@ -5,62 +5,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Website 🔥</title>
     <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
-<link rel="manifest" href="/site.webmanifest">
-<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
-<meta name="msapplication-TileColor" content="#da532c">
-<meta name="theme-color" content="#ffffff">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        body, html {
+        /* Ensure both html and body have the same dark background */
+        html, body {
             margin: 0;
             padding: 0;
             height: 100%;
+            background-color: #1e293b; /* Dark blue background */
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #f3f4f6; /* Light gray background */
+            transition: background-color 0.3s ease;
         }
+
         .bottom-left {
             position: absolute;
             left: 20px;
             bottom: 20px;
         }
-        .top-right {
-            position: absolute;
-            right: 20px;
-            top: 20px;
-        }
+
         .logo {
             width: 24px; /* Adjust size to match emoji */
             height: 24px; /* Adjust size to match emoji */
             vertical-align: middle; /* Align with text */
         }
+
         .forms {
             width: 20px; /* Adjust size to match emoji */
             height: 24px; /* Adjust size to match emoji */
             vertical-align: middle; /* Align with text */
         }
+
+        /* Gradient hover effect for buttons */
+        .hover-gradient {
+            background-color: #6366f1; /* Original blue button */
+        }
+
+        .hover-gradient:hover {
+            background: linear-gradient(90deg, lightorange, lightblue, lightgreen);
+        }
+
+        /* Color toggle button */
+        .toggle-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #6366f1;
+            color: white;
+            font-bold;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 transition duration-300">
-
-    <!-- Dark Mode Toggle -->
-    <div class="top-right">
-        <button id="darkModeToggle" class="bg-gray-300 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold py-2 px-4 rounded shadow hover:bg-gray-400 dark:hover:bg-gray-700 transition duration-300" aria-label="Toggle dark mode">
-            🌞 Light Mode
-        </button>
-    </div>
+<body>
 
     <div class="flex flex-col space-y-4">
-        <a href="tetris.html" class="bg-blue-500 text-white font-bold py-2 px-4 rounded shadow hover:bg-blue-600 transition duration-300">
+        <a href="tetris.html" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">
             Play Tetris
         </a>
-        <a href="dnd-char-generator.html" class="bg-blue-500 text-white font-bold py-2 px-4 rounded shadow hover:bg-blue-600 transition duration-300">
+        <a href="dnd-char-generator.html" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">
             D&D Character Generator
         </a>
-        <a href="games.html" class="bg-blue-500 text-white font-bold py-2 px-4 rounded shadow hover:bg-blue-600 transition duration-300">
+        <a href="games.html" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">
             Games
         </a>
         <button class="bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded shadow cursor-not-allowed">
@@ -72,55 +87,42 @@
         <a href="yoshiromaximus.html" class="text-blue-500 font-bold text-lg hover:text-blue-600 transition duration-300">
             🚀 
         </a>
+        <!-- GitHub icon that will switch based on mode -->
         <a href="https://github.com/YoshiroMaximus" target="_blank" class="ml-2">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" alt="GitHub Logo" class="logo">
+            <img id="githubIcon" src="/images/github-dark.svg" alt="GitHub Logo" class="logo">
         </a>
         <a href="https://forms.gle/Qj2VZMxZX1p9e3AG8" target="_blank" class="ml-2">
             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Google_Forms_2020_Logo.svg/70px-Google_Forms_2020_Logo.svg.png" alt="Google Forms Logo" class="forms">
         </a>
-        <span class="ml-2 text-gray-700 dark:text-gray-300">← give recc plz</span>
+        <span class="ml-2 text-gray-300">← give recc plz</span>
     </div>
 
+    <!-- Button to Toggle Color Modes -->
+    <button id="colorToggle" class="toggle-button">☀️</button>
+
     <script>
-        const toggle = document.getElementById('darkModeToggle');
+        const html = document.documentElement;
         const body = document.body;
+        const colorToggle = document.getElementById('colorToggle');
+        const githubIcon = document.getElementById('githubIcon');
 
-        // Detect user's system-wide preference
-        const userPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const savedTheme = localStorage.getItem('theme');
+        let darkMode = true; // Default to dark mode
 
-        // Apply saved theme or system preference
-        if (savedTheme === 'dark' || (!savedTheme && userPrefersDark)) {
-            body.classList.add('dark');
-            toggle.innerHTML = '🌙 Dark Mode';
-        } else {
-            toggle.innerHTML = '🌞 Light Mode';
-        }
-
-        // Toggle dark mode on click and update button label
-        toggle.addEventListener('click', function() {
-            console.log("Toggle button clicked"); // Debugging log
-            body.classList.toggle('dark');
-            if (body.classList.contains('dark')) {
-                console.log("Dark mode enabled"); // Debugging log
-                toggle.innerHTML = '🌙 Dark Mode';
-                localStorage.setItem('theme', 'dark');
+        colorToggle.addEventListener('click', function() {
+            if (darkMode) {
+                // Switch to light mode
+                html.style.backgroundColor = '#f3f4f6'; // Light background color for html
+                body.style.backgroundColor = '#f3f4f6'; // Light background color for body
+                colorToggle.textContent = '🌙';
+                githubIcon.src = '/images/github-light.svg'; // Switch to light GitHub icon
+                darkMode = false;
             } else {
-                console.log("Light mode enabled"); // Debugging log
-                toggle.innerHTML = '🌞 Light Mode';
-                localStorage.setItem('theme', 'light');
-            }
-        });
-
-        // Listen for system preference changes and update accordingly
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-            const newColorScheme = e.matches ? 'dark' : 'light';
-            if (newColorScheme === 'dark') {
-                body.classList.add('dark');
-                toggle.innerHTML = '🌙 Dark Mode';
-            } else {
-                body.classList.remove('dark');
-                toggle.innerHTML = '🌞 Light Mode';
+                // Switch to dark mode
+                html.style.backgroundColor = '#1e293b'; // Dark background color for html
+                body.style.backgroundColor = '#1e293b'; // Dark background color for body
+                colorToggle.textContent = '☀️';
+                githubIcon.src = '/images/github-dark.svg'; // Switch to dark GitHub icon
+                darkMode = true;
             }
         });
     </script>
