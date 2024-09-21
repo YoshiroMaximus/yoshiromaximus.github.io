@@ -1,5 +1,3 @@
-# Website 🔥
-
 ## Overview
 
 This website serves as an interactive platform for playing a selection of HTML games. With a focus on user experience, it features a modern design that adapts seamlessly across devices. The site integrates a dark/light mode toggle for customizable viewing preferences, enhancing usability for all users.
