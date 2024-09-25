@@ -122,6 +122,13 @@
         const githubIcon = document.getElementById('githubIcon');
 
         let darkMode = getCookie('theme') === 'dark'; // Check cookie
+
+        // Default to dark mode if no cookie is set
+        if (getCookie('theme') === '') {
+            setCookie('theme', 'dark', 7);
+            darkMode = true;
+        }
+
         body.classList.toggle('light-mode', !darkMode); // Set initial theme based on cookie
 
         if (darkMode) {
