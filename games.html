@@ -1,51 +1,142 @@
 <!DOCTYPE html>
-<html lang=en>
+<html lang="en">
 <head>
-<meta charset=UTF-8>
-<meta name=viewport content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Games</title>
-<link rel=apple-touch-icon sizes=180x180 href=/images/apple-touch-icon.png>
-<link rel=icon type=image/png sizes=32x32 href=/images/favicon-32x32.png>
-<link rel=icon type=image/png sizes=16x16 href=/images/favicon-16x16.png>
-<link rel=manifest href=/site.webmanifest>
-<link rel=mask-icon href=/images/safari-pinned-tab.svg color=#5bbad5>
-<meta name=msapplication-TileColor content=#da532c>
-<meta name=theme-color content=#ffffff>
-<link href=https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css rel=stylesheet>
-<style>html,body{margin:0;padding:0;height:100%;display:flex;align-items:center;justify-content:center;transition:background-color .3s ease}body{background-color:#1e293b}.light-mode{background-color:#f3f4f6}.top-left{position:absolute;top:20px;left:20px}.back-button{width:90px;height:90px;cursor:pointer}.hover-gradient{background-color:#6366f1}.hover-gradient:hover{background:linear-gradient(90deg,lightorange,lightblue,lightgreen)}.toggle-button{position:absolute;top:20px;right:20px;background-color:#6366f1;color:white;font-bold;padding:10px 20px;border-radius:8px;cursor:pointer}</style>
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+<meta name="msapplication-TileColor" content="#da532c">
+<meta name="theme-color" content="#ffffff">
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color .3s ease;
+  }
+  body {
+    background-color: #1e293b;
+  }
+  .light-mode {
+    background-color: #f3f4f6;
+  }
+  .top-left {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+  }
+  .back-button {
+    width: 90px;
+    height: 90px;
+    cursor: pointer;
+  }
+  .hover-gradient {
+    background-color: #6366f1;
+  }
+  .hover-gradient:hover {
+    background: linear-gradient(90deg, lightorange, lightblue, lightgreen);
+  }
+  .toggle-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: #6366f1;
+    color: white;
+    font-weight: bold;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .custom-select {
+    appearance: none;
+    background-color: #6366f1;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  .custom-select:hover {
+    background-color: #4f46e5;
+  }
+</style>
+<script>
+  window.addEventListener("load", function() {
+    document.getElementById("form1").addEventListener("submit", function(e) {
+      this.action = document.getElementById("pages").value;
+    });
+  });
+
+  function setCookie(name, value, days) {
+    const expires = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/';
+  }
+
+  function getCookie(name) {
+    return document.cookie.split('; ').reduce((r, v) => {
+      const parts = v.split('=');
+      return parts[0] === name ? decodeURIComponent(parts[1]) : r;
+    }, '');
+  }
+
+  const body = document.body;
+  const colorToggle = document.getElementById('colorToggle');
+  let darkMode = getCookie('theme') === 'dark';
+  body.classList.toggle('light-mode', !darkMode);
+  colorToggle.textContent = darkMode ? '☀️' : '🌙';
+
+  colorToggle.addEventListener('click', function() {
+    darkMode = !darkMode;
+    body.classList.toggle('light-mode', !darkMode);
+    setCookie('theme', darkMode ? 'dark' : 'light', 7);
+    colorToggle.textContent = darkMode ? '☀️' : '🌙';
+  });
+
+  function selectBlockCraft() {
+    const version = prompt("Choose a version:\n1.8\n1.2");
+    if (version === '1.8') {
+      window.location.href = 'blockcraft.html';
+    } else if (version === '1.2') {
+      window.location.href = 'oldblockcraft.html';
+    } else {
+      alert("not skibidi, please choose 1.8 or 1.2.");
+    }
+  }
+</script>
 </head>
 <body>
-<div class=top-left>
-<a href=index.html>
-<img src=images/back-button.png alt="Back Button" class=back-button>
-</a>
+<div class="top-left">
+  <a href="index.html">
+    <img src="images/back-button.png" alt="Back Button" class="back-button">
+  </a>
 </div>
-<button id=colorToggle class=toggle-button>☀️</button>
+<button id="colorToggle" class="toggle-button">☀️</button>
 <div class="flex flex-col space-y-4">
-<a href=totm.html target=_blank class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">
-Play Tomb of the Mask
-</a>
-<a href=https://yoshiromaximus.github.io/fger/forager/main.html target=_blank class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">
-Play Forager
-</a>
-<a href=https://yoshiromaximus.github.io/surf/ target=_blank class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">
-Play Surf
-</a>
-<a href=slope.html target=_blank class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">
-Play Slope
-</a>
-<a href=hsmc.html target=_blank class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">
-Play Henry Stickmin
-</a>
-<a href=# onclick=selectBlockCraft() class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">
-Play BlockCraft
-</a>
-<button class="bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded shadow cursor-not-allowed">
-Coming Soon
-</button>
+  <form id="form1" target="_blank" class="flex flex-col space-y-4">
+    <select id="pages" class="custom-select">
+      <option value="totm.html">Tomb of the Mask <--</option>
+      <option value="https://yoshiromaximus.github.io/fger/forager/main.html">Forager</option>
+      <option value="https://yoshiromaximus.github.io/surf/">Surf</option>
+      <option value="slope.html">Slope</option>
+      <option value="hsmc.html">Henry Stickmin</option>
+      <option value="#" onclick="selectBlockCraft()">BlockCraft</option>
+    </select>
+    <button type="submit" id="go" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">
+      GO
+    </button>
+  </form>
+  <button class="bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded shadow cursor-not-allowed">
+    Coming Soon
+  </button>
 </div>
-<script>function setCookie(name,value,days){const expires=new Date(Date.now()+days*864e5).toUTCString();document.cookie=name+'='+encodeURIComponent(value)+'; expires='+expires+'; path=/';}
-function getCookie(name){return document.cookie.split('; ').reduce((r,v)=>{const parts=v.split('=');return parts[0]===name?decodeURIComponent(parts[1]):r;},'');}
-const body=document.body;const colorToggle=document.getElementById('colorToggle');let darkMode=getCookie('theme')==='dark';body.classList.toggle('light-mode',!darkMode);colorToggle.textContent=darkMode?'☀️':'🌙';colorToggle.addEventListener('click',function(){darkMode=!darkMode;body.classList.toggle('light-mode',!darkMode);setCookie('theme',darkMode?'dark':'light',7);colorToggle.textContent=darkMode?'☀️':'🌙';});function selectBlockCraft(){const version=prompt("Choose a version:\n1.8\n1.2");if(version==='1.8'){window.location.href='blockcraft.html';}else if(version==='1.2'){window.location.href='oldblockcraft.html';}else{alert("not skibidi, please choose 1.8 or 1.2.");}}</script>
 </body>
 </html>
