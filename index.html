@@ -14,36 +14,35 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         :root {
-            --dark-bg: #1e293b; /* Dark mode background */
-            --light-bg: #f3f4f6; /* Light mode background */
-            --text-dark: #ffffff; /* Text color for dark mode */
-            --text-light: #1e293b; /* Text color for light mode */
-        }
-
-        html, body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            --dark-bg: #1e293b;
+            --light-bg: #f3f4f6;
+            --text-dark: #1e293b;
+            --text-light: #ffffff;
         }
 
         body {
-            background-color: var(--dark-bg); /* Default to dark mode */
-            color: var(--text-light); /* Default text color */
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
         }
 
-        .light-mode {
-            background-color: var(--light-bg); /* Light mode background */
-            color: var(--text-dark); /* Light mode text color */
+        body.light-mode {
+            background-color: var(--light-bg);
+            color: var(--text-dark);
         }
 
         .bottom-left {
-            position: absolute;
+            position: fixed;
             left: 20px;
             bottom: 20px;
+            z-index: 10;
         }
 
         .logo, .forms {
@@ -53,61 +52,72 @@
         }
 
         .hover-gradient {
-            background-color: #6366f1;
+            background-color: #4f46e5;
+            transition: background 0.3s ease, transform 0.2s ease;
         }
 
         .hover-gradient:hover {
-            background: linear-gradient(90deg, lightorange, lightblue, lightgreen);
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1);
+            transform: translateY(-2px);
         }
 
         .toggle-button {
-            position: absolute;
+            position: fixed;
             top: 20px;
             right: 20px;
-            background-color: #6366f1;
+            background-color: #4f46e5;
             color: white;
             font-weight: bold;
             padding: 10px 20px;
             border-radius: 8px;
             cursor: pointer;
+            z-index: 10;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .toggle-button:hover {
+            background-color: #4338ca;
+            transform: translateY(-2px);
+        }
+
+        .menu-links a, .menu-links button {
+            width: 220px;
+            text-align: center;
+        }
+
+        @media (max-width: 640px) {
+            .menu-links a, .menu-links button {
+                width: 180px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="flex flex-col space-y-4">
-        <a href="tetris.html" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">Play Tetris</a>
-        <a href="dnd-char-generator.html" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">D&D Character-Gen</a>
-        <a href="games.html" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">Games</a>
-        <a href="https://yoshiromaximus.github.io/sz/" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">Sz-games (bugs)</a>
-        <button class="bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded shadow cursor-not-allowed">Coming Soon</button>
+    <div class="menu-links flex flex-col space-y-4">
+        <a href="tetris.html" class="hover-gradient text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300">Play Tetris</a>
+        <a href="dnd-char-generator.html" class="hover-gradient text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300">D&D Character-Gen</a>
+        <a href="games.html" class="hover-gradient text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300">Games</a>
+        <a href="https://yoshiromaximus.github.io/sz/" class="hover-gradient text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300">Sz-games (bugs)</a>
+        <button class="bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-lg shadow-lg cursor-not-allowed transition duration-300">Coming Soon</button>
     </div>
 
     <div class="bottom-left flex items-center">
-        <a href="https://yoshiromaximus.github.io/old/" class="text-blue-500 font-bold text-lg hover:text-blue-600 transition duration-300">🚀</a>
-        <a href="https://github.com/YoshiroMaximus" target="_blank" class="ml-2">
-            <img id="githubIcon" src="/images/github-dark.svg" alt="GitHub Logo" class="logo">
+        <a href="https://yoshiromaximus.github.io/old/" class="text-blue-400 hover:text-blue-300 font-bold text-lg transition duration-300">🚀</a>
+        <a href="https://github.com/YoshiroMaximus" target="_blank" rel="noopener noreferrer" class="ml-3">
+            <img id="githubIcon" src="/images/github-light.svg" alt="GitHub Logo" class="logo">
         </a>
-        <a href="https://forms.gle/Qj2VZMxZX1p9e3AG8" target="_blank" class="ml-2">
+        <a href="https://forms.gle/Qj2VZMxZX1p9e3AG8" target="_blank" rel="noopener noreferrer" class="ml-3">
             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Google_Forms_2020_Logo.svg/70px-Google_Forms_2020_Logo.svg.png" alt="Google Forms Logo" class="forms">
         </a>
-        <span class="ml-2 text-gray-300">← give recc plz</span>
+        <span class="ml-3 text-gray-400 dark:text-gray-300">← give recc plz</span>
     </div>
 
-    <button id="colorToggle" class="toggle-button">☀️</button>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <button id="colorToggle" class="toggle-button" aria-label="Toggle dark/light mode">☀️</button>
     <script>
-        // Anime.js example animation
-        anime({
-            targets: 'div.box',
-            translateX: 250,
-            duration: 2000,
-            loop: true
-        });
-
         function setCookie(name, value, days) {
             const expires = new Date(Date.now() + days * 864e5).toUTCString();
-            document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/';
+            document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/; SameSite=Lax';
         }
 
         function getCookie(name) {
@@ -121,42 +131,25 @@
         const colorToggle = document.getElementById('colorToggle');
         const githubIcon = document.getElementById('githubIcon');
 
-        let darkMode = getCookie('theme') === 'dark'; // Check cookie
+        let darkMode = getCookie('theme') !== 'light';
 
-        // Default to dark mode if no cookie is set
-        if (getCookie('theme') === '') {
-            setCookie('theme', 'dark', 7);
-            darkMode = true;
+        function setTheme(isDark) {
+            body.classList.toggle('light-mode', !isDark);
+            colorToggle.textContent = isDark ? '☀️' : '🌙';
+            colorToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+            githubIcon.src = isDark ? '/images/github-light.svg' : '/images/github-dark.svg';
+            setCookie('theme', isDark ? 'dark' : 'light', 30);
         }
 
-        body.classList.toggle('light-mode', !darkMode); // Set initial theme based on cookie
-
-        if (darkMode) {
-            colorToggle.textContent = '☀️'; // Set toggle icon for light mode
-            githubIcon.src = '/images/github-light.svg'; // Change GitHub icon for dark mode
-        } else {
-            colorToggle.textContent = '🌙'; // Set toggle icon for dark mode
-            githubIcon.src = '/images/github-dark.svg'; // Change GitHub icon for light mode
-        }
+        setTheme(darkMode);
 
         colorToggle.addEventListener('click', function() {
-            darkMode = !darkMode; // Toggle mode
-            body.classList.toggle('light-mode', !darkMode); // Toggle light mode class
-
-            if (darkMode) {
-                setCookie('theme', 'dark', 7); // Set dark mode cookie
-                colorToggle.textContent = '☀️'; // Switch to light mode icon
-                githubIcon.src = '/images/github-light.svg'; // Change GitHub icon for dark mode
-            } else {
-                setCookie('theme', 'light', 7); // Set light mode cookie
-                colorToggle.textContent = '🌙'; // Switch to dark mode icon
-                githubIcon.src = '/images/github-dark.svg'; // Change GitHub icon for light mode
-            }
+            darkMode = !darkMode;
+            setTheme(darkMode);
         });
 
-        // Keyboard event listener for toggling dark/light mode
         document.addEventListener('keydown', function(event) {
-            if (event.key === 't') { // Press 't' to toggle theme
+            if (event.key === 't') {
                 colorToggle.click();
             }
         });

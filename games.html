@@ -1,142 +1,209 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Games</title>
-<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
-<link rel="manifest" href="/site.webmanifest">
-<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
-<meta name="msapplication-TileColor" content="#da532c">
-<meta name="theme-color" content="#ffffff">
-<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-<style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color .3s ease;
-  }
-  body {
-    background-color: #1e293b;
-  }
-  .light-mode {
-    background-color: #f3f4f6;
-  }
-  .top-left {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-  }
-  .back-button {
-    width: 90px;
-    height: 90px;
-    cursor: pointer;
-  }
-  .hover-gradient {
-    background-color: #6366f1;
-  }
-  .hover-gradient:hover {
-    background: linear-gradient(90deg, lightorange, lightblue, lightgreen);
-  }
-  .toggle-button {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background-color: #6366f1;
-    color: white;
-    font-weight: bold;
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-  .custom-select {
-    appearance: none;
-    background-color: #6366f1;
-    color: white;
-    padding: 10px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  .custom-select:hover {
-    background-color: #4f46e5;
-  }
-</style>
-<script>
-  window.addEventListener("load", function() {
-    document.getElementById("form1").addEventListener("submit", function(e) {
-      this.action = document.getElementById("pages").value;
-    });
-  });
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Games</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --dark-bg: #1e293b;
+            --light-bg: #f3f4f6;
+            --text-dark: #1e293b;
+            --text-light: #ffffff;
+        }
 
-  function setCookie(name, value, days) {
-    const expires = new Date(Date.now() + days * 864e5).toUTCString();
-    document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/';
-  }
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+        }
 
-  function getCookie(name) {
-    return document.cookie.split('; ').reduce((r, v) => {
-      const parts = v.split('=');
-      return parts[0] === name ? decodeURIComponent(parts[1]) : r;
-    }, '');
-  }
+        body.light-mode {
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+        }
 
-  const body = document.body;
-  const colorToggle = document.getElementById('colorToggle');
-  let darkMode = getCookie('theme') === 'dark';
-  body.classList.toggle('light-mode', !darkMode);
-  colorToggle.textContent = darkMode ? '☀️' : '🌙';
+        .top-left {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+        }
 
-  colorToggle.addEventListener('click', function() {
-    darkMode = !darkMode;
-    body.classList.toggle('light-mode', !darkMode);
-    setCookie('theme', darkMode ? 'dark' : 'light', 7);
-    colorToggle.textContent = darkMode ? '☀️' : '🌙';
-  });
+        .back-button {
+            width: 60px;
+            height: 60px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
 
-  function selectBlockCraft() {
-    const version = prompt("Choose a version:\n1.8\n1.2");
-    if (version === '1.8') {
-      window.location.href = 'blockcraft.html';
-    } else if (version === '1.2') {
-      window.location.href = 'oldblockcraft.html';
-    } else {
-      alert("not skibidi, please choose 1.8 or 1.2.");
-    }
-  }
-</script>
+        .back-button:hover {
+            transform: scale(1.1);
+        }
+
+        .hover-gradient {
+            background-color: #4f46e5;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        .hover-gradient:hover {
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1);
+            transform: translateY(-2px);
+        }
+
+        .toggle-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4f46e5;
+            color: white;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 10;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .toggle-button:hover {
+            background-color: #4338ca;
+            transform: translateY(-2px);
+        }
+
+        .custom-select {
+            appearance: none;
+            background-color: #4f46e5;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .custom-select:hover, .custom-select:focus {
+            background-color: #4338ca;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 640px) {
+            .back-button {
+                width: 50px;
+                height: 50px;
+            }
+            .custom-select, #go {
+                width: 90%;
+                max-width: none;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="top-left">
-  <a href="index.html">
-    <img src="images/back-button.png" alt="Back Button" class="back-button">
-  </a>
-</div>
-<button id="colorToggle" class="toggle-button">☀️</button>
-<div class="flex flex-col space-y-4">
-  <form id="form1" target="_blank" class="flex flex-col space-y-4">
-    <select id="pages" class="custom-select">
-      <option value="totm.html">Tomb of the Mask <--</option>
-      <option value="https://yoshiromaximus.github.io/fger/forager/main.html">Forager</option>
-      <option value="https://yoshiromaximus.github.io/surf/">Surf</option>
-      <option value="slope.html">Slope</option>
-      <option value="hsmc.html">Henry Stickmin</option>
-      <option value="#" onclick="selectBlockCraft()">BlockCraft</option>
-    </select>
-    <button type="submit" id="go" class="hover-gradient text-white font-bold py-2 px-4 rounded shadow transition duration-300">
-      GO
-    </button>
-  </form>
-  <button class="bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded shadow cursor-not-allowed">
-    Coming Soon
-  </button>
-</div>
+    <div class="top-left">
+        <a href="index.html">
+            <img src="images/back-button.png" alt="Back to Home" class="back-button">
+        </a>
+    </div>
+    <button id="colorToggle" class="toggle-button" aria-label="Toggle dark/light mode">☀️</button>
+    <div class="flex flex-col space-y-4 items-center w-full max-w-md px-4">
+        <form id="form1" target="_blank" class="flex flex-col space-y-4 w-full items-center">
+            <select id="pages" class="custom-select">
+                <option value="totm.html">Tomb of the Mask</option>
+                <option value="https://yoshiromaximus.github.io/fger/forager/main.html">Forager</option>
+                <option value="https://yoshiromaximus.github.io/surf/">Surf</option>
+                <option value="slope.html">Slope</option>
+                <option value="hsmc.html">Henry Stickmin</option>
+                <option value="#" data-special="blockcraft">BlockCraft</option>
+            </select>
+            <button type="submit" id="go" class="hover-gradient text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300 w-full max-w-[300px]">
+                GO
+            </button>
+        </form>
+        <button class="bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-lg shadow-lg cursor-not-allowed transition duration-300 w-full max-w-[300px]">
+            Coming Soon
+        </button>
+    </div>
+
+    <script>
+        function setCookie(name, value, days) {
+            const expires = new Date(Date.now() + days * 864e5).toUTCString();
+            document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/; SameSite=Lax';
+        }
+
+        function getCookie(name) {
+            return document.cookie.split('; ').reduce((r, v) => {
+                const parts = v.split('=');
+                return parts[0] === name ? decodeURIComponent(parts[1]) : r;
+            }, '');
+        }
+
+        const body = document.body;
+        const colorToggle = document.getElementById('colorToggle');
+        let darkMode = getCookie('theme') !== 'light';
+
+        function setTheme(isDark) {
+            body.classList.toggle('light-mode', !isDark);
+            colorToggle.textContent = isDark ? '☀️' : '🌙';
+            colorToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+            setCookie('theme', isDark ? 'dark' : 'light', 30);
+        }
+
+        setTheme(darkMode);
+
+        colorToggle.addEventListener('click', function() {
+            darkMode = !darkMode;
+            setTheme(darkMode);
+        });
+
+        function selectBlockCraft() {
+            const version = prompt("Choose a version:\n1.8\n1.2");
+            if (version === '1.8') {
+                return 'blockcraft.html';
+            } else if (version === '1.2') {
+                return 'oldblockcraft.html';
+            } else {
+                alert("Invalid choice. Please choose 1.8 or 1.2.");
+                return null;
+            }
+        }
+
+        document.getElementById("form1").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const select = document.getElementById("pages");
+            const selectedOption = select.options[select.selectedIndex];
+            
+            if (selectedOption.dataset.special === "blockcraft") {
+                const blockCraftUrl = selectBlockCraft();
+                if (blockCraftUrl) {
+                    window.open(blockCraftUrl, '_blank');
+                }
+            } else {
+                window.open(select.value, '_blank');
+            }
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 't') {
+                colorToggle.click();
+            }
+        });
+    </script>
 </body>
 </html>
