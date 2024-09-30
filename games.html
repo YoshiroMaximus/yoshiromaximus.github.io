@@ -117,7 +117,7 @@
 </head>
 <body>
     <div class="top-left">
-        <a href="index.html">
+        <a href="index">
             <img src="images/back-button.png" alt="Back to Home" class="back-button">
         </a>
     </div>
@@ -125,11 +125,11 @@
     <div class="flex flex-col space-y-4 items-center w-full max-w-md px-4">
         <form id="form1" target="_blank" class="flex flex-col space-y-4 w-full items-center">
             <select id="pages" class="custom-select">
-                <option value="totm.html">Tomb of the Mask</option>
-                <option value="https://yoshiromaximus.github.io/fger/forager/main.html">Forager</option>
-                <option value="https://yoshiromaximus.github.io/surf/">Surf</option>
-                <option value="slope.html">Slope</option>
-                <option value="hsmc.html">Henry Stickmin</option>
+                <option value="totm">Tomb of the Mask</option>
+                <option value="https://sn3k.org/fger/forager/main">Forager</option>
+                <option value="https://sn3k.org/surf">Surf</option>
+                <option value="slope">Slope</option>
+                <option value="hsmc">Henry Stickmin</option>
                 <option value="#" data-special="blockcraft">BlockCraft</option>
             </select>
             <button type="submit" id="go" class="hover-gradient text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300 w-full max-w-[300px]">
@@ -175,9 +175,9 @@
         function selectBlockCraft() {
             const version = prompt("Choose a version:\n1.8\n1.2");
             if (version === '1.8') {
-                return 'blockcraft.html';
+                return 'blockcraft';
             } else if (version === '1.2') {
-                return 'oldblockcraft.html';
+                return 'oldblockcraft';
             } else {
                 alert("Invalid choice. Please choose 1.8 or 1.2.");
                 return null;
