@@ -8,9 +8,9 @@ updates:
   - package-ecosystem: "npm"
     directory: "/" # location of package.json
     schedule:
-      interval: "weekly" # check for updates weekly
+      interval: "daily" # check for updates weekly
     commit-message:
       prefix: "fix" # commit message prefix
-    open-pull-requests-limit: 5 # max open PRs
+    open-pull-requests-limit: 10 # max open PRs
 
   # You can add other ecosystems or directories if needed
