@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Links 📎</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --dark-bg: #1e293b;
+            --light-bg: #f3f4f6;
+            --text-dark: #1e293b;
+            --text-light: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+        }
+
+        body.light-mode {
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+        }
+
+        .bottom-left {
+            position: fixed;
+            left: 20px;
+            bottom: 20px;
+            z-index: 10;
+        }
+
+        .logo, .forms {
+            width: 24px;
+            height: 24px;
+            vertical-align: middle;
+        }
+
+        .hover-gradient {
+            background-color: #4f46e5;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        .hover-gradient:hover {
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1);
+            transform: translateY(-2px);
+        }
+
+        .toggle-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4f46e5;
+            color: white;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 10;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .toggle-button:hover {
+            background-color: #4338ca;
+            transform: translateY(-2px);
+        }
+
+        .menu-links button {
+            width: 220px;
+            text-align: center;
+        }
+
+        @media (max-width: 640px) {
+            .menu-links button {
+                width: 180px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="menu-links flex flex-col space-y-4">
+        <button class="bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-lg shadow-lg cursor-not-allowed transition duration-300">Coming Soon</button>
+        <button class="bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-lg shadow-lg cursor-not-allowed transition duration-300">Coming Soon</button>
+        <button class="bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-lg shadow-lg cursor-not-allowed transition duration-300">Coming Soon</button>
+        <button class="bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-lg shadow-lg cursor-not-allowed transition duration-300">Coming Soon</button>
+    </div>
+
+    <div class="bottom-left flex items-center">
+    </div>
+
+    <button id="colorToggle" class="toggle-button" aria-label="Toggle dark/light mode">☀️</button>
+    <script>
+        function setCookie(name, value, days) {
+            const expires = new Date(Date.now() + days * 864e5).toUTCString();
+            document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/; SameSite=Lax';
+        }
+
+        function getCookie(name) {
+            return document.cookie.split('; ').reduce((r, v) => {
+                const parts = v.split('=');
+                return parts[0] === name ? decodeURIComponent(parts[1]) : r;
+            }, '');
+        }
+
+        const body = document.body;
+        const colorToggle = document.getElementById('colorToggle');
+
+        let darkMode = getCookie('theme') !== 'light';
+
+        function setTheme(isDark) {
+            body.classList.toggle('light-mode', !isDark);
+            colorToggle.textContent = isDark ? '☀️' : '🌙';
+            colorToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+            setCookie('theme', isDark ? 'dark' : 'light', 30);
+        }
+
+        setTheme(darkMode);
+
+        colorToggle.addEventListener('click', function() {
+            darkMode = !darkMode;
+            setTheme(darkMode);
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 't') {
+                colorToggle.click();
+            }
+        });
+    </script>
+</body>
+</html>
