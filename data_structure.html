@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Allowance Email Creator</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f3f4f6; color: #333; line-height: 1.6; margin: 0; padding: 0; }
+        .container { max-width: 700px; margin: 20px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        h1, p { text-align: center; }
+        .chores-list { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0; }
+        .chores-list label { display: flex; align-items: center; width: 48%; }
+        textarea { width: 100%; height: 100px; margin-top: 10px; border: 1px solid #ccc; border-radius: 4px; padding: 10px; }
+        .button-row { display: flex; justify-content: space-between; margin-top: 10px; }
+        .button-row button { flex: 1; margin: 0 5px; padding: 10px; background-color: #007BFF; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .button-row button:hover { background-color: #0056b3; }
+        #emailPreview { margin-top: 20px; padding: 20px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 5px; text-align: left; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Allowance Email Creator</h1>
+        <p>Select the chores you did this week:</p>
+        <form id="choresForm" class="chores-list">
+            <label><input type="checkbox" value="took out the trash 🗑️"> Took out the trash 🗑️</label>
+            <label><input type="checkbox" value="took out the compost 🤢"> Took out the compost 🤢</label>
+            <label><input type="checkbox" value="took out recycling ♻️"> Took out recycling ♻️</label>
+            <label><input type="checkbox" value="brought in the cans"> Brought in the cans</label>
+            <label><input type="checkbox" value="did the dishes 🍽️"> Did the dishes 🍽️</label>
+            <label><input type="checkbox" value="put away the dishes"> Put away the dishes</label>
+            <label><input type="checkbox" value="cleaned the floor 🧹"> Cleaned the floor 🧹</label>
+            <label><input type="checkbox" value="folded the laundry 🧺"> Folded the laundry 🧺</label>
+            <label><input type="checkbox" value="washed the laundry 💦"> Washed the laundry 💦</label>
+            <label><input type="checkbox" value="watered the plants 🌱"> Watered the plants 🌱</label>
+            <label><input type="checkbox" value="helped clean up 🧽"> Helped clean up 🧽</label>
+            <label><input type="checkbox" value="made the bed 🛏️"> Made the bed 🛏️</label>
+        </form>
+        <textarea id="choresMessage" placeholder="Add your custom message here..."></textarea>
+        <textarea id="customMessage" placeholder="Write your personal note here..."></textarea>
+        <div class="button-row">
+            <button onclick="generateEmail()">Generate Email</button>
+            <button onclick="makeEditable()">Make Editable</button>
+        </div>
+        <div id="emailPreview" contenteditable="false"></div>
+    </div>
+    <script>
+        function generateEmail() {
+            const checkboxes = document.querySelectorAll('#choresForm input[type="checkbox"]');
+            let selectedChores = [];
+            checkboxes.forEach(checkbox => { if (checkbox.checked) selectedChores.push(checkbox.value); });
+            const choresMessage = document.getElementById('choresMessage').value.trim();
+            const customMessage = document.getElementById('customMessage').value.trim();
+            let emailContent = '<h2>Email Preview:</h2>';
+            emailContent += '<p style="text-align: left;">Dear Mom,</p>';
+            if (selectedChores.length > 0) {
+                emailContent += `<p style="text-align: left;">I think I should get my allowance because I ${selectedChores.join(', ')}`;
+                if (choresMessage) emailContent += `, and ${choresMessage}`;
+                emailContent += '.</p>';
+            } else {
+                emailContent += '<p style="text-align: left;">I didn’t get to do much this week, but I’ll try harder next time!</p>';
+            }
+            if (customMessage) {
+                emailContent += `<p style="text-align: left;">${customMessage}</p>`;
+            }
+            emailContent += '<p style="text-align: left;">Love,</p><p style="text-align: left;">Nico</p>';
+            document.getElementById('emailPreview').innerHTML = emailContent;
+            document.getElementById('emailPreview').contentEditable = false;
+        }
+
+        function makeEditable() {
+            const preview = document.getElementById('emailPreview');
+            preview.contentEditable = true;
+            alert('You can now edit the email directly. Click elsewhere to finish.');
+        }
+    </script>
+</body>
+</html>
