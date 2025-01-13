@@ -1,18 +1,68 @@
 <!doctype html>
 <title>Site Maintenance</title>
 <style>
-  body { text-align: center; padding: 150px; }
-  h1 { font-size: 50px; }
-  body { font: 20px Helvetica, sans-serif; color: #333; }
-  article { display: block; text-align: left; width: 650px; margin: 0 auto; }
-  a { color: #dc8100; text-decoration: none; }
-  a:hover { color: #333; text-decoration: none; }
+  body {
+    text-align: center;
+    padding: 150px;
+    font: 20px Helvetica, sans-serif;
+    color: #333;
+  }
+  h1 {
+    font-size: 50px;
+  }
+  article {
+    display: block;
+    text-align: left;
+    width: 650px;
+    margin: 0 auto;
+  }
+  a {
+    color: #dc8100;
+    text-decoration: none;
+  }
+  a:hover {
+    color: #333;
+  }
+  #countdown {
+    font-size: 30px;
+    margin-top: 20px;
+  }
+  .countdown-red {
+    color: red;
+    font-weight: bold;
+  }
 </style>
 
 <article>
-    <h1>We&rsquo;ll be back soon!</h1>
-    <div>
-        <p>Sorry for the inconvenience but we&rsquo;re performing some maintenance at the moment. If you need to you can always <a href="mailto:#">contact us</a>, otherwise we&rsquo;ll be back online shortly!</p>
-        <p>&mdash; The Sn3k.org Team</p>
-    </div>
+  <h1>We&rsquo;ll be back soon!</h1>
+  <div>
+    <p>Sorry for the inconvenience but we&rsquo;re performing some maintenance 
+    at the moment. If you need to you can always <a href="mailto:#">contact us</a>, 
+    otherwise we&rsquo;ll be back online shortly!</p>
+    <p>&mdash; The Sn3k.org Team</p>
+    <div id="countdown">Update in: <span class="countdown-red"></span></div>
+  </div>
 </article>
+
+<script>
+  const countdownDate = new Date("January 17, 2025 00:00:00").getTime();
+  const countdownElement = document.querySelector(".countdown-red");
+
+  const updateCountdown = () => {
+    const distance = countdownDate - Date.now();
+
+    if (distance < 0) {
+      clearInterval(countdownFunction);
+      countdownElement.textContent = "Maintenance is over!";
+      return;
+    }
+
+    const formatTime = (time) => Math.floor(time).toString();
+    countdownElement.textContent = `${formatTime(distance / (1000 * 60 * 60 * 24))}d ` +
+                                    `${formatTime((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))}h ` +
+                                    `${formatTime((distance % (1000 * 60 * 60)) / (1000 * 60))}m ` +
+                                    `${formatTime((distance % (1000 * 60)) / 1000)}s`;
+  };
+
+  const countdownFunction = setInterval(updateCountdown, 1000);
+</script>
