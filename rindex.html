@@ -19,7 +19,6 @@
             --text-dark: #1e293b;
             --text-light: #ffffff;
         }
-
         body {
             margin: 0;
             padding: 0;
@@ -28,39 +27,33 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            transition: background-color 0.3s, color 0.3s;
             background-color: var(--dark-bg);
             color: var(--text-light);
         }
-
         body.light-mode {
             background-color: var(--light-bg);
             color: var(--text-dark);
         }
-
         .bottom-left {
             position: fixed;
             left: 20px;
             bottom: 20px;
             z-index: 10;
         }
-
         .logo, .forms {
             width: 24px;
             height: 24px;
             vertical-align: middle;
         }
-
         .hover-gradient {
             background-color: #4f46e5;
-            transition: background 0.3s ease, transform 0.2s ease;
+            transition: background 0.3s, transform 0.2s;
         }
-
         .hover-gradient:hover {
             background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1);
             transform: translateY(-2px);
         }
-
         .toggle-button {
             position: fixed;
             top: 20px;
@@ -72,19 +65,16 @@
             border-radius: 8px;
             cursor: pointer;
             z-index: 10;
-            transition: background-color 0.3s ease, transform 0.2s ease;
+            transition: background-color 0.3s, transform 0.2s;
         }
-
         .toggle-button:hover {
             background-color: #4338ca;
             transform: translateY(-2px);
         }
-
         .menu-links a, .menu-links button {
             width: 220px;
             text-align: center;
         }
-
         @media (max-width: 640px) {
             .menu-links a, .menu-links button {
                 width: 180px;
@@ -95,15 +85,10 @@
 <body>
 
     <div class="menu-links flex flex-col space-y-4">
-        <!-- Removed Tetris button -->
         <a href="mb/dnd" class="hover-gradient text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300">D&D Character-Gen</a>
         <a href="games" class="hover-gradient text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300">Games</a>
         <a href="sz" class="hover-gradient text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300">Sz-games (bugs)</a>
-
-        <!-- Added More Links button -->
         <a href="links" class="hover-gradient text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300">More Links (no work)</a>
-
-        <!-- Added Coming Soon button -->
         <button class="bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-lg shadow-lg cursor-not-allowed transition duration-300">Coming Soon</button>
     </div>
 
@@ -120,43 +105,40 @@
 
     <button id="colorToggle" class="toggle-button" aria-label="Toggle dark/light mode">☀️</button>
     <script>
-        function setCookie(name, value, days) {
+        const setCookie = (name, value, days) => {
             const expires = new Date(Date.now() + days * 864e5).toUTCString();
-            document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/; SameSite=Lax';
-        }
+            document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+        };
 
-        function getCookie(name) {
+        const getCookie = (name) => {
             return document.cookie.split('; ').reduce((r, v) => {
                 const parts = v.split('=');
                 return parts[0] === name ? decodeURIComponent(parts[1]) : r;
             }, '');
-        }
+        };
 
         const body = document.body;
         const colorToggle = document.getElementById('colorToggle');
         const githubIcon = document.getElementById('githubIcon');
-
         let darkMode = getCookie('theme') !== 'light';
 
-        function setTheme(isDark) {
+        const setTheme = (isDark) => {
             body.classList.toggle('light-mode', !isDark);
             colorToggle.textContent = isDark ? '☀️' : '🌙';
             colorToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
             githubIcon.src = isDark ? '/images/github-light.svg' : '/images/github-dark.svg';
             setCookie('theme', isDark ? 'dark' : 'light', 30);
-        }
+        };
 
         setTheme(darkMode);
 
-        colorToggle.addEventListener('click', function() {
+        colorToggle.addEventListener('click', () => {
             darkMode = !darkMode;
             setTheme(darkMode);
         });
 
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 't') {
-                colorToggle.click();
-            }
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 't') colorToggle.click();
         });
     </script>
 </body>
