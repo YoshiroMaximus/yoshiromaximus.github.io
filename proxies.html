@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Dot Links</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --dark-bg: #1e293b;
+            --light-bg: #f3f4f6;
+            --text-dark: #1e293b;
+            --text-light: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+        }
+
+        body.light-mode {
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+        }
+
+        .top-left, .toggle-button {
+            position: fixed;
+            z-index: 10;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .top-left {
+            top: 20px;
+            left: 20px;
+        }
+
+        .toggle-button {
+            top: 20px;
+            right: 20px;
+            background-color: #4f46e5;
+            color: white;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+
+        .toggle-button:hover {
+            background-color: #4338ca;
+            transform: translateY(-2px);
+        }
+
+        .back-button {
+            width: 60px;
+            height: 60px;
+            transition: transform 0.2s ease;
+        }
+
+        .back-button:hover {
+            transform: scale(1.1);
+        }
+
+        .link-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 600px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .link-item {
+            background-color: #4f46e5;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .link-item:hover {
+            background-color: #4338ca;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 640px) {
+            .back-button {
+                width: 50px;
+                height: 50px;
+            }
+            .link-list {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-left">
+        <a href="index">
+            <img src="images/back-button.png" alt="Back to Home" class="back-button">
+        </a>
+    </div>
+    <button id="colorToggle" class="toggle-button" aria-label="Toggle dark/light mode">☀️</button>
+    <div class="link-list">
+        <a href="https://edu.supermario.gq/" class="link-item" target="_blank">edu.supermario.gq</a>
+        <a href="https://edu.imdb.gq/" class="link-item" target="_blank">edu.imdb.gq</a>
+        <a href="https://kjmsedu.macgyver.cf/" class="link-item" target="_blank">kjmsedu.macgyver.cf</a>
+        <a href="https://selling-skibidi.toilets.tk/" class="link-item" target="_blank">selling-skibidi.toilets.tk</a>
+        <a href="https://sharky.imdb.gq/" class="link-item" target="_blank">sharky.imdb.gq</a>
+        <a href="https://selling.singleton-home.tk/" class="link-item" target="_blank">selling.singleton-home.tk</a>
+        <a href="https://dicemyicargo.interteh.tk/" class="link-item" target="_blank">dicemyicargo.interteh.tk</a>
+        <a href="https://math.digitalartscloud.com.by.84238.toilets.tk/" class="link-item" target="_blank">math.digitalartscloud.com.by.84238.toilets.tk</a>
+        <a href="https://galblease.cisua.tk/" class="link-item" target="_blank">galblease.cisua.tk</a>
+        <a href="https://841238.singleton-home.tk/" class="link-item" target="_blank">841238.singleton-home.tk</a>
+        <a href="https://misto.singleton-home.tk/" class="link-item" target="_blank">misto.singleton-home.tk</a>
+        <a href="https://ramm-841328.singleton-home.tk/" class="link-item" target="_blank">ramm-841328.singleton-home.tk</a>
+        <a href="https://securitycheck-84238.singleton-home.tk/" class="link-item" target="_blank">securitycheck-84238.singleton-home.tk</a>
+        <a href="https://signe.singleton-home.tk/" class="link-item" target="_blank">signe.singleton-home.tk</a>
+        <a href="https://gooogleserver-as4.macgyver.cf/" class="link-item" target="_blank">gooogleserver-as4.macgyver.cf</a>
+        <a href="https://gooogleserver-as3.macgyver.cf/" class="link-item" target="_blank">gooogleserver-as3.macgyver.cf</a>
+        <a href="https://mathreview.macgyver.cf/" class="link-item" target="_blank">mathreview.macgyver.cf</a>
+        <a href="https://sigma.toilets.tk/" class="link-item" target="_blank">sigma.toilets.tk</a>
+        <a href="https://akshaj.toilets.tk/" class="link-item" target="_blank">akshaj.toilets.tk</a>
+        <a href="https://wankilans.toilets.tk/" class="link-item" target="_blank">wankilans.toilets.tk</a>
+        <a href="https://sklbidi.toilets.tk/" class="link-item" target="_blank">sklbidi.toilets.tk</a>
+    </div>
+
+    <script>
+        function setCookie(name, value, days) {
+            const expires = new Date(Date.now() + days * 864e5).toUTCString();
+            document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+        }
+
+        function getCookie(name) {
+            return document.cookie.split('; ').reduce((r, v) => {
+                const parts = v.split('=');
+                return parts[0] === name ? decodeURIComponent(parts[1]) : r;
+            }, '');
+        }
+
+        const body = document.body;
+        const colorToggle = document.getElementById('colorToggle');
+        let darkMode = getCookie('theme') !== 'light';
+
+        function setTheme(isDark) {
+            body.classList.toggle('light-mode', !isDark);
+            colorToggle.textContent = isDark ? '☀️' : '🌙';
+            colorToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+            setCookie('theme', isDark ? 'dark' : 'light', 30);
+        }
+
+        setTheme(darkMode);
+
+        colorToggle.addEventListener('click', function() {
+            darkMode = !darkMode;
+            setTheme(darkMode);
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 't') colorToggle.click();
+        });
+    </script>
+</body>
+</html>
