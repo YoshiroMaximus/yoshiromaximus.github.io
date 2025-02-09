@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Green Dot Links</title>
+    <title>Proxies</title>
     <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
@@ -78,23 +78,24 @@
         .link-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            align-items: center;
             max-width: 600px;
             width: 100%;
             padding: 20px;
         }
 
-        .link-item {
+        .coming-soon {
             background-color: #4f46e5;
             color: white;
-            padding: 12px;
+            padding: 12px 24px;
             border-radius: 8px;
+            font-size: 1.25rem;
+            font-weight: bold;
             text-align: center;
-            text-decoration: none;
             transition: background-color 0.3s ease, transform 0.2s ease;
         }
 
-        .link-item:hover {
+        .coming-soon:hover {
             background-color: #4338ca;
             transform: translateY(-2px);
         }
@@ -118,27 +119,7 @@
     </div>
     <button id="colorToggle" class="toggle-button" aria-label="Toggle dark/light mode">☀️</button>
     <div class="link-list">
-        <a href="https://edu.supermario.gq/" class="link-item" target="_blank">edu.supermario.gq</a>
-        <a href="https://edu.imdb.gq/" class="link-item" target="_blank">edu.imdb.gq</a>
-        <a href="https://kjmsedu.macgyver.cf/" class="link-item" target="_blank">kjmsedu.macgyver.cf</a>
-        <a href="https://selling-skibidi.toilets.tk/" class="link-item" target="_blank">selling-skibidi.toilets.tk</a>
-        <a href="https://sharky.imdb.gq/" class="link-item" target="_blank">sharky.imdb.gq</a>
-        <a href="https://selling.singleton-home.tk/" class="link-item" target="_blank">selling.singleton-home.tk</a>
-        <a href="https://dicemyicargo.interteh.tk/" class="link-item" target="_blank">dicemyicargo.interteh.tk</a>
-        <a href="https://math.digitalartscloud.com.by.84238.toilets.tk/" class="link-item" target="_blank">math.digitalartscloud.com.by.84238.toilets.tk</a>
-        <a href="https://galblease.cisua.tk/" class="link-item" target="_blank">galblease.cisua.tk</a>
-        <a href="https://841238.singleton-home.tk/" class="link-item" target="_blank">841238.singleton-home.tk</a>
-        <a href="https://misto.singleton-home.tk/" class="link-item" target="_blank">misto.singleton-home.tk</a>
-        <a href="https://ramm-841328.singleton-home.tk/" class="link-item" target="_blank">ramm-841328.singleton-home.tk</a>
-        <a href="https://securitycheck-84238.singleton-home.tk/" class="link-item" target="_blank">securitycheck-84238.singleton-home.tk</a>
-        <a href="https://signe.singleton-home.tk/" class="link-item" target="_blank">signe.singleton-home.tk</a>
-        <a href="https://gooogleserver-as4.macgyver.cf/" class="link-item" target="_blank">gooogleserver-as4.macgyver.cf</a>
-        <a href="https://gooogleserver-as3.macgyver.cf/" class="link-item" target="_blank">gooogleserver-as3.macgyver.cf</a>
-        <a href="https://mathreview.macgyver.cf/" class="link-item" target="_blank">mathreview.macgyver.cf</a>
-        <a href="https://sigma.toilets.tk/" class="link-item" target="_blank">sigma.toilets.tk</a>
-        <a href="https://akshaj.toilets.tk/" class="link-item" target="_blank">akshaj.toilets.tk</a>
-        <a href="https://wankilans.toilets.tk/" class="link-item" target="_blank">wankilans.toilets.tk</a>
-        <a href="https://sklbidi.toilets.tk/" class="link-item" target="_blank">sklbidi.toilets.tk</a>
+        <button class="coming-soon">Coming Soon</button>
     </div>
 
     <script>
