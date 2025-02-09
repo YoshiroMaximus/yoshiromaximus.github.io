@@ -113,16 +113,16 @@
 </head>
 <body>
     <div class="top-left">
-        <a href="index">
-            <img src="images/back-button.png" alt="Back to Home" class="back-button">
+        <a href="index" aria-label="Back to Home">
+            <img src="images/back-button.png" alt="Back" class="back-button" loading="lazy">
         </a>
     </div>
     <button id="colorToggle" class="toggle-button" aria-label="Toggle dark/light mode">☀️</button>
     <div class="link-list">
-        <button class="coming-soon">Coming Soon</button>
+        <button class="coming-soon" aria-disabled="true">Coming Soon</button>
     </div>
 
-    <script>
+    <script defer>
         function setCookie(name, value, days) {
             const expires = new Date(Date.now() + days * 864e5).toUTCString();
             document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;

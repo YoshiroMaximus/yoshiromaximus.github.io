@@ -19,6 +19,7 @@
             --text-dark: #1e293b;
             --text-light: #ffffff;
         }
+
         body {
             margin: 0;
             padding: 0;
@@ -31,29 +32,35 @@
             background-color: var(--dark-bg);
             color: var(--text-light);
         }
+
         body.light-mode {
             background-color: var(--light-bg);
             color: var(--text-dark);
         }
+
         .bottom-left {
             position: fixed;
             left: 20px;
             bottom: 20px;
             z-index: 10;
         }
+
         .logo, .forms {
             width: 24px;
             height: 24px;
             vertical-align: middle;
         }
+
         .hover-gradient {
             background-color: #4f46e5;
             transition: background 0.3s, transform 0.2s;
         }
+
         .hover-gradient:hover {
             background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1);
             transform: translateY(-2px);
         }
+
         .toggle-button {
             position: fixed;
             top: 20px;
@@ -67,14 +74,17 @@
             z-index: 10;
             transition: background-color 0.3s, transform 0.2s;
         }
+
         .toggle-button:hover {
             background-color: #4338ca;
             transform: translateY(-2px);
         }
+
         .menu-links a, .menu-links button {
             width: 220px;
             text-align: center;
         }
+
         @media (max-width: 640px) {
             .menu-links a, .menu-links button {
                 width: 180px;
@@ -95,16 +105,17 @@
     <div class="bottom-left flex items-center">
         <a href="old" class="text-blue-400 hover:text-blue-300 font-bold text-lg transition duration-300">🚀</a>
         <a href="https://github.com/YoshiroMaximus" target="_blank" rel="noopener noreferrer" class="ml-3">
-            <img id="githubIcon" src="/images/github-light.svg" alt="GitHub Logo" class="logo">
+            <img id="githubIcon" src="/images/github-light.svg" alt="GitHub Logo" class="logo" loading="lazy">
         </a>
         <a href="https://forms.gle/Qj2VZMxZX1p9e3AG8" target="_blank" rel="noopener noreferrer" class="ml-3">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Google_Forms_2020_Logo.svg/70px-Google_Forms_2020_Logo.svg.png" alt="Google Forms Logo" class="forms">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Google_Forms_2020_Logo.svg/70px-Google_Forms_2020_Logo.svg.png" alt="Google Forms Logo" class="forms" loading="lazy">
         </a>
         <span class="ml-3 text-gray-400 dark:text-gray-300">← give recc plz (made by yoshiro)</span>
     </div>
 
     <button id="colorToggle" class="toggle-button" aria-label="Toggle dark/light mode">☀️</button>
-    <script>
+    
+    <script defer>
         const setCookie = (name, value, days) => {
             const expires = new Date(Date.now() + days * 864e5).toUTCString();
             document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;

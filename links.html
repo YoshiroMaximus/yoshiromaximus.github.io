@@ -80,13 +80,13 @@
             transform: translateY(-2px);
         }
 
-        .menu-links button {
+        .menu-links a, .menu-links button {
             width: 220px;
             text-align: center;
         }
 
         @media (max-width: 640px) {
-            .menu-links button {
+            .menu-links a, .menu-links button {
                 width: 180px;
             }
         }
@@ -94,50 +94,57 @@
 </head>
 <body>
 
+    <div class="top-left">
+        <a href="index" aria-label="Back to Home">
+            <img src="images/back-button.png" alt="Back" class="back-button" loading="lazy" style="width: 60px; height: 60px;">
+        </a>
+    </div>
+
     <div class="menu-links flex flex-col space-y-4">
-    <a href="https://photopea.com" class="hover-gradient text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300">Photoshop Clone</a>
-    <a href="https://notion.so" class="hover-gradient text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300">Best Notetaking App</a>
-    <a href="https://sn3k.org" class="hover-gradient text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300">Best Website Ever</a>
-    <button class="bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-lg shadow-lg cursor-not-allowed transition duration-300">Coming Soon</button>
-</div>
+        <a href="https://photopea.com" class="hover-gradient text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300">Photoshop Clone</a>
+        <a href="https://notion.so" class="hover-gradient text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300">Best Notetaking App</a>
+        <a href="https://sn3k.org" class="hover-gradient text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300">Best Website Ever</a>
+        <button class="bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-lg shadow-lg cursor-not-allowed transition duration-300">Coming Soon</button>
+    </div>
 
     <div class="bottom-left flex items-center">
+        <!-- Additional content can be added here if needed -->
     </div>
 
     <button id="colorToggle" class="toggle-button" aria-label="Toggle dark/light mode">☀️</button>
-    <script>
-        function setCookie(name, value, days) {
+    
+    <script defer>
+        const setCookie = (name, value, days) => {
             const expires = new Date(Date.now() + days * 864e5).toUTCString();
-            document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/; SameSite=Lax';
-        }
+            document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+        };
 
-        function getCookie(name) {
+        const getCookie = (name) => {
             return document.cookie.split('; ').reduce((r, v) => {
                 const parts = v.split('=');
                 return parts[0] === name ? decodeURIComponent(parts[1]) : r;
             }, '');
-        }
+        };
 
         const body = document.body;
         const colorToggle = document.getElementById('colorToggle');
-
         let darkMode = getCookie('theme') !== 'light';
 
-        function setTheme(isDark) {
+        const setTheme = (isDark) => {
             body.classList.toggle('light-mode', !isDark);
             colorToggle.textContent = isDark ? '☀️' : '🌙';
             colorToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
             setCookie('theme', isDark ? 'dark' : 'light', 30);
-        }
+        };
 
         setTheme(darkMode);
 
-        colorToggle.addEventListener('click', function() {
+        colorToggle.addEventListener('click', () => {
             darkMode = !darkMode;
             setTheme(darkMode);
         });
 
-        document.addEventListener('keydown', function(event) {
+        document.addEventListener('keydown', (event) => {
             if (event.key === 't') {
                 colorToggle.click();
             }
