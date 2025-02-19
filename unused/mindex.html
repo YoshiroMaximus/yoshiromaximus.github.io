@@ -1,69 +1,172 @@
-<!doctype html>
-<title>Site Maintenance</title>
-<style>
-  body {
-    text-align: center;
-    padding: 150px;
-    font: 20px Helvetica, sans-serif;
-    color: #333;
-  }
-  h1 {
-    font-size: 50px;
-  }
-  article {
-    display: block;
-    text-align: left;
-    width: 650px;
-    margin: 0 auto;
-  }
-  a {
-    color: #dc8100;
-    text-decoration: none;
-  }
-  a:hover {
-    color: #333;
-  }
-  #countdown {
-    font-size: 30px;
-    margin-top: 20px;
-  }
-  .countdown-red {
-    color: red;
-    font-weight: bold;
-  }
-</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Maintenance</title>
+    <link rel="icon" type="image/png" href="/images/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/images/favicon.svg" />
+    <link rel="shortcut icon" href="/images/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Sn3k" />
+    <link rel="manifest" href="/images/site.webmanifest" />
+    <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --dark-bg: #1e293b;
+            --light-bg: #f3f4f6;
+            --text-dark: #1e293b;
+            --text-light: #ffffff;
+        }
 
-<article>
-  <h1>We&rsquo;ll be back soon!</h1>
-  <div>
-    <p>Sorry for the inconvenience but we&rsquo;re performing some maintenance 
-    at the moment. If you need to you can always <a href="mailto:#">contact us</a>, 
-    otherwise we&rsquo;ll be back online shortly!</p>
-    <p>&mdash; The Sn3k.org Team</p>
-    <div id="countdown">Update in: <span class="countdown-red"></span></div>
-    <p><a href="https://forms.gle/eW3R1nhAZRTpetbz9" target="_blank">please tell me what to add <-- click to be rederected to a google form</a></p>
-  </div>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s, color 0.3s;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+        }
+
+        body.light-mode {
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        a {
+            color: #dc8100;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        a:hover {
+            color: #333;
+        }
+
+        #countdown {
+            font-size: 1.5rem;
+            margin-top: 1rem;
+            color: red;
+            font-weight: bold;
+        }
+
+        .toggle-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4f46e5;
+            color: white;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 10;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .toggle-button:hover {
+            background-color: #4338ca;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+    <article class="text-center max-w-lg mx-auto space-y-4">
+    <h1>we&rsquo;re updating things!</h1>
+    
+    <p>sorry for the inconvenience, but we&rsquo;re working hard to make things better for you. this maintenance won&rsquo;t take long, and we&rsquo;ll be back online shortly. thanks for your patience!</p>
+    
+    <p>if you need immediate assistance, feel free to <a href="mailto:#">reach out to us</a>.</p>
+    
+    <p>&mdash; the sn3k.org team</p>
+    
+    <div id="countdown">
+        <p>next update in: <span></span></p>
+    </div>
+    
+    <p>have ideas or suggestions? <a href="https://tally.so/r/wM6dQp" target="_blank">click here to share them with us!</a></p>
+
+    <!-- Added button with favicon and link -->
+    <a href="https://jnlawoffices.com/2023/02/02/turning-yourself-warrant-california/" target="_blank" 
+        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+        <img src="https://sn3k.org/images/favicon.ico" alt="sn3k favicon" class="w-6 h-6 mr-2">
+        learn more
+    </a>
 </article>
 
-<script>
-  const countdownDate = new Date("January 17, 2025 00:00:00").getTime();
-  const countdownElement = document.querySelector(".countdown-red");
 
-  const updateCountdown = () => {
-    const distance = countdownDate - Date.now();
 
-    if (distance < 0) {
-      clearInterval(countdownFunction);
-      countdownElement.textContent = "Maintenance is over!";
-      return;
-    }
 
-    const formatTime = (time) => Math.floor(time).toString();
-    countdownElement.textContent = `${formatTime(distance / (1000 * 60 * 60 * 24))}d ` +
-                                    `${formatTime((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))}h ` +
-                                    `${formatTime((distance % (1000 * 60 * 60)) / (1000 * 60))}m ` +
-                                    `${formatTime((distance % (1000 * 60)) / 1000)}s`;
-  };
+    <button id="colorToggle" class="toggle-button" aria-label="Toggle dark/light mode">☀️</button>
 
-  const countdownFunction = setInterval(updateCountdown, 1000);
-</script>
+    <script defer>
+        const setCookie = (name, value, days) => {
+            const expires = new Date(Date.now() + days * 864e5).toUTCString();
+            document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+        };
+
+        const getCookie = (name) => {
+            return document.cookie.split('; ').reduce((r, v) => {
+                const parts = v.split('=');
+                return parts[0] === name ? decodeURIComponent(parts[1]) : r;
+            }, '');
+        };
+
+        const body = document.body;
+        const colorToggle = document.getElementById('colorToggle');
+        let darkMode = getCookie('theme') !== 'light';
+
+        const setTheme = (isDark) => {
+            body.classList.toggle('light-mode', !isDark);
+            colorToggle.textContent = isDark ? '☀️' : '🌙';
+            colorToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+            setCookie('theme', isDark ? 'dark' : 'light', 30);
+        };
+
+        setTheme(darkMode);
+
+        colorToggle.addEventListener('click', () => {
+            darkMode = !darkMode;
+            setTheme(darkMode);
+        });
+
+        const countdownDate = new Date("Febuary 20, 2025 00:00:00").getTime();
+        const countdownElement = document.querySelector("#countdown span");
+
+        const updateCountdown = () => {
+            const distance = countdownDate - Date.now();
+
+            if (distance < 0) {
+                clearInterval(countdownFunction);
+                countdownElement.textContent = "Maintenance is over!";
+                return;
+            }
+
+            const formatTime = (time) => Math.floor(time).toString();
+            countdownElement.textContent = `${formatTime(distance / (1000 * 60 * 60 * 24))}d ` +
+                                            `${formatTime((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))}h ` +
+                                            `${formatTime((distance % (1000 * 60 * 60)) / (1000 * 60))}m ` +
+                                            `${formatTime((distance % (1000 * 60)) / 1000)}s`;
+        };
+
+        const countdownFunction = setInterval(updateCountdown, 1000);
+    </script>
+</body>
+</html>
