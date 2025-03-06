@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Games | Sn3k</title>
+    <!-- Favicon setup -->
+    <link rel="icon" type="image/png" href="/images/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/images/favicon.svg" />
+    <link rel="shortcut icon" href="/images/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Sn3k" />
+    <link rel="manifest" href="/images/site.webmanifest" />
+    <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    
+    <!-- Modern Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4f46e5',
+                        secondary: '#4338ca',
+                        accent: {
+                            red: '#ff6b6b',
+                            teal: '#4ecdc4',
+                            blue: '#45b7d1'
+                        }
+                    },
+                    animation: {
+                        'gradient-x': 'gradient-x 3s ease infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        'gradient-x': {
+                            '0%, 100%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'left center'
+                            },
+                            '50%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'right center'
+                            }
+                        },
+                        'float': {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
+        }
+        
+        .game-card {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        .hover-gradient {
+            background-size: 200% 200%;
+            transition: all 0.3s ease;
+        }
+        
+        .hover-gradient:hover {
+            background-position: right center;
+        }
+        
+        .dice-spin {
+            animation: dice-spin 0.5s ease-in-out;
+        }
+
+        @keyframes dice-spin {
+            0% { transform: rotate(0deg); }
+            50% { transform: rotate(180deg) scale(1.2); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Custom select styling */
+        select {
+            background-color: #1f2937; /* Dark background for better contrast */
+            color: #e5e7eb; /* Light text for readability */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23e5e7eb'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.5em;
+            padding-right: 3.5rem; /* Make room for both dice and arrow */
+        }
+
+        .dark select {
+            background-color: #1f2937; /* Dark mode background */
+            color: #e5e7eb; /* Light text */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23e5e7eb'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+        }
+
+        .light select {
+            background-color: #ffffff; /* Light mode background */
+            color: #4f46e5; /* Primary text color */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%234f46e5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+        }
+
+        /* Vertical separator line */
+        .separator-line {
+            position: absolute;
+            top: 50%;
+            height: 60%;
+            width: 1px;
+            transform: translateY(-50%);
+            background-color: rgba(156, 163, 175, 0.5); /* gray-400 with opacity */
+        }
+
+        /* Tooltip styles */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 120px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.75rem;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="dark:bg-slate-900 bg-gray-50 dark:text-white text-slate-900 min-h-screen flex flex-col items-center justify-center">
+    <!-- Background gradient -->
+    <div class="fixed inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 dark:from-indigo-900/20 dark:via-purple-900/20 dark:to-pink-900/20 -z-10"></div>
+    
+    <!-- Animated background shapes -->
+    <div class="fixed inset-0 overflow-hidden -z-10">
+        <div class="absolute -top-20 -left-20 w-72 h-72 bg-primary/10 dark:bg-primary/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-float"></div>
+        <div class="absolute top-1/3 -right-20 w-96 h-96 bg-accent-teal/10 dark:bg-accent-teal/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-float" style="animation-delay: 1s;"></div>
+        <div class="absolute -bottom-32 left-1/3 w-80 h-80 bg-accent-red/10 dark:bg-accent-red/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-float" style="animation-delay: 2s;"></div>
+    </div>
+
+    <!-- Back button -->
+    <div class="fixed top-4 left-4 z-10">
+        <a href="index" aria-label="Back to Home" class="block bg-white/70 dark:bg-slate-800/70 p-3 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:scale-110">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+    </div>
+
+    <!-- Theme toggle button -->
+    <button id="colorToggle" class="fixed top-4 right-4 bg-white/70 dark:bg-slate-800/70 p-3 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-900 z-10" aria-label="Toggle dark/light mode">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+    </button>
+
+    <!-- Main content -->
+    <div class="game-card bg-white/70 dark:bg-slate-800/70 p-8 rounded-2xl shadow-lg max-w-md w-full mx-4 border border-gray-200 dark:border-gray-700">
+        <h1 class="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-primary to-accent-blue bg-clip-text text-transparent">Game Library</h1>
+        
+        <form id="form1" target="_blank" class="flex flex-col space-y-6 w-full items-center" aria-labelledby="game-selection">
+            <div class="w-full relative">
+                <label for="pages" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Choose a game:</label>
+                <div class="relative">
+                    <select id="pages" class="w-full bg-gradient-to-r from-primary to-accent-blue text-white dark:text-white py-3 px-4 pr-16 rounded-lg shadow-md appearance-none focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition-all duration-300 hover:shadow-lg" aria-label="Select a game">
+                        <option value="" disabled selected>- - -> Select a game <- - -</option>
+                        <optgroup label="RPG">
+                            <option value="mb/fger/forager/main">Forager</option>
+                        </optgroup>
+                        <optgroup label="Shooter">
+                            <option value="mb/doomori">Doomori</option>
+                            <option value="mb/10mins">10 Minutes Till Dawn</option>
+                            <option value="mb/1v1">1v1</option>
+                            <option value="mb/cold">Supercold</option>
+                            <option value="mb/serious/t.html">Serious Shooter</option>
+                        </optgroup>
+                        <optgroup label="Racing">
+                            <option value="mb/surf">Surf</option>
+                            <option value="mb/slope">Slope</option>
+                            <option value="mb/totm">Tomb of the Mask</option>
+                            <option value="mb/poly">Polytrack</option>
+                            <option value="mb/dino">Chrome Dino</option>
+                            <option value="mb/snowrider">Snowrider 3D</option>
+                            <option value="mb/glitch-buster">Glitch Buster</option>
+                        </optgroup>
+                        <optgroup label="Action">
+                            <option value="mb/stik">Stik</option>
+                            <option value="mb/hsmc">Henry Stickmin</option>
+                            <option value="mb/porydrive">Pory Drive</option>
+                            <option value="mb/oh-flip">OH-FLIP!</option>
+                            <option value="mb/uno">UNO Multiplayer</option>
+                            <option value="mb/NotABug-Collection">NotABug Collection</option>
+                            <option value="mb/hextris">Hextris</option>
+                            <option value="mb/adarkroom">A Dark Room</option>
+                        </optgroup>
+                        <optgroup label="Puzzle">
+                            <option value="mb/blockcraft" data-special="blockcraft">BlockCraft</option>
+                            <option value="mb/2048">2048</option>
+                            <option value="mb/tetris">Tetris</option>
+                            <option value="mb/no-game">There Is No Game</option>
+                            <option value="mb/cookie">Cookie Clicker</option>
+                            <option value="mb/dice">Dice Roller</option>
+                            <option value="mb/osu">osu!</option>
+                            <option value="mb/2048-cupcake">2048 Cupcake</option>
+                        </optgroup>
+                        <optgroup label="Casual">
+                            <option value="mb/monkey">Monkey Mart</option>
+                            <option value="mb/bowl">Retro Bowl</option>
+                            <option value="mb/bitlife">BitLife</option>
+                            <option value="mb/oregon-trail">Oregon Trail</option>
+                        </optgroup>
+                        <optgroup label="Down">
+                            <option value="mb/agar">Agar.io (offline)</option>
+                            <option value="mb/time">Superhot</option>
+                        </optgroup>
+                        <optgroup label="Coming Soon">
+                            <option value="" disabled>Coming Soon</option>
+                            <option value="beta-driftboss">Drift Boss</option>
+                            <option value="mb/othello">Othello</option>
+                            <option value="mb/more-ore">More Ore</option>
+                        </optgroup>
+                    </select>
+                    <div class="absolute right-12 top-0 h-full flex items-center">
+                        <div class="separator-line"></div>
+                    </div>
+                    <button id="randomGame" type="button" class="tooltip absolute right-12 top-0 h-full px-3 flex items-center justify-center hover:opacity-90 transition-all focus:outline-none" aria-label="Select random game">
+                        <span class="text-2xl">🎲</span>
+                        <span class="tooltip-text">Random Game</span>
+                    </button>
+                </div>
+            </div>
+            
+            <button type="submit" id="go" class="w-full hover-gradient bg-gradient-to-r from-primary to-accent-blue text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 flex items-center justify-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+                <span>PLAY GAME</span>
+            </button>
+        </form>
+        
+        <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <button disabled class="w-full bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 font-semibold py-3 px-6 rounded-lg shadow-md cursor-not-allowed transition duration-300 flex items-center justify-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                </svg>
+                <span>Coming Soon</span>
+            </button>
+            
+            <p class="text-sm text-gray-500 dark:text-gray-400 text-center mt-4">
+                More games are being added regularly!
+            </p>
+        </div>
+    </div>
+
+    <!-- Feedback button -->
+    <div class="fixed left-4 bottom-4 z-10">
+        <a href="https://tally.so/r/w7a9OP" target="_blank" rel="noopener noreferrer" class="block bg-white/70 dark:bg-slate-800/70 p-3 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:scale-110" aria-label="Provide feedback">
+            <svg width="24" height="24" viewBox="0 0 16 16" fill="currentColor" class="text-primary dark:text-white" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9.99169 2.39306C9.99169 3.27827 9.66489 4.49613 9.18309 6.13269L8.83837 7.38966L9.92921 6.67715C12.0027 5.2211 13.2549 4.67462 14.0838 4.67462C15.0266 4.67462 16 5.34831 16 6.68815C16 8.39252 14.1804 8.8767 10.6672 8.9364L9.35372 8.99811L10.3896 9.82276C12.8489 11.7184 13.7015 12.647 13.7015 13.8238C13.7015 14.7498 12.8408 15.7144 11.7737 15.7144C10.1704 15.7144 9.44568 14.0483 8.46877 11.2197L7.97078 9.99025L7.50229 11.2197C6.40739 14.4325 5.56468 15.6849 4.16787 15.6849C3.04174 15.6849 2.2401 14.6612 2.2401 13.7942C2.2401 12.4993 3.41711 11.4228 5.58146 9.82276L6.61736 8.99811L5.33333 8.9364C1.60214 8.90626 0 8.36962 0 6.6586C0 5.31875 1.00351 4.64506 1.92835 4.64506C3.04521 4.64506 4.2633 5.39844 6.07135 6.67715L7.1622 7.38966L6.81748 6.13269C6.2952 4.40746 6.04995 3.14179 6.04995 2.39306C6.04995 1.22098 6.71048 0.25 8.00028 0.25C9.31959 0.25 9.99169 1.22098 9.99169 2.39306Z" />
+            </svg>
+        </a>
+    </div>
+    
+    <script>
+        // Theme toggle functionality
+        const setCookie = (name, value, days) => {
+            const expires = new Date(Date.now() + days * 864e5).toUTCString();
+            document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+        };
+
+        const getCookie = (name) => {
+            return document.cookie.split('; ').reduce((r, v) => {
+                const parts = v.split('=');
+                return parts[0] === name ? decodeURIComponent(parts[1]) : r;
+            }, '');
+        };
+
+        const colorToggle = document.getElementById('colorToggle');
+        let darkMode = getCookie('theme') !== 'light';
+        
+        // Check for system preference if no cookie is set
+        if (!getCookie('theme')) {
+            darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+
+        const setTheme = (isDark) => {
+            document.documentElement.classList.toggle('dark', isDark);
+            setCookie('theme', isDark ? 'dark' : 'light', 30);
+        };
+
+        // Set initial theme
+        setTheme(darkMode);
+
+        // Toggle theme on button click
+        colorToggle.addEventListener('click', () => {
+            darkMode = !darkMode;
+            setTheme(darkMode);
+        });
+
+        // Form submission handler
+        document.getElementById("form1").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const select = document.getElementById("pages");
+            const selectedOption = select.options[select.selectedIndex];
+
+            if (!selectedOption || selectedOption.value === "") {
+                alert("Please select a game first!");
+                return;
+            }
+
+            let gameUrl;
+            
+            try {
+                // Handle special cases
+                if (selectedOption.value === "mb/tetris") {
+                    gameUrl = "tetris";
+                } else if (selectedOption.dataset.special === "blockcraft") {
+                    gameUrl = selectBlockCraft();
+                    if (!gameUrl) return; // User canceled or entered invalid input
+                } else {
+                    gameUrl = selectedOption.value;
+                }
+                
+                // Open the game in a new tab
+                window.open(gameUrl, '_blank');
+            } catch (error) {
+                console.error("Error opening game:", error);
+                alert("There was an error opening the game. Please try again.");
+            }
+        });
+
+        // Improved BlockCraft version selector
+        function selectBlockCraft() {
+            // Create a more user-friendly dialog
+            const version = prompt("Choose a BlockCraft version:\n\n1.8 - Modern version with more features\n1.2 - Classic version", "1.8");
+            
+            if (!version) return null; // User canceled
+            
+            const trimmedVersion = version.trim();
+            if (trimmedVersion === '1.8') return 'mb/eaglarfast';
+            if (trimmedVersion === '1.2') return 'vxlc';
+            
+            alert("Invalid choice. Please choose 1.8 or 1.2.");
+            return null;
+        }
+
+        // Enhanced random game selection
+        document.getElementById("randomGame").addEventListener("click", function() {
+            const diceButton = this;
+            const select = document.getElementById("pages");
+            
+            // Get all valid game options (excluding disabled, empty, and problematic categories)
+            const options = Array.from(select.options).filter(option => 
+                !option.disabled && 
+                option.value !== "" && 
+                option.parentElement && // Ensure parent exists
+                !option.parentElement.label.includes("Down") && 
+                !option.parentElement.label.includes("Coming Soon")
+            );
+            
+            if (options.length > 0) {
+                // Add spin animation to dice
+                diceButton.classList.add("dice-spin");
+                
+                // Select a random game after a short delay
+                setTimeout(() => {
+                    const randomIndex = Math.floor(Math.random() * options.length);
+                    const randomOption = options[randomIndex];
+                    
+                    // Set the selected value
+                    select.value = randomOption.value;
+                    
+                    // Highlight the selection with a brief animation
+                    select.classList.add("ring-2", "ring-accent-teal");
+                    
+                    // Show a brief notification of the selected game
+                    const gameCategory = randomOption.parentElement.label;
+                    const gameName = randomOption.textContent;
+                    
+                    // Create and show a temporary toast notification
+                    const toast = document.createElement('div');
+                    toast.className = 'fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-lg z-50 text-sm';
+                    toast.textContent = `Selected: ${gameName} (${gameCategory})`;
+                    document.body.appendChild(toast);
+                    
+                    // Remove animation classes and notification after delay
+                    setTimeout(() => {
+                        select.classList.remove("ring-2", "ring-accent-teal");
+                        diceButton.classList.remove("dice-spin");
+                        document.body.removeChild(toast);
+                    }, 2000);
+                }, 300);
+            } else {
+                alert("No games available to select randomly!");
+            }
+        });
+
+        // Toggle theme with 't' key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 't') colorToggle.click();
+            // Add 'r' key to trigger random game selection
+            if (event.key === 'r') document.getElementById("randomGame").click();
+        });
+
+        // Initialize tooltips for mobile devices
+        document.addEventListener('DOMContentLoaded', function() {
+            // For mobile devices, make tooltips work with touch
+            const tooltips = document.querySelectorAll('.tooltip');
+            tooltips.forEach(tooltip => {
+                tooltip.addEventListener('touchstart', function() {
+                    const tooltipText = this.querySelector('.tooltip-text');
+                    tooltipText.style.visibility = 'visible';
+                    tooltipText.style.opacity = '1';
+                    
+                    // Hide after a delay
+                    setTimeout(() => {
+                        tooltipText.style.visibility = 'hidden';
+                        tooltipText.style.opacity = '0';
+                    }, 1500);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+

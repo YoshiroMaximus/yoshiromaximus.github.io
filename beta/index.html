@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website 🔥</title>
+    <!-- Favicon setup -->
+    <link rel="icon" type="image/png" href="/images/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/images/favicon.svg" />
+    <link rel="shortcut icon" href="/images/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Sn3k" />
+    <link rel="manifest" href="/images/site.webmanifest" />
+    <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    
+    <!-- Modern Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4f46e5',
+                        secondary: '#4338ca',
+                        accent: {
+                            red: '#ff6b6b',
+                            teal: '#4ecdc4',
+                            blue: '#45b7d1'
+                        }
+                    },
+                    animation: {
+                        'gradient-x': 'gradient-x 3s ease infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        'gradient-x': {
+                            '0%, 100%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'left center'
+                            },
+                            '50%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'right center'
+                            }
+                        },
+                        'float': {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
+        }
+        
+        .menu-card {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        .hover-gradient {
+            background-size: 200% 200%;
+            transition: all 0.3s ease;
+        }
+        
+        .hover-gradient:hover {
+            background-position: right center;
+        }
+    </style>
+</head>
+<body class="dark:bg-slate-900 bg-gray-50 dark:text-white text-slate-900 min-h-screen flex flex-col items-center justify-center">
+    <!-- Background gradient -->
+    <div class="fixed inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 dark:from-indigo-900/20 dark:via-purple-900/20 dark:to-pink-900/20 -z-10"></div>
+    
+    <!-- Animated background shapes -->
+    <div class="fixed inset-0 overflow-hidden -z-10">
+        <div class="absolute -top-20 -left-20 w-72 h-72 bg-primary/10 dark:bg-primary/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-float"></div>
+        <div class="absolute top-1/3 -right-20 w-96 h-96 bg-accent-teal/10 dark:bg-accent-teal/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-float" style="animation-delay: 1s;"></div>
+        <div class="absolute -bottom-32 left-1/3 w-80 h-80 bg-accent-red/10 dark:bg-accent-red/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-float" style="animation-delay: 2s;"></div>
+    </div>
+
+    <!-- Main content -->
+    <div class="menu-card bg-white/70 dark:bg-slate-800/70 p-8 rounded-2xl shadow-lg max-w-md w-full mx-4 border border-gray-200 dark:border-gray-700">
+        <h1 class="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-primary to-accent-blue bg-clip-text text-transparent">Welcome to Sn3k</h1>
+        
+        <div class="menu-links flex flex-col space-y-3">
+            <a href="mb/dnd" class="hover-gradient bg-gradient-to-r from-primary to-accent-blue text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z" />
+                </svg>
+                D&D Character-Gen
+            </a>
+            <a href="games" class="hover-gradient bg-gradient-to-r from-primary to-accent-blue text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V9.236a1 1 0 00-1.447-.894l-4 2a1 1 0 00-.553.894V17zM15.211 6.276a1 1 0 000-1.788l-4.764-2.382a1 1 0 00-.894 0L4.789 4.488a1 1 0 000 1.788l4.764 2.382a1 1 0 00.894 0l4.764-2.382zM4.447 8.342A1 1 0 003 9.236V15a1 1 0 00.553.894l4 2A1 1 0 009 17v-5.764a1 1 0 00-.553-.894l-4-2z" />
+                </svg>
+                Games
+            </a>
+            <a href="sz" class="hover-gradient bg-gradient-to-r from-primary to-accent-blue text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+                SZ-games (bugs)
+            </a>
+            <a href="links" class="hover-gradient bg-gradient-to-r from-primary to-accent-blue text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd" />
+                </svg>
+                More Links
+            </a>
+            <button disabled class="bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 font-semibold py-3 px-6 rounded-lg shadow-md cursor-not-allowed transition duration-300 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                </svg>
+                Coming Soon
+            </button>
+        </div>
+    </div>
+
+    <!-- Bottom left links -->
+    <div class="fixed left-4 bottom-4 flex items-center bg-white/70 dark:bg-slate-800/70 p-2 rounded-full shadow-lg border border-gray-200 dark:border-gray-700">
+        <a href="old" class="text-primary hover:text-accent-blue transition duration-300 p-2" aria-label="Old version">
+            <img src="https://sn3k.org/images/rocket.png" alt="Rocket" class="w-6 h-6 hover:animate-float">
+        </a>
+        <a href="https://github.com/YoshiroMaximus" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-accent-blue transition duration-300 p-2" aria-label="GitHub">
+            <img id="githubIcon" src="https://sn3k.org/images/github-light.svg" alt="GitHub Logo" class="w-6 h-6 dark:block hidden" loading="lazy">
+            <img id="githubIconLight" src="https://sn3k.org/images/github-dark.svg" alt="GitHub Logo" class="w-6 h-6 dark:hidden block" loading="lazy">
+        </a>
+        <a href="https://tally.so/r/wM6dQp" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-accent-blue transition duration-300 p-2" aria-label="Feedback form">
+            <svg width="24" height="24" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9.99169 2.39306C9.99169 3.27827 9.66489 4.49613 9.18309 6.13269L8.83837 7.38966L9.92921 6.67715C12.0027 5.2211 13.2549 4.67462 14.0838 4.67462C15.0266 4.67462 16 5.34831 16 6.68815C16 8.39252 14.1804 8.8767 10.6672 8.9364L9.35372 8.99811L10.3896 9.82276C12.8489 11.7184 13.7015 12.647 13.7015 13.8238C13.7015 14.7498 12.8408 15.7144 11.7737 15.7144C10.1704 15.7144 9.44568 14.0483 8.46877 11.2197L7.97078 9.99025L7.50229 11.2197C6.40739 14.4325 5.56468 15.6849 4.16787 15.6849C3.04174 15.6849 2.2401 14.6612 2.2401 13.7942C2.2401 12.4993 3.41711 11.4228 5.58146 9.82276L6.61736 8.99811L5.33333 8.9364C1.60214 8.90626 0 8.36962 0 6.6586C0 5.31875 1.00351 4.64506 1.92835 4.64506C3.04521 4.64506 4.2633 5.39844 6.07135 6.67715L7.1622 7.38966L6.81748 6.13269C6.2952 4.40746 6.04995 3.14179 6.04995 2.39306C6.04995 1.22098 6.71048 0.25 8.00028 0.25C9.31959 0.25 9.99169 1.22098 9.99169 2.39306Z" />
+            </svg>
+        </a>
+        <span class="ml-2 text-sm text-gray-600 dark:text-gray-300 hidden sm:inline-block">← give recc plz (made by yoshiro)</span>
+    </div>
+
+    <!-- Theme toggle button -->
+    <button id="colorToggle" class="fixed top-4 right-4 bg-white dark:bg-slate-800 text-primary dark:text-white p-3 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-900" aria-label="Toggle dark/light mode">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+    </button>
+    
+    <script>
+        // Theme toggle functionality
+        const setCookie = (name, value, days) => {
+            const expires = new Date(Date.now() + days * 864e5).toUTCString();
+            document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+        };
+
+        const getCookie = (name) => {
+            return document.cookie.split('; ').reduce((r, v) => {
+                const parts = v.split('=');
+                return parts[0] === name ? decodeURIComponent(parts[1]) : r;
+            }, '');
+        };
+
+        const colorToggle = document.getElementById('colorToggle');
+        let darkMode = getCookie('theme') !== 'light';
+        
+        // Check for system preference if no cookie is set
+        if (!getCookie('theme')) {
+            darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+
+        const setTheme = (isDark) => {
+            document.documentElement.classList.toggle('dark', isDark);
+            setCookie('theme', isDark ? 'dark' : 'light', 30);
+        };
+
+        // Set initial theme
+        setTheme(darkMode);
+
+        // Toggle theme on button click
+        colorToggle.addEventListener('click', () => {
+            darkMode = !darkMode;
+            setTheme(darkMode);
+        });
+
+        // Toggle theme with 't' key
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 't') colorToggle.click();
+        });
+    </script>
+</body>
+</html>
