@@ -2,7 +2,8 @@
 
 password: 1234567890
 
-staticrypt index.html links.html games.html servers.html
+staticrypt de/index.html de/links.html de/games.html de/servers.html 
+
 staticrypt index.html --share https://sn4k.me/hello_worldd
 
 
