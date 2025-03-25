@@ -1,5 +1,11 @@
 # Wlcome to My Webiste
 
+password: 1234567890
+
+staticrypt index.html links.html games.html servers.html
+staticrypt index.html --share https://sn4k.me/hello_worldd
+
+
 Ths prjcect is an encrytped wsibe usnig [StatiCrypt](https://robinmoisson.github.io/staticrypt/). Thsi meaens tha only auhorzed users wtih the psasword can acsecss the contnet.
 
 ## Fetaures
