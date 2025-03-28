@@ -2,9 +2,9 @@
 
 staticrypt de/index.html de/links.html de/games.html de/servers.html 
 
-password has to do with the numbers on your keyboard 1 through 0
-
 Ths prjcect is an encrytped wsibe usnig [StatiCrypt](https://robinmoisson.github.io/staticrypt/). Thsi meaens tha only auhorzed users wtih the psasword can acsecss the contnet.
+
+below numbers
 
 ## Fetaures
 
