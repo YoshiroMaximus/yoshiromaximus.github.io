@@ -15,10 +15,20 @@ model User {
   clerkId       String    @unique
   email         String    @unique
   username      String?
+  imageUrl      String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   gameHistory   GameHistory[]
   favoriteGames FavoriteGame[]
+  reviews       Review[]
+  ratings       Rating[]
+  achievements  Achievement[]
+  role          UserRole  @default(USER)
+}
+
+enum UserRole {
+  USER
+  ADMIN
 }
 
 model Game {
@@ -31,6 +41,8 @@ model Game {
   updatedAt   DateTime  @updatedAt
   history     GameHistory[]
   favorites   FavoriteGame[]
+  reviews     Review[]
+  ratings     Rating[]
 }
 
 model GameHistory {
@@ -56,5 +68,53 @@ model FavoriteGame {
   @@unique([userId, gameId])
   @@index([userId])
   @@index([gameId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  content   String
+  userId    String
+  gameId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([gameId])
+}
+
+model Rating {
+  id        String   @id @default(cuid())
+  rating    Int
+  userId    String
+  gameId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameId])
+  @@index([userId])
+  @@index([gameId])
+}
+
+model Achievement {
+  id          String           @id @default(cuid())
+  name        String
+  description String
+  type        AchievementType
+  unlockedAt  DateTime         @default(now())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum AchievementType {
+  GAMES_PLAYED
+  RATING
+  REVIEWS
+  FAVORITES
+  SPECIAL
 }
 
