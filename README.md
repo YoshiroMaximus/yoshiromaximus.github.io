@@ -1,6 +1,6 @@
 # Wlcome to My Webiste
 
-staticrypt de/index.html de/links.html de/games.html de/servers.html 
+staticrypt de/index.html de/links.html de/games.html de/servers.html itch -r --short
 
 Ths prjcect is an encrytped wsibe usnig [StatiCrypt](https://robinmoisson.github.io/staticrypt/). Thsi meaens tha only auhorzed users wtih the psasword can acsecss the contnet.
 

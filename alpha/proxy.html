@@ -3,169 +3,247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document Viewer</title>
+    <title>HTML Source Viewer</title>
     <style>
         :root {
+            /* Light theme variables */
             --primary-color: #4f46e5;
             --primary-hover: #4338ca;
-            --bg-color: #f9fafb;
+            --bg-color: #f5f5f5;
             --card-bg: #ffffff;
             --text-color: #1f2937;
+            --text-secondary: #6b7280;
             --border-color: #e5e7eb;
             --success-color: #10b981;
             --error-color: #ef4444;
             --warning-color: #f59e0b;
+            --info-color: #3b82f6;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --input-bg: #ffffff;
+            --dropdown-hover: #f9fafb;
+        }
+        
+        [data-theme="dark"] {
+            /* Dark theme variables */
+            --primary-color: #6366f1;
+            --primary-hover: #818cf8;
+            --bg-color: #111827;
+            --card-bg: #1f2937;
+            --text-color: #f9fafb;
+            --text-secondary: #9ca3af;
+            --border-color: #374151;
+            --success-color: #34d399;
+            --error-color: #f87171;
+            --warning-color: #fbbf24;
+            --info-color: #60a5fa;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --input-bg: #374151;
+            --dropdown-hover: #374151;
         }
         
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             line-height: 1.6;
             padding: 20px;
+            min-height: 100vh;
         }
         
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px var(--shadow-color);
         }
         
         .header {
-            text-align: center;
-            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
         }
         
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(90deg, #4f46e5, #8b5cf6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        h1 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 1.8rem;
         }
         
-        .header p {
-            font-size: 1.1rem;
-            color: #6b7280;
+        .theme-switch {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
         }
         
-        .form-group {
-            margin-bottom: 1rem;
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
         }
         
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
         }
         
-        .form-control {
-            width: 100%;
-            padding: 0.75rem;
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+        
+        input:focus + .slider {
+            box-shadow: 0 0 1px var(--primary-color);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+        
+        .theme-icon {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .input-group {
+            display: flex;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        input[type="url"] {
+            flex: 1;
+            padding: 12px 16px;
             border: 1px solid var(--border-color);
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            transition: border-color 0.15s ease-in-out;
+            border-radius: 8px 0 0 8px;
+            font-size: 16px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background-color: var(--input-bg);
+            color: var(--text-color);
         }
         
-        .form-control:focus {
+        input[type="url"]:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
         }
         
         .btn {
-            display: inline-block;
-            font-weight: 500;
-            text-align: center;
-            white-space: nowrap;
-            vertical-align: middle;
-            user-select: none;
-            border: 1px solid transparent;
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
-            line-height: 1.5;
-            border-radius: 0.5rem;
-            transition: all 0.15s ease-in-out;
-            cursor: pointer;
-        }
-        
-        .btn-primary {
-            color: #fff;
             background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-            border-color: var(--primary-hover);
-        }
-        
-        .btn-block {
-            display: block;
-            width: 100%;
-        }
-        
-        .tabs {
-            display: flex;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 1rem;
-        }
-        
-        .tab {
-            padding: 0.75rem 1.5rem;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 0 8px 8px 0;
             cursor: pointer;
-            border-bottom: 2px solid transparent;
+            font-size: 16px;
             font-weight: 500;
-            transition: all 0.15s ease-in-out;
+            transition: background-color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         
-        .tab.active {
-            border-bottom-color: var(--primary-color);
-            color: var(--primary-color);
+        .btn:hover {
+            background-color: var(--primary-hover);
         }
         
-        .tab-content {
-            display: none;
+        .btn:active {
+            transform: translateY(1px);
         }
         
-        .tab-content.active {
-            display: block;
+        .btn-icon {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s, transform 0.1s;
         }
         
-        .alert {
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
+        .btn-icon:hover {
+            background-color: var(--primary-hover);
         }
         
-        .alert-success {
-            background-color: rgba(16, 185, 129, 0.1);
-            border: 1px solid var(--success-color);
-            color: var(--success-color);
+        .btn-icon:active {
+            transform: translateY(1px);
         }
         
-        .alert-error {
+        .status {
+            margin-bottom: 20px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .status.loading {
+            background-color: rgba(59, 130, 246, 0.1);
+            border: 1px solid var(--info-color);
+            color: var(--info-color);
+        }
+        
+        .status.error {
             background-color: rgba(239, 68, 68, 0.1);
             border: 1px solid var(--error-color);
             color: var(--error-color);
         }
         
-        .alert-warning {
+        .status.success {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success-color);
+            color: var(--success-color);
+        }
+        
+        .status.warning {
             background-color: rgba(245, 158, 11, 0.1);
             border: 1px solid var(--warning-color);
             color: var(--warning-color);
@@ -175,71 +253,64 @@
             width: 100%;
             height: 600px;
             border: 1px solid var(--border-color);
-            border-radius: 0.5rem;
+            border-radius: 8px;
             overflow: hidden;
+            position: relative;
+            transition: height 0.3s;
         }
         
-        .viewer iframe {
+        iframe {
             width: 100%;
             height: 100%;
             border: none;
+            background-color: white; /* Always white for content */
         }
         
         .viewer-controls {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 1rem;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
         }
         
-        .viewer-controls button {
-            padding: 0.5rem 1rem;
+        .viewer-controls-left, .viewer-controls-right {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 20px;
         }
         
         .checkbox-group {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
+            gap: 8px;
         }
         
         .checkbox-group input[type="checkbox"] {
-            margin: 0;
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary-color);
         }
         
-        .settings-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        .settings-group h3 {
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-        }
-        
-        .code-block {
-            background-color: #f8f9fa;
-            border: 1px solid #eaecef;
-            border-radius: 6px;
-            padding: 16px;
-            overflow-x: auto;
-            font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
-            font-size: 85%;
-            line-height: 1.45;
-            margin-bottom: 16px;
-        }
-        
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
+        .footer {
+            margin-top: 24px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
         }
         
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(79, 70, 229, 0.1);
+            border: 3px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            border-left-color: var(--primary-color);
+            border-top: 3px solid white;
+            width: 16px;
+            height: 16px;
             animation: spin 1s linear infinite;
         }
         
@@ -248,1019 +319,899 @@
             100% { transform: rotate(360deg); }
         }
         
-        .footer {
-            text-align: center;
-            margin-top: 2rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border-color);
-            color: #6b7280;
-            font-size: 0.9rem;
+        .history-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            z-index: 10;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            animation: slideDown 0.2s ease-out;
         }
         
-        /* Responsive */
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .history-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s;
+            color: var(--text-color);
+        }
+        
+        .history-item:hover {
+            background-color: var(--dropdown-hover);
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .tooltip {
+            position: relative;
+        }
+        
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 120px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+            pointer-events: none;
+        }
+        
+        .tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+        }
+        
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .resize-handle {
+            height: 10px;
+            background-color: var(--border-color);
+            cursor: ns-resize;
+            border-radius: 0 0 8px 8px;
+            position: relative;
+        }
+        
+        .resize-handle::after {
+            content: "";
+            position: absolute;
+            width: 30px;
+            height: 4px;
+            background-color: var(--text-secondary);
+            border-radius: 2px;
+            top: 3px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        /* Icons */
+        .icon {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+        
+        /* Responsive styles */
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2rem;
+            .container {
+                padding: 16px;
             }
             
-            .card {
-                padding: 1rem;
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .theme-switch {
+                align-self: flex-end;
+            }
+            
+            .viewer-controls {
+                flex-direction: column;
+            }
+            
+            .viewer-controls-left, .viewer-controls-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .options {
+                flex-direction: column;
+                gap: 12px;
             }
             
             .viewer {
                 height: 400px;
             }
         }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Document Viewer</h1>
-            <p>View web content securely within this domain</p>
+            <h1>HTML Source Viewer</h1>
+            
+            <div class="theme-switch">
+                <svg class="theme-icon" viewBox="0 0 24 24" id="sun-icon">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                
+                <label class="switch">
+                    <input type="checkbox" id="theme-toggle">
+                    <span class="slider"></span>
+                </label>
+                
+                <svg class="theme-icon" viewBox="0 0 24 24" id="moon-icon">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </div>
         </div>
         
-        <div class="card">
-            <div class="tabs">
-                <div class="tab active" data-tab="viewer">Viewer</div>
-                <div class="tab" data-tab="settings">Settings</div>
-                <div class="tab" data-tab="advanced">Advanced</div>
-                <div class="tab" data-tab="help">Help</div>
+        <form id="url-form">
+            <div class="input-group">
+                <input type="url" id="url-input" placeholder="Enter URL (e.g., example.com)" autocomplete="off">
+                <button type="submit" id="view-btn" class="btn">
+                    <span id="btn-text">View Page</span>
+                    <span id="btn-spinner" class="spinner" style="display: none;"></span>
+                </button>
+                
+                <div id="history-dropdown" class="history-dropdown"></div>
+            </div>
+        </form>
+        
+        <div class="options">
+            <div class="checkbox-group">
+                <input type="checkbox" id="remove-scripts" checked>
+                <label for="remove-scripts">Remove scripts (safer)</label>
             </div>
             
-            <div class="tab-content active" id="viewer-tab">
-                <div id="alert-container"></div>
-                
-                <form id="viewer-form">
-                    <div class="form-group">
-                        <label for="url-input">Enter URL or HTML Content</label>
-                        <input type="text" class="form-control" id="url-input" placeholder="https://example.com or paste HTML content">
-                    </div>
-                    
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="use-data-url" checked>
-                        <label for="use-data-url">Use data URL (recommended for bypassing)</label>
-                    </div>
-                    
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="obfuscate-content">
-                        <label for="obfuscate-content">Obfuscate content</label>
-                    </div>
-                    
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="remove-scripts" checked>
-                        <label for="remove-scripts">Remove scripts (safer)</label>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary btn-block">Load Content</button>
-                </form>
-                
-                <div class="viewer-controls" style="display: none;">
-                    <button id="refresh-btn" class="btn btn-primary">Refresh</button>
-                    <button id="clear-btn" class="btn">Clear</button>
-                </div>
-                
-                <div class="viewer" id="content-viewer" style="display: none;">
-                    <iframe id="viewer-iframe" sandbox="allow-same-origin"></iframe>
-                </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="fix-links" checked>
+                <label for="fix-links">Fix relative links</label>
             </div>
             
-            <div class="tab-content" id="settings-tab">
-                <div class="settings-group">
-                    <h3>Bypass Settings</h3>
-                    
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="use-blob-urls" checked>
-                        <label for="use-blob-urls">Use Blob URLs when possible</label>
-                    </div>
-                    
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="use-base64-encoding" checked>
-                        <label for="use-base64-encoding">Use Base64 encoding</label>
-                    </div>
-                    
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="use-iframe-sandbox" checked>
-                        <label for="use-iframe-sandbox">Use iframe sandbox</label>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="user-agent-override">User-Agent Override</label>
-                        <input type="text" class="form-control" id="user-agent-override" placeholder="Leave empty for default">
-                    </div>
-                </div>
-                
-                <div class="settings-group">
-                    <h3>Content Processing</h3>
-                    
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="fix-relative-urls" checked>
-                        <label for="fix-relative-urls">Fix relative URLs</label>
-                    </div>
-                    
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="remove-metadata" checked>
-                        <label for="remove-metadata">Remove metadata</label>
-                    </div>
-                    
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="remove-frames">
-                        <label for="remove-frames">Remove iframes</label>
-                    </div>
-                </div>
-                
-                <button id="save-settings" class="btn btn-primary">Save Settings</button>
+            <div class="checkbox-group">
+                <input type="checkbox" id="remove-frames">
+                <label for="remove-frames">Remove iframes</label>
             </div>
             
-            <div class="tab-content" id="advanced-tab">
-                <div class="settings-group">
-                    <h3>Custom HTML Injection</h3>
-                    <p>Inject custom HTML directly into the viewer</p>
+            <div class="checkbox-group">
+                <input type="checkbox" id="use-cors-proxy" checked>
+                <label for="use-cors-proxy">Try multiple sources</label>
+            </div>
+        </div>
+        
+        <div id="status-container" style="display: none;" class="status"></div>
+        
+        <div id="viewer-container" style="display: none;">
+            <div class="viewer-controls">
+                <div class="viewer-controls-left">
+                    <button id="refresh-btn" class="btn-icon tooltip">
+                        <span class="tooltip-text">Refresh</span>
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"></path>
+                        </svg>
+                    </button>
                     
-                    <div class="form-group">
-                        <textarea class="form-control" id="custom-html" rows="10" placeholder="Enter custom HTML here"></textarea>
-                    </div>
+                    <button id="copy-url-btn" class="btn-icon tooltip">
+                        <span class="tooltip-text">Copy Data URL</span>
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+                        </svg>
+                    </button>
                     
-                    <button id="inject-html" class="btn btn-primary">Inject HTML</button>
+                    <button id="clear-btn" class="btn-icon tooltip">
+                        <span class="tooltip-text">Clear</span>
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                    </button>
                 </div>
                 
-                <div class="settings-group">
-                    <h3>URL Encoder</h3>
-                    <p>Encode URLs to bypass detection</p>
-                    
-                    <div class="form-group">
-                        <input type="text" class="form-control" id="url-to-encode" placeholder="Enter URL to encode">
-                    </div>
-                    
-                    <div class="form-group">
-                        <select class="form-control" id="encoding-method">
-                            <option value="base64">Base64</option>
-                            <option value="hex">Hexadecimal</option>
-                            <option value="uri">URI Component</option>
-                            <option value="binary">Binary</option>
-                        </select>
-                    </div>
-                    
-                    <button id="encode-url" class="btn btn-primary">Encode</button>
-                    
-                    <div class="form-group" style="margin-top: 1rem;">
-                        <label for="encoded-result">Encoded Result</label>
-                        <input type="text" class="form-control" id="encoded-result" readonly>
-                    </div>
-                </div>
-                
-                <div class="settings-group">
-                    <h3>Extension Detection</h3>
-                    <button id="detect-extensions" class="btn btn-primary">Detect Blocking Extensions</button>
-                    <div id="extension-results" class="code-block" style="margin-top: 1rem; display: none;"></div>
+                <div class="viewer-controls-right">
+                    <button id="fullscreen-btn" class="btn-icon tooltip">
+                        <span class="tooltip-text">Open in New Tab</span>
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
+                        </svg>
+                    </button>
                 </div>
             </div>
             
-            <div class="tab-content" id="help-tab">
-                <div class="settings-group">
-                    <h3>How to Use</h3>
-                    <p>This tool helps you view web content that might be blocked by browser extensions. Here's how to use it:</p>
-                    <ol>
-                        <li>Enter a URL or paste HTML content in the input field</li>
-                        <li>Choose your bypass options</li>
-                        <li>Click "Load Content" to view the content</li>
-                    </ol>
-                    <p>If one method doesn't work, try different settings combinations.</p>
-                </div>
-                
-                <div class="settings-group">
-                    <h3>Bypass Techniques</h3>
-                    <p>This tool uses several techniques to bypass content blocking:</p>
-                    <ul>
-                        <li><strong>Data URLs</strong>: Converts content to a data: URL format</li>
-                        <li><strong>Blob URLs</strong>: Creates blob objects from content</li>
-                        <li><strong>Content Obfuscation</strong>: Obfuscates HTML to avoid detection</li>
-                        <li><strong>Iframe Sandboxing</strong>: Uses sandbox attributes to isolate content</li>
-                        <li><strong>Base64 Encoding</strong>: Encodes content in base64</li>
-                    </ul>
-                </div>
-                
-                <div class="settings-group">
-                    <h3>Limitations</h3>
-                    <p>While this tool attempts to bypass content blocking, it has limitations:</p>
-                    <ul>
-                        <li>Cannot bypass network-level blocks</li>
-                        <li>Some extensions may still detect and block content</li>
-                        <li>Dynamic content requiring external scripts may not work</li>
-                        <li>Content requiring authentication won't work</li>
-                    </ul>
-                </div>
-                
-                <div class="settings-group">
-                    <h3>Tips for Best Results</h3>
-                    <ul>
-                        <li>Try different combinations of settings</li>
-                        <li>For complex websites, try viewing the source and pasting it</li>
-                        <li>Use the "Remove scripts" option for safer browsing</li>
-                        <li>Some sites may work better with specific encoding methods</li>
-                    </ul>
-                </div>
+            <div class="viewer">
+                <iframe id="content-frame" sandbox="allow-same-origin"></iframe>
             </div>
+            
+            <div class="resize-handle" id="resize-handle"></div>
         </div>
         
         <div class="footer">
-            <p>Document Viewer - For educational purposes only</p>
+            <p>HTML Source Viewer - View web content safely through data URLs</p>
         </div>
     </div>
 
     <script>
-        // Settings object
-        let settings = {
-            useDataUrl: true,
-            obfuscateContent: false,
-            removeScripts: true,
-            useBlobUrls: true,
-            useBase64Encoding: true,
-            useIframeSandbox: true,
-            userAgentOverride: '',
-            fixRelativeUrls: true,
-            removeMetadata: true,
-            removeFrames: false
-        };
-        
         // DOM Elements
-        const elements = {
-            tabs: document.querySelectorAll('.tab'),
-            tabContents: document.querySelectorAll('.tab-content'),
-            viewerForm: document.getElementById('viewer-form'),
-            urlInput: document.getElementById('url-input'),
-            useDataUrl: document.getElementById('use-data-url'),
-            obfuscateContent: document.getElementById('obfuscate-content'),
-            removeScripts: document.getElementById('remove-scripts'),
-            contentViewer: document.getElementById('content-viewer'),
-            viewerIframe: document.getElementById('viewer-iframe'),
-            viewerControls: document.querySelector('.viewer-controls'),
-            refreshBtn: document.getElementById('refresh-btn'),
-            clearBtn: document.getElementById('clear-btn'),
-            alertContainer: document.getElementById('alert-container'),
-            useBlobUrls: document.getElementById('use-blob-urls'),
-            useBase64Encoding: document.getElementById('use-base64-encoding'),
-            useIframeSandbox: document.getElementById('use-iframe-sandbox'),
-            userAgentOverride: document.getElementById('user-agent-override'),
-            fixRelativeUrls: document.getElementById('fix-relative-urls'),
-            removeMetadata: document.getElementById('remove-metadata'),
-            removeFrames: document.getElementById('remove-frames'),
-            saveSettings: document.getElementById('save-settings'),
-            customHtml: document.getElementById('custom-html'),
-            injectHtml: document.getElementById('inject-html'),
-            urlToEncode: document.getElementById('url-to-encode'),
-            encodingMethod: document.getElementById('encoding-method'),
-            encodeUrl: document.getElementById('encode-url'),
-            encodedResult: document.getElementById('encoded-result'),
-            detectExtensions: document.getElementById('detect-extensions'),
-            extensionResults: document.getElementById('extension-results')
-        };
+        const urlForm = document.getElementById('url-form');
+        const urlInput = document.getElementById('url-input');
+        const viewBtn = document.getElementById('view-btn');
+        const btnText = document.getElementById('btn-text');
+        const btnSpinner = document.getElementById('btn-spinner');
+        const statusContainer = document.getElementById('status-container');
+        const viewerContainer = document.getElementById('viewer-container');
+        const contentFrame = document.getElementById('content-frame');
+        const removeScriptsCheckbox = document.getElementById('remove-scripts');
+        const fixLinksCheckbox = document.getElementById('fix-links');
+        const removeFramesCheckbox = document.getElementById('remove-frames');
+        const useCorsProxyCheckbox = document.getElementById('use-cors-proxy');
+        const refreshBtn = document.getElementById('refresh-btn');
+        const copyUrlBtn = document.getElementById('copy-url-btn');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const historyDropdown = document.getElementById('history-dropdown');
+        const themeToggle = document.getElementById('theme-toggle');
+        const resizeHandle = document.getElementById('resize-handle');
+        
+        // Current data URL
+        let currentDataUrl = '';
+        
+        // URL history
+        let urlHistory = [];
+        
+        // Source services to try (in order)
+        const sourceServices = [
+            {
+                name: 'view-page-source.com',
+                fetch: async (url) => {
+                    const sourceUrl = `https://view-page-source.com/source/${encodeURIComponent(url)}`;
+                    const response = await fetch(sourceUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch from view-page-source.com: ${response.status}`);
+                    }
+                    
+                    const text = await response.text();
+                    
+                    // Extract the HTML source from the response
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(text, 'text/html');
+                    const sourceElement = doc.querySelector('#source');
+                    
+                    if (sourceElement) {
+                        return sourceElement.textContent;
+                    } else {
+                        throw new Error('Could not find source code on view-page-source.com');
+                    }
+                }
+            },
+            {
+                name: 'allorigins.win',
+                fetch: async (url) => {
+                    const sourceUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                    const response = await fetch(sourceUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch from allorigins.win: ${response.status}`);
+                    }
+                    
+                    return await response.text();
+                }
+            },
+            {
+                name: 'corsproxy.io',
+                fetch: async (url) => {
+                    const sourceUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                    const response = await fetch(sourceUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch from corsproxy.io: ${response.status}`);
+                    }
+                    
+                    return await response.text();
+                }
+            },
+            {
+                name: 'cors-anywhere.herokuapp.com',
+                fetch: async (url) => {
+                    const sourceUrl = `https://cors-anywhere.herokuapp.com/${url}`;
+                    const response = await fetch(sourceUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch from cors-anywhere: ${response.status}`);
+                    }
+                    
+                    return await response.text();
+                }
+            },
+            {
+                name: 'proxy.cors.sh',
+                fetch: async (url) => {
+                    const sourceUrl = `https://proxy.cors.sh/${url}`;
+                    const response = await fetch(sourceUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch from proxy.cors.sh: ${response.status}`);
+                    }
+                    
+                    return await response.text();
+                }
+            }
+        ];
         
         // Initialize
         function init() {
-            // Load settings
-            loadSettings();
+            // Load URL history from localStorage
+            loadHistory();
+            
+            // Load theme preference
+            loadThemePreference();
             
             // Set up event listeners
             setupEventListeners();
-            
-            // Update UI based on settings
-            updateUI();
         }
         
         // Set up event listeners
         function setupEventListeners() {
-            // Tab navigation
-            elements.tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const tabId = tab.getAttribute('data-tab');
-                    switchTab(tabId);
-                });
+            // Form submission
+            urlForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                fetchAndDisplayPage();
             });
             
-            // Viewer form submission
-            elements.viewerForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                loadContent();
+            // URL input focus
+            urlInput.addEventListener('focus', () => {
+                showHistoryDropdown();
+            });
+            
+            // URL input blur
+            urlInput.addEventListener('blur', (e) => {
+                // Delay hiding to allow for clicks on history items
+                setTimeout(() => {
+                    hideHistoryDropdown();
+                }, 200);
+            });
+            
+            // URL input input event
+            urlInput.addEventListener('input', () => {
+                filterHistoryDropdown();
             });
             
             // Refresh button
-            elements.refreshBtn.addEventListener('click', () => {
-                loadContent();
+            refreshBtn.addEventListener('click', () => {
+                fetchAndDisplayPage();
+            });
+            
+            // Copy URL button
+            copyUrlBtn.addEventListener('click', () => {
+                copyDataUrl();
+            });
+            
+            // Fullscreen button
+            fullscreenBtn.addEventListener('click', () => {
+                openInNewTab();
             });
             
             // Clear button
-            elements.clearBtn.addEventListener('click', () => {
+            clearBtn.addEventListener('click', () => {
                 clearViewer();
             });
             
-            // Save settings
-            elements.saveSettings.addEventListener('click', () => {
-                saveSettings();
+            // Theme toggle
+            themeToggle.addEventListener('change', () => {
+                toggleTheme();
             });
             
-            // Inject HTML
-            elements.injectHtml.addEventListener('click', () => {
-                injectCustomHtml();
-            });
+            // Resize handle for viewer height
+            let isResizing = false;
+            let startY, startHeight;
             
-            // Encode URL
-            elements.encodeUrl.addEventListener('click', () => {
-                encodeUrl();
-            });
-            
-            // Detect extensions
-            elements.detectExtensions.addEventListener('click', () => {
-                detectBlockingExtensions();
-            });
-        }
-        
-        // Switch tab
-        function switchTab(tabId) {
-            elements.tabs.forEach(tab => {
-                if (tab.getAttribute('data-tab') === tabId) {
-                    tab.classList.add('active');
-                } else {
-                    tab.classList.remove('active');
-                }
-            });
-            
-            elements.tabContents.forEach(content => {
-                if (content.id === `${tabId}-tab`) {
-                    content.classList.add('active');
-                } else {
-                    content.classList.remove('active');
-                }
-            });
-        }
-        
-        // Load content
-        async function loadContent() {
-            const input = elements.urlInput.value.trim();
-            
-            if (!input) {
-                showAlert('Please enter a URL or HTML content', 'error');
-                return;
-            }
-            
-            // Get current settings from form
-            settings.useDataUrl = elements.useDataUrl.checked;
-            settings.obfuscateContent = elements.obfuscateContent.checked;
-            settings.removeScripts = elements.removeScripts.checked;
-            
-            try {
-                // Show loading
-                showLoading();
+            resizeHandle.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                startY = e.clientY;
+                startHeight = parseInt(document.defaultView.getComputedStyle(document.querySelector('.viewer')).height, 10);
                 
-                let content;
-                
-                // Check if input is a URL or HTML content
-                if (isUrl(input)) {
-                    // It's a URL, try to fetch it
-                    content = await fetchContent(input);
-                } else {
-                    // It's HTML content
-                    content = input;
-                }
-                
-                // Process content
-                content = processContent(content, input);
-                
-                // Display content
-                displayContent(content);
-                
-                // Show viewer controls
-                elements.viewerControls.style.display = 'flex';
-                
-                // Hide loading
-                hideLoading();
-            } catch (error) {
-                hideLoading();
-                showAlert(`Error: ${error.message}`, 'error');
-            }
-        }
-        
-        // Fetch content
-        async function fetchContent(url) {
-            try {
-                // Try to use fetch directly (will likely be blocked by extensions)
-                const response = await fetch(url, {
-                    mode: 'cors',
-                    headers: {
-                        'User-Agent': settings.userAgentOverride || navigator.userAgent
-                    }
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', () => {
+                    isResizing = false;
+                    document.removeEventListener('mousemove', handleMouseMove);
                 });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                
-                return await response.text();
-            } catch (error) {
-                // If direct fetch fails, try alternative methods
-                
-                // Method 1: Try using a dynamically created iframe
-                try {
-                    return await fetchViaIframe(url);
-                } catch (iframeError) {
-                    // Method 2: Try using XMLHttpRequest
-                    try {
-                        return await fetchViaXhr(url);
-                    } catch (xhrError) {
-                        // Method 3: Try using a service worker if available
-                        try {
-                            return await fetchViaServiceWorker(url);
-                        } catch (swError) {
-                            // All methods failed
-                            throw new Error('Could not fetch content. Try pasting the HTML directly.');
-                        }
-                    }
+            });
+            
+            function handleMouseMove(e) {
+                if (!isResizing) return;
+                const newHeight = startHeight + (e.clientY - startY);
+                if (newHeight > 200) { // Minimum height
+                    document.querySelector('.viewer').style.height = `${newHeight}px`;
                 }
             }
-        }
-        
-        // Fetch via iframe
-        function fetchViaIframe(url) {
-            return new Promise((resolve, reject) => {
-                const iframe = document.createElement('iframe');
-                iframe.style.display = 'none';
-                iframe.src = url;
-                
-                const timeoutId = setTimeout(() => {
-                    document.body.removeChild(iframe);
-                    reject(new Error('Iframe fetch timed out'));
-                }, 10000);
-                
-                iframe.onload = () => {
-                    try {
-                        clearTimeout(timeoutId);
-                        const content = iframe.contentDocument.documentElement.outerHTML;
-                        document.body.removeChild(iframe);
-                        resolve(content);
-                    } catch (error) {
-                        document.body.removeChild(iframe);
-                        reject(new Error('Could not access iframe content due to same-origin policy'));
+            
+            // Handle keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                // Ctrl+Enter to submit form
+                if (e.ctrlKey && e.key === 'Enter') {
+                    if (document.activeElement === urlInput) {
+                        fetchAndDisplayPage();
                     }
-                };
-                
-                iframe.onerror = () => {
-                    clearTimeout(timeoutId);
-                    document.body.removeChild(iframe);
-                    reject(new Error('Iframe failed to load'));
-                };
-                
-                document.body.appendChild(iframe);
+                }
             });
         }
         
-        // Fetch via XMLHttpRequest
-        function fetchViaXhr(url) {
-            return new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.open('GET', url, true);
-                
-                if (settings.userAgentOverride) {
-                    xhr.setRequestHeader('User-Agent', settings.userAgentOverride);
-                }
-                
-                xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        resolve(xhr.responseText);
-                    } else {
-                        reject(new Error(`XHR error! Status: ${xhr.status}`));
-                    }
-                };
-                
-                xhr.onerror = () => {
-                    reject(new Error('XHR request failed'));
-                };
-                
-                xhr.timeout = 10000;
-                xhr.ontimeout = () => {
-                    reject(new Error('XHR request timed out'));
-                };
-                
-                xhr.send();
-            });
-        }
-        
-        // Fetch via Service Worker
-        async function fetchViaServiceWorker(url) {
-            // Check if service workers are supported
-            if (!('serviceWorker' in navigator)) {
-                throw new Error('Service Workers not supported');
-            }
-            
-            // Check if we already have a service worker
-            const registration = await navigator.serviceWorker.getRegistration();
-            
-            if (!registration) {
-                // Register a new service worker
-                const swCode = `
-                    self.addEventListener('install', event => {
-                        self.skipWaiting();
-                    });
-                    
-                    self.addEventListener('activate', event => {
-                        event.waitUntil(clients.claim());
-                    });
-                    
-                    self.addEventListener('fetch', event => {
-                        // Only handle our specific fetch requests
-                        if (event.request.url.includes('__sw_fetch__')) {
-                            const url = new URL(event.request.url).searchParams.get('url');
-                            
-                            if (url) {
-                                event.respondWith(
-                                    fetch(url, {
-                                        mode: 'cors',
-                                        credentials: 'omit'
-                                    })
-                                );
-                            }
-                        }
-                    });
-                `;
-                
-                const blob = new Blob([swCode], { type: 'text/javascript' });
-                const swUrl = URL.createObjectURL(blob);
-                
-                await navigator.serviceWorker.register(swUrl, { scope: './' });
-                await navigator.serviceWorker.ready;
-                
-                // Clean up
-                URL.revokeObjectURL(swUrl);
-            }
-            
-            // Use the service worker to fetch the URL
-            const response = await fetch(`/__sw_fetch__?url=${encodeURIComponent(url)}`);
-            
-            if (!response.ok) {
-                throw new Error(`Service Worker fetch failed! Status: ${response.status}`);
-            }
-            
-            return await response.text();
-        }
-        
-        // Process content
-        function processContent(content, sourceUrl) {
-            // Remove scripts if needed
-            if (settings.removeScripts) {
-                content = removeScriptsFromHtml(content);
-            }
-            
-            // Fix relative URLs
-            if (settings.fixRelativeUrls && isUrl(sourceUrl)) {
-                content = fixRelativeUrls(content, sourceUrl);
-            }
-            
-            // Remove metadata if needed
-            if (settings.removeMetadata) {
-                content = removeMetadata(content);
-            }
-            
-            // Remove iframes if needed
-            if (settings.removeFrames) {
-                content = removeIframes(content);
-            }
-            
-            // Obfuscate content if needed
-            if (settings.obfuscateContent) {
-                content = obfuscateHtml(content);
-            }
-            
-            return content;
-        }
-        
-        // Display content
-        function displayContent(content) {
-            // Show the viewer
-            elements.contentViewer.style.display = 'block';
-            
-            // Get the iframe document
-            const iframe = elements.viewerIframe;
-            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-            
-            // Clear existing content
-            iframeDoc.open();
-            
-            // Set sandbox attribute based on settings
-            if (settings.useIframeSandbox) {
-                iframe.setAttribute('sandbox', 'allow-same-origin');
-            } else {
-                iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-            }
-            
-            // Use different methods to load content based on settings
-            if (settings.useDataUrl) {
-                // Use data URL
-                const dataUrl = createDataUrl(content);
-                iframe.src = dataUrl;
-            } else if (settings.useBlobUrls) {
-                // Use blob URL
-                const blobUrl = createBlobUrl(content);
-                iframe.src = blobUrl;
-            } else {
-                // Write directly to iframe
-                iframeDoc.write(content);
-                iframeDoc.close();
-            }
-        }
-        
-        // Create data URL
-        function createDataUrl(content) {
-            const base64Content = settings.useBase64Encoding ? 
-                btoa(unescape(encodeURIComponent(content))) : 
-                encodeURIComponent(content);
-            
-            return settings.use  : 
-                encodeURIComponent(content);
-            
-            return settings.useBase64Encoding ? 
-                `data:text/html;base64,${base64Content}` : 
-                `data:text/html,${base64Content}`;
-        }
-        
-        // Create blob URL
-        function createBlobUrl(content) {
-            const blob = new Blob([content], { type: 'text/html' });
-            return URL.createObjectURL(blob);
-        }
-        
-        // Clear viewer
-        function clearViewer() {
-            elements.urlInput.value = '';
-            elements.contentViewer.style.display = 'none';
-            elements.viewerControls.style.display = 'none';
-            
-            // Clear iframe
-            const iframe = elements.viewerIframe;
-            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-            iframeDoc.open();
-            iframeDoc.write('');
-            iframeDoc.close();
-            
-            // Clear any blob URLs to prevent memory leaks
-            if (iframe.src && iframe.src.startsWith('blob:')) {
-                URL.revokeObjectURL(iframe.src);
-            }
-            
-            iframe.src = 'about:blank';
-        }
-        
-        // Show loading
-        function showLoading() {
-            // Clear any existing alerts
-            elements.alertContainer.innerHTML = '';
-            
-            // Create loading indicator
-            const loadingDiv = document.createElement('div');
-            loadingDiv.className = 'loading';
-            loadingDiv.innerHTML = '<div class="spinner"></div>';
-            
-            elements.alertContainer.appendChild(loadingDiv);
-        }
-        
-        // Hide loading
-        function hideLoading() {
-            elements.alertContainer.innerHTML = '';
-        }
-        
-        // Show alert
-        function showAlert(message, type = 'info') {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type}`;
-            alertDiv.textContent = message;
-            
-            elements.alertContainer.innerHTML = '';
-            elements.alertContainer.appendChild(alertDiv);
-            
-            // Auto-hide after 5 seconds for success messages
-            if (type === 'success') {
-                setTimeout(() => {
-                    if (elements.alertContainer.contains(alertDiv)) {
-                        elements.alertContainer.removeChild(alertDiv);
-                    }
-                }, 5000);
-            }
-        }
-        
-        // Save settings
-        function saveSettings() {
-            settings.useBlobUrls = elements.useBlobUrls.checked;
-            settings.useBase64Encoding = elements.useBase64Encoding.checked;
-            settings.useIframeSandbox = elements.useIframeSandbox.checked;
-            settings.userAgentOverride = elements.userAgentOverride.value;
-            settings.fixRelativeUrls = elements.fixRelativeUrls.checked;
-            settings.removeMetadata = elements.removeMetadata.checked;
-            settings.removeFrames = elements.removeFrames.checked;
-            
-            localStorage.setItem('viewerSettings', JSON.stringify(settings));
-            
-            showAlert('Settings saved successfully', 'success');
-        }
-        
-        // Load settings
-        function loadSettings() {
-            const savedSettings = localStorage.getItem('viewerSettings');
-            if (savedSettings) {
-                settings = { ...settings, ...JSON.parse(savedSettings) };
-            }
-        }
-        
-        // Update UI based on settings
-        function updateUI() {
-            elements.useDataUrl.checked = settings.useDataUrl;
-            elements.obfuscateContent.checked = settings.obfuscateContent;
-            elements.removeScripts.checked = settings.removeScripts;
-            elements.useBlobUrls.checked = settings.useBlobUrls;
-            elements.useBase64Encoding.checked = settings.useBase64Encoding;
-            elements.useIframeSandbox.checked = settings.useIframeSandbox;
-            elements.userAgentOverride.value = settings.userAgentOverride;
-            elements.fixRelativeUrls.checked = settings.fixRelativeUrls;
-            elements.removeMetadata.checked = settings.removeMetadata;
-            elements.removeFrames.checked = settings.removeFrames;
-        }
-        
-        // Inject custom HTML
-        function injectCustomHtml() {
-            const html = elements.customHtml.value.trim();
-            
-            if (!html) {
-                showAlert('Please enter HTML content', 'error');
-                return;
-            }
-            
-            // Process and display the HTML
-            const processedHtml = processContent(html, '');
-            displayContent(processedHtml);
-            
-            // Show viewer controls
-            elements.viewerControls.style.display = 'flex';
-            
-            // Switch to viewer tab
-            switchTab('viewer');
-            
-            showAlert('Custom HTML injected successfully', 'success');
-        }
-        
-        // Encode URL
-        function encodeUrl() {
-            const url = elements.urlToEncode.value.trim();
+        // Main function to fetch and display a page
+        async function fetchAndDisplayPage() {
+            let url = urlInput.value.trim();
             
             if (!url) {
-                showAlert('Please enter a URL to encode', 'error');
+                showStatus('Please enter a valid URL', 'error');
                 return;
             }
             
-            const method = elements.encodingMethod.value;
-            let encoded;
-            
-            switch (method) {
-                case 'base64':
-                    encoded = btoa(url);
-                    break;
-                case 'hex':
-                    encoded = Array.from(url).map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join('');
-                    break;
-                case 'uri':
-                    encoded = encodeURIComponent(url);
-                    break;
-                case 'binary':
-                    encoded = Array.from(url).map(c => c.charCodeAt(0).toString(2).padStart(8, '0')).join(' ');
-                    break;
-                default:
-                    encoded = btoa(url);
+            // Add https:// if not present and not starting with http://
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+                urlInput.value = url;
             }
             
-            elements.encodedResult.value = encoded;
-        }
-        
-        // Detect blocking extensions
-        async function detectBlockingExtensions() {
-            elements.extensionResults.style.display = 'block';
-            elements.extensionResults.textContent = 'Detecting extensions...';
+            // Show loading
+            setLoading(true);
+            showStatus('Fetching page source...', 'loading');
             
-            const results = {
-                adBlockers: false,
-                contentFilters: false,
-                scriptBlockers: false,
-                proxyBlockers: false,
-                corsRestrictions: false
-            };
-            
-            // Test for ad blockers
             try {
-                const adDiv = document.createElement('div');
-                adDiv.className = 'ad-unit adsbox ad-slot ad-banner ad-placeholder ad-frame';
-                adDiv.style.height = '1px';
-                adDiv.style.width = '1px';
-                adDiv.style.position = 'absolute';
-                adDiv.style.left = '-999px';
-                document.body.appendChild(adDiv);
+                // Add to history
+                addToHistory(url);
                 
-                await new Promise(resolve => setTimeout(resolve, 100));
+                // Step 1: Get the HTML source
+                const html = await fetchHtmlSource(url);
                 
-                if (adDiv.offsetHeight === 0 || adDiv.offsetWidth === 0) {
-                    results.adBlockers = true;
+                // Step 2: Process the HTML
+                let processedHtml = html;
+                
+                if (removeScriptsCheckbox.checked) {
+                    processedHtml = removeScripts(processedHtml);
                 }
                 
-                document.body.removeChild(adDiv);
-            } catch (e) {
-                results.adBlockers = true;
-            }
-            
-            // Test for content filters
-            try {
-                const testUrl = 'https://example.com';
-                const response = await fetch(testUrl, { mode: 'no-cors', cache: 'no-store' });
-                // If we get here, the request wasn't blocked
-            } catch (e) {
-                results.contentFilters = true;
-            }
-            
-            // Test for script blockers
-            try {
-                const script = document.createElement('script');
-                script.textContent = 'window._testScriptExecution = true;';
-                document.head.appendChild(script);
-                document.head.removeChild(script);
-                
-                if (!window._testScriptExecution) {
-                    results.scriptBlockers = true;
+                if (fixLinksCheckbox.checked) {
+                    processedHtml = fixRelativeLinks(processedHtml, url);
                 }
                 
-                delete window._testScriptExecution;
-            } catch (e) {
-                results.scriptBlockers = true;
+                if (removeFramesCheckbox.checked) {
+                    processedHtml = removeIframes(processedHtml);
+                }
+                
+                // Step 3: Convert to data URL and display
+                displayHtml(processedHtml);
+                
+                showStatus('Page loaded successfully!', 'success');
+                setTimeout(() => {
+                    statusContainer.style.display = 'none';
+                }, 3000);
+                
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                setLoading(false);
             }
-            
-            // Test for proxy blockers
-            try {
-                const proxyCheckUrl = 'https://www.google.com';
-                const proxyResponse = await fetch(proxyCheckUrl, { 
-                    mode: 'cors', 
-                    cache: 'no-store',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                });
-                // If we get here without error, proxy might not be blocked
-            } catch (e) {
-                results.proxyBlockers = true;
-            }
-            
-            // Test for CORS restrictions
-            try {
-                const corsCheckUrl = 'https://api.github.com/users/octocat';
-                const corsResponse = await fetch(corsCheckUrl, { mode: 'cors' });
-                // If we get here without error, CORS might not be restricted
-            } catch (e) {
-                results.corsRestrictions = true;
-            }
-            
-            // Display results
-            let resultsHtml = '<h4>Extension Detection Results:</h4><ul>';
-            resultsHtml += `<li>Ad Blockers: ${results.adBlockers ? '✓ Detected' : '✗ Not Detected'}</li>`;
-            resultsHtml += `<li>Content Filters: ${results.contentFilters ? '✓ Detected' : '✗ Not Detected'}</li>`;
-            resultsHtml += `<li>Script Blockers: ${results.scriptBlockers ? '✓ Detected' : '✗ Not Detected'}</li>`;
-            resultsHtml += `<li>Proxy Blockers: ${results.proxyBlockers ? '✓ Detected' : '✗ Not Detected'}</li>`;
-            resultsHtml += `<li>CORS Restrictions: ${results.corsRestrictions ? '✓ Detected' : '✗ Not Detected'}</li>`;
-            resultsHtml += '</ul>';
-            
-            elements.extensionResults.innerHTML = resultsHtml;
         }
         
-        // Helper functions
-        
-        // Check if string is a URL
-        function isUrl(str) {
-            try {
-                new URL(str);
-                return true;
-            } catch (e) {
-                return false;
+        // Fetch HTML source using multiple services
+        async function fetchHtmlSource(url) {
+            const errors = [];
+            
+            // Try each service in order
+            for (const service of sourceServices) {
+                try {
+                    showStatus(`Trying ${service.name}...`, 'loading');
+                    return await service.fetch(url);
+                } catch (error) {
+                    errors.push(`${service.name}: ${error.message}`);
+                    
+                    // If not using CORS proxy, only try the first service
+                    if (!useCorsProxyCheckbox.checked) {
+                        break;
+                    }
+                }
             }
+            
+            // If we get here, all services failed
+            throw new Error(`Failed to fetch HTML source. ${errors.join('. ')}`);
         }
         
         // Remove scripts from HTML
-        function removeScriptsFromHtml(html) {
-            // Create a DOM parser
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            
-            // Remove script tags
-            const scripts = doc.querySelectorAll('script');
-            scripts.forEach(script => script.remove());
-            
-            // Remove inline event handlers
-            const allElements = doc.querySelectorAll('*');
-            allElements.forEach(el => {
-                const attributes = el.attributes;
-                for (let i = attributes.length - 1; i >= 0; i--) {
-                    const attrName = attributes[i].name;
-                    if (attrName.startsWith('on')) {
-                        el.removeAttribute(attrName);
+        function removeScripts(html) {
+            try {
+                // Create a DOM parser
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Remove script tags
+                const scripts =  'text/html');
+                
+                // Remove script tags
+                const scripts = doc.querySelectorAll('script');
+                scripts.forEach(script => script.remove());
+                
+                // Remove inline event handlers
+                const allElements = doc.querySelectorAll('*');
+                allElements.forEach(el => {
+                    const attributes = el.attributes;
+                    for (let i = attributes.length - 1; i >= 0; i--) {
+                        const attrName = attributes[i].name;
+                        if (attrName.startsWith('on')) {
+                            el.removeAttribute(attrName);
+                        }
                     }
-                }
-            });
-            
-            // Return the cleaned HTML
-            return doc.documentElement.outerHTML;
+                });
+                
+                // Return the cleaned HTML
+                return doc.documentElement.outerHTML;
+            } catch (e) {
+                // If parsing fails, use regex as fallback
+                return html
+                    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                    .replace(/on\w+="[^"]*"/gi, '')
+                    .replace(/on\w+='[^']*'/gi, '');
+            }
         }
         
-        // Fix relative URLs in HTML
-        function fixRelativeUrls(html, baseUrl) {
+        // Fix relative links in HTML
+        function fixRelativeLinks(html, baseUrl) {
             try {
                 const base = new URL(baseUrl);
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 
+                // Add base tag to head
+                const head = doc.querySelector('head');
+                if (head) {
+                    const baseTag = doc.createElement('base');
+                    baseTag.href = base.origin + '/';
+                    head.insertBefore(baseTag, head.firstChild);
+                }
+                
                 // Fix links
                 doc.querySelectorAll('a[href]').forEach(a => {
                     try {
-                        a.href = new URL(a.getAttribute('href'), base).href;
+                        const href = a.getAttribute('href');
+                        if (!href.startsWith('http') && !href.startsWith('#') && !href.startsWith('javascript:')) {
+                            a.href = new URL(href, base).href;
+                        }
                     } catch (e) {}
                 });
                 
                 // Fix images
                 doc.querySelectorAll('img[src]').forEach(img => {
                     try {
-                        img.src = new URL(img.getAttribute('src'), base).href;
+                        const src = img.getAttribute('src');
+                        if (!src.startsWith('http') && !src.startsWith('data:')) {
+                            img.src = new URL(src, base).href;
+                        }
                     } catch (e) {}
                 });
                 
                 // Fix stylesheets
                 doc.querySelectorAll('link[rel="stylesheet"][href]').forEach(link => {
                     try {
-                        link.href = new URL(link.getAttribute('href'), base).href;
+                        const href = link.getAttribute('href');
+                        if (!href.startsWith('http')) {
+                            link.href = new URL(href, base).href;
+                        }
                     } catch (e) {}
-                });
-                
-                // Fix scripts
-                doc.querySelectorAll('script[src]').forEach(script => {
-                    try {
-                        script.src = new URL(script.getAttribute('src'), base).href;
-                    } catch (e) {}
-                });
-                
-                // Fix background images in inline styles
-                doc.querySelectorAll('[style*="background"]').forEach(el => {
-                    const style = el.getAttribute('style');
-                    if (style) {
-                        const newStyle = style.replace(/url$$['"]?([^'")]+)['"]?$$/g, (match, url) => {
-                            try {
-                                const absoluteUrl = new URL(url, base).href;
-                                return `url('${absoluteUrl}')`;
-                            } catch (e) {
-                                return match;
-                            }
-                        });
-                        el.setAttribute('style', newStyle);
-                    }
                 });
                 
                 return doc.documentElement.outerHTML;
             } catch (e) {
-                // If anything goes wrong, return the original HTML
+                // If there's an error parsing the URL, return the original HTML
                 return html;
             }
         }
         
-        // Remove metadata from HTML
-        function removeMetadata(html) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            
-            // Remove meta tags
-            doc.querySelectorAll('meta').forEach(meta => meta.remove());
-            
-            // Remove link tags except stylesheets
-            doc.querySelectorAll('link:not([rel="stylesheet"])').forEach(link => link.remove());
-            
-            return doc.documentElement.outerHTML;
-        }
-        
         // Remove iframes from HTML
         function removeIframes(html) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            
-            // Remove iframe tags
-            doc.querySelectorAll('iframe').forEach(iframe => iframe.remove());
-            
-            return doc.documentElement.outerHTML;
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Remove iframe tags
+                doc.querySelectorAll('iframe').forEach(iframe => iframe.remove());
+                
+                return doc.documentElement.outerHTML;
+            } catch (e) {
+                // If parsing fails, use regex as fallback
+                return html.replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
+            }
         }
         
-        // Obfuscate HTML
-        function obfuscateHtml(html) {
-            // Simple obfuscation: convert tags to entities
-            return html
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/&lt;/g, '<')
-                .replace(/&gt;/g, '>')
-                .replace(/class=/g, 'cl\u200Bass=')
-                .replace(/id=/g, 'i\u200Bd=')
-                .replace(/style=/g, 'st\u200Byle=');
+        // Display HTML in the iframe using a data URL
+        function displayHtml(html) {
+            try {
+                // Convert HTML to a data URL
+                currentDataUrl = createDataUrl(html);
+                
+                // Display in iframe
+                contentFrame.src = currentDataUrl;
+                viewerContainer.style.display = 'block';
+            } catch (e) {
+                showStatus(`Error displaying content: ${e.message}`, 'error');
+            }
+        }
+        
+        // Create a data URL from HTML
+        function createDataUrl(html) {
+            try {
+                // Base64 encode the HTML
+                const base64Html = btoa(unescape(encodeURIComponent(html)));
+                return `data:text/html;base64,${base64Html}`;
+            } catch (e) {
+                // Handle very large content
+                if (e.message.includes('Maximum call stack size exceeded') || 
+                    e.message.includes('Invalid string length')) {
+                    showStatus('Content too large for data URL. Trying alternative method...', 'warning');
+                    
+                    // Create a blob URL instead
+                    const blob = new Blob([html], { type: 'text/html' });
+                    return URL.createObjectURL(blob);
+                } else {
+                    throw e;
+                }
+            }
+        }
+        
+        // Show status message
+        function showStatus(message, type) {
+            statusContainer.innerHTML = '';
+            
+            if (type === 'loading') {
+                const spinner = document.createElement('div');
+                spinner.className = 'spinner';
+                spinner.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                spinner.style.borderTopColor = '#3b82f6';
+                statusContainer.appendChild(spinner);
+            }
+            
+            const messageSpan = document.createElement('span');
+            messageSpan.textContent = message;
+            statusContainer.appendChild(messageSpan);
+            
+            statusContainer.className = `status ${type}`;
+            statusContainer.style.display = 'flex';
+        }
+        
+        // Set loading state
+        function setLoading(isLoading) {
+            if (isLoading) {
+                btnText.style.display = 'none';
+                btnSpinner.style.display = 'block';
+                viewBtn.disabled = true;
+            } else {
+                btnText.style.display = 'block';
+                btnSpinner.style.display = 'none';
+                viewBtn.disabled = false;
+            }
+        }
+        
+        // Copy data URL to clipboard
+        function copyDataUrl() {
+            if (!currentDataUrl) return;
+            
+            navigator.clipboard.writeText(currentDataUrl)
+                .then(() => {
+                    showStatus('Data URL copied to clipboard!', 'success');
+                    setTimeout(() => {
+                        statusContainer.style.display = 'none';
+                    }, 3000);
+                })
+                .catch(err => {
+                    showStatus('Failed to copy: ' + err, 'error');
+                });
+        }
+        
+        // Open in new tab
+        function openInNewTab() {
+            if (!currentDataUrl) return;
+            
+            window.open(currentDataUrl, '_blank');
+        }
+        
+        // Clear viewer
+        function clearViewer() {
+            urlInput.value = '';
+            viewerContainer.style.display = 'none';
+            currentDataUrl = '';
+            
+            // Clear iframe
+            contentFrame.src = 'about:blank';
+            
+            showStatus('Viewer cleared', 'success');
+            setTimeout(() => {
+                statusContainer.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Add URL to history
+        function addToHistory(url) {
+            // Remove if already exists
+            urlHistory = urlHistory.filter(item => item !== url);
+            
+            // Add to beginning
+            urlHistory.unshift(url);
+            
+            // Limit to 10 items
+            if (urlHistory.length > 10) {
+                urlHistory.pop();
+            }
+            
+            // Save to localStorage
+            saveHistory();
+        }
+        
+        // Save history to localStorage
+        function saveHistory() {
+            try {
+                localStorage.setItem('urlHistory', JSON.stringify(urlHistory));
+            } catch (e) {
+                console.error('Failed to save history:', e);
+            }
+        }
+        
+        // Load history from localStorage
+        function loadHistory() {
+            try {
+                const saved = localStorage.getItem('urlHistory');
+                if (saved) {
+                    urlHistory = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.error('Failed to load history:', e);
+                urlHistory = [];
+            }
+        }
+        
+        // Show history dropdown
+        function showHistoryDropdown() {
+            if (urlHistory.length === 0) return;
+            
+            historyDropdown.innerHTML = '';
+            
+            urlHistory.forEach(url => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.textContent = url;
+                item.addEventListener('click', () => {
+                    urlInput.value = url;
+                    hideHistoryDropdown();
+                    fetchAndDisplayPage();
+                });
+                historyDropdown.appendChild(item);
+            });
+            
+            historyDropdown.style.display = 'block';
+        }
+        
+        // Hide history dropdown
+        function hideHistoryDropdown() {
+            historyDropdown.style.display = 'none';
+        }
+        
+        // Filter history dropdown based on input
+        function filterHistoryDropdown() {
+            const filter = urlInput.value.toLowerCase();
+            
+            const items = historyDropdown.querySelectorAll('.history-item');
+            let hasVisibleItems = false;
+            
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(filter)) {
+                    item.style.display = 'block';
+                    hasVisibleItems = true;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // Hide dropdown if no matching items
+            if (!hasVisibleItems) {
+                hideHistoryDropdown();
+            } else {
+                historyDropdown.style.display = 'block';
+            }
+        }
+        
+        // Toggle theme
+        function toggleTheme() {
+            if (themeToggle.checked) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        // Load theme preference
+        function loadThemePreference() {
+            const savedTheme = localStorage.getItem('theme');
+            
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeToggle.checked = true;
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                themeToggle.checked = false;
+            }
+            
+            // Also check system preference if no saved preference
+            if (!savedTheme) {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (prefersDark) {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    themeToggle.checked = true;
+                }
+            }
         }
         
         // Initialize the application
