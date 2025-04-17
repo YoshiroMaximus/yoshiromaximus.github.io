@@ -280,6 +280,48 @@
             stroke-linejoin: round;
             fill: none;
         }
+
+        /* Dark mode styles */
+        body.dark-mode {
+            background-color: #1f2937;
+            color: #f5f5f5;
+        }
+
+        body.dark-mode .container {
+            background-color: #374151;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        body.dark-mode input[type="url"] {
+            background-color: #4b5563;
+            color: #f5f5f5;
+            border-color: #6b7280;
+        }
+
+        body.dark-mode input[type="url"]:focus {
+            border-color: var(--primary-hover);
+        }
+
+        body.dark-mode .btn {
+            background-color: var(--primary-hover);
+        }
+
+        body.dark-mode .btn:hover {
+            background-color: var(--primary-color);
+        }
+
+        body.dark-mode .history-dropdown {
+            background-color: #4b5563;
+            color: #f5f5f5;
+        }
+
+        body.dark-mode .history-item:hover {
+            background-color: #6b7280;
+        }
+
+        body.dark-mode .status {
+            color: #d1d5db;
+        }
     </style>
 </head>
 <body>
@@ -348,6 +390,12 @@
                             <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
                         </svg>
                     </button>
+                    <button id="dark-mode-toggle" class="btn-icon tooltip">
+                        <span class="tooltip-text">Toggle Dark Mode</span>
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M12 3v1M12 20v1M4.22 4.22l.71.71M18.36 18.36l.71.71M1 12h1M20 12h1M4.22 19.78l.71-.71M18.36 5.64l.71-.71M12 7a5 5 0 100 10 5 5 0 000-10z"></path>
+                        </svg>
+                    </button>
                 </div>
             </div>
             
@@ -379,6 +427,7 @@
         const copyUrlBtn = document.getElementById('copy-url-btn');
         const fullscreenBtn = document.getElementById('fullscreen-btn');
         const historyDropdown = document.getElementById('history-dropdown');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
         
         // Current data URL
         let currentDataUrl = '';
@@ -501,6 +550,21 @@
             // Fullscreen button
             fullscreenBtn.addEventListener('click', () => {
                 openInNewTab();
+            });
+
+            // Dark mode toggle
+            darkModeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                localStorage.setItem('darkMode', isDarkMode ? 'enabled' : 'disabled');
+            });
+
+            // Load dark mode preference on page load
+            document.addEventListener('DOMContentLoaded', () => {
+                const darkModePreference = localStorage.getItem('darkMode');
+                if (darkModePreference === 'enabled') {
+                    document.body.classList.add('dark-mode');
+                }
             });
         }
         
