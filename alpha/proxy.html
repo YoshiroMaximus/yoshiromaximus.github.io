@@ -6,46 +6,21 @@
     <title>HTML Source Viewer</title>
     <style>
         :root {
-            /* Light theme variables */
             --primary-color: #4f46e5;
             --primary-hover: #4338ca;
             --bg-color: #f5f5f5;
             --card-bg: #ffffff;
             --text-color: #1f2937;
-            --text-secondary: #6b7280;
             --border-color: #e5e7eb;
             --success-color: #10b981;
             --error-color: #ef4444;
             --warning-color: #f59e0b;
-            --info-color: #3b82f6;
-            --shadow-color: rgba(0, 0, 0, 0.1);
-            --input-bg: #ffffff;
-            --dropdown-hover: #f9fafb;
-        }
-        
-        [data-theme="dark"] {
-            /* Dark theme variables */
-            --primary-color: #6366f1;
-            --primary-hover: #818cf8;
-            --bg-color: #111827;
-            --card-bg: #1f2937;
-            --text-color: #f9fafb;
-            --text-secondary: #9ca3af;
-            --border-color: #374151;
-            --success-color: #34d399;
-            --error-color: #f87171;
-            --warning-color: #fbbf24;
-            --info-color: #60a5fa;
-            --shadow-color: rgba(0, 0, 0, 0.3);
-            --input-bg: #374151;
-            --dropdown-hover: #374151;
         }
         
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
         }
         
         body {
@@ -54,91 +29,21 @@
             color: var(--text-color);
             line-height: 1.6;
             padding: 20px;
-            min-height: 100vh;
         }
         
         .container {
             max-width: 1200px;
             margin: 0 auto;
             background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 4px 12px var(--shadow-color);
-        }
-        
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-            gap: 16px;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
         h1 {
             color: var(--primary-color);
-            margin: 0;
-            font-size: 1.8rem;
-        }
-        
-        .theme-switch {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 48px;
-            height: 24px;
-        }
-        
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
-        }
-        
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        
-        input:checked + .slider {
-            background-color: var(--primary-color);
-        }
-        
-        input:focus + .slider {
-            box-shadow: 0 0 1px var(--primary-color);
-        }
-        
-        input:checked + .slider:before {
-            transform: translateX(24px);
-        }
-        
-        .theme-icon {
-            width: 16px;
-            height: 16px;
+            text-align: center;
+            margin-bottom: 20px;
         }
         
         .input-group {
@@ -149,19 +54,16 @@
         
         input[type="url"] {
             flex: 1;
-            padding: 12px 16px;
+            padding: 12px;
             border: 1px solid var(--border-color);
-            border-radius: 8px 0 0 8px;
+            border-radius: 4px 0 0 4px;
             font-size: 16px;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            background-color: var(--input-bg);
-            color: var(--text-color);
+            transition: border-color 0.2s;
         }
         
         input[type="url"]:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
         }
         
         .btn {
@@ -169,11 +71,10 @@
             color: white;
             border: none;
             padding: 12px 20px;
-            border-radius: 0 8px 8px 0;
+            border-radius: 0 4px 4px 0;
             cursor: pointer;
             font-size: 16px;
-            font-weight: 500;
-            transition: background-color 0.2s, transform 0.1s;
+            transition: background-color 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -184,105 +85,83 @@
             background-color: var(--primary-hover);
         }
         
-        .btn:active {
-            transform: translateY(1px);
-        }
-        
         .btn-icon {
             background-color: var(--primary-color);
             color: white;
             border: none;
             width: 40px;
             height: 40px;
-            border-radius: 8px;
+            border-radius: 4px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background-color 0.2s, transform 0.1s;
+            transition: background-color 0.2s;
         }
         
         .btn-icon:hover {
             background-color: var(--primary-hover);
         }
         
-        .btn-icon:active {
-            transform: translateY(1px);
-        }
-        
         .status {
             margin-bottom: 20px;
-            padding: 12px 16px;
-            border-radius: 8px;
+            padding: 12px;
+            border-radius: 4px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            gap: 10px;
         }
         
         .status.loading {
-            background-color: rgba(59, 130, 246, 0.1);
-            border: 1px solid var(--info-color);
-            color: var(--info-color);
+            background-color: #f0f9ff;
+            border: 1px solid #bae6fd;
+            color: #0369a1;
         }
         
         .status.error {
-            background-color: rgba(239, 68, 68, 0.1);
-            border: 1px solid var(--error-color);
-            color: var(--error-color);
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
         }
         
         .status.success {
-            background-color: rgba(16, 185, 129, 0.1);
-            border: 1px solid var(--success-color);
-            color: var(--success-color);
-        }
-        
-        .status.warning {
-            background-color: rgba(245, 158, 11, 0.1);
-            border: 1px solid var(--warning-color);
-            color: var(--warning-color);
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #15803d;
         }
         
         .viewer {
             width: 100%;
             height: 600px;
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 4px;
             overflow: hidden;
             position: relative;
-            transition: height 0.3s;
         }
         
         iframe {
             width: 100%;
             height: 100%;
             border: none;
-            background-color: white; /* Always white for content */
         }
         
         .viewer-controls {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 16px;
+            margin-bottom: 15px;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 10px;
         }
         
         .viewer-controls-left, .viewer-controls-right {
             display: flex;
-            gap: 8px;
+            gap: 10px;
         }
         
         .options {
             display: flex;
             flex-wrap: wrap;
-            gap: 16px;
+            gap: 15px;
             margin-bottom: 20px;
         }
         
@@ -295,13 +174,12 @@
         .checkbox-group input[type="checkbox"] {
             width: 16px;
             height: 16px;
-            accent-color: var(--primary-color);
         }
         
         .footer {
-            margin-top: 24px;
+            margin-top: 20px;
             text-align: center;
-            color: var(--text-secondary);
+            color: #6b7280;
             font-size: 14px;
         }
         
@@ -324,32 +202,24 @@
             top: 100%;
             left: 0;
             right: 0;
-            background-color: var(--card-bg);
+            background-color: white;
             border: 1px solid var(--border-color);
-            border-radius: 0 0 8px 8px;
-            box-shadow: 0 4px 12px var(--shadow-color);
+            border-radius: 0 0 4px 4px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             z-index: 10;
             max-height: 200px;
             overflow-y: auto;
             display: none;
-            animation: slideDown 0.2s ease-out;
-        }
-        
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
         }
         
         .history-item {
-            padding: 12px 16px;
+            padding: 10px;
             cursor: pointer;
             border-bottom: 1px solid var(--border-color);
-            transition: background-color 0.2s;
-            color: var(--text-color);
         }
         
         .history-item:hover {
-            background-color: var(--dropdown-hover);
+            background-color: #f9fafb;
         }
         
         .history-item:last-child {
@@ -363,11 +233,11 @@
         .tooltip .tooltip-text {
             visibility: hidden;
             width: 120px;
-            background-color: rgba(0, 0, 0, 0.8);
+            background-color: #333;
             color: #fff;
             text-align: center;
-            border-radius: 6px;
-            padding: 5px 8px;
+            border-radius: 4px;
+            padding: 5px;
             position: absolute;
             z-index: 1;
             bottom: 125%;
@@ -376,18 +246,6 @@
             opacity: 0;
             transition: opacity 0.3s;
             font-size: 12px;
-            pointer-events: none;
-        }
-        
-        .tooltip .tooltip-text::after {
-            content: "";
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
         }
         
         .tooltip:hover .tooltip-text {
@@ -395,24 +253,21 @@
             opacity: 1;
         }
         
-        .resize-handle {
-            height: 10px;
-            background-color: var(--border-color);
-            cursor: ns-resize;
-            border-radius: 0 0 8px 8px;
-            position: relative;
-        }
-        
-        .resize-handle::after {
-            content: "";
-            position: absolute;
-            width: 30px;
-            height: 4px;
-            background-color: var(--text-secondary);
-            border-radius: 2px;
-            top: 3px;
-            left: 50%;
-            transform: translateX(-50%);
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .viewer-controls {
+                flex-direction: column;
+            }
+            
+            .viewer-controls-left, .viewer-controls-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .options {
+                flex-direction: column;
+                gap: 10px;
+            }
         }
         
         /* Icons */
@@ -425,89 +280,11 @@
             stroke-linejoin: round;
             fill: none;
         }
-        
-        /* Responsive styles */
-        @media (max-width: 768px) {
-            .container {
-                padding: 16px;
-            }
-            
-            .header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .theme-switch {
-                align-self: flex-end;
-            }
-            
-            .viewer-controls {
-                flex-direction: column;
-            }
-            
-            .viewer-controls-left, .viewer-controls-right {
-                width: 100%;
-                justify-content: space-between;
-            }
-            
-            .options {
-                flex-direction: column;
-                gap: 12px;
-            }
-            
-            .viewer {
-                height: 400px;
-            }
-        }
-        
-        /* Scrollbar styling */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: var(--bg-color);
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--text-secondary);
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>HTML Source Viewer</h1>
-            
-            <div class="theme-switch">
-                <svg class="theme-icon" viewBox="0 0 24 24" id="sun-icon">
-                    <circle cx="12" cy="12" r="5"></circle>
-                    <line x1="12" y1="1" x2="12" y2="3"></line>
-                    <line x1="12" y1="21" x2="12" y2="23"></line>
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                    <line x1="1" y1="12" x2="3" y2="12"></line>
-                    <line x1="21" y1="12" x2="23" y2="12"></line>
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                </svg>
-                
-                <label class="switch">
-                    <input type="checkbox" id="theme-toggle">
-                    <span class="slider"></span>
-                </label>
-                
-                <svg class="theme-icon" viewBox="0 0 24 24" id="moon-icon">
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                </svg>
-            </div>
-        </div>
+        <h1>HTML Source Viewer</h1>
         
         <form id="url-form">
             <div class="input-group">
@@ -562,15 +339,6 @@
                             <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
                         </svg>
                     </button>
-                    
-                    <button id="clear-btn" class="btn-icon tooltip">
-                        <span class="tooltip-text">Clear</span>
-                        <svg class="icon" viewBox="0 0 24 24">
-                            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
-                            <line x1="10" y1="11" x2="10" y2="17"></line>
-                            <line x1="14" y1="11" x2="14" y2="17"></line>
-                        </svg>
-                    </button>
                 </div>
                 
                 <div class="viewer-controls-right">
@@ -586,8 +354,6 @@
             <div class="viewer">
                 <iframe id="content-frame" sandbox="allow-same-origin"></iframe>
             </div>
-            
-            <div class="resize-handle" id="resize-handle"></div>
         </div>
         
         <div class="footer">
@@ -612,10 +378,7 @@
         const refreshBtn = document.getElementById('refresh-btn');
         const copyUrlBtn = document.getElementById('copy-url-btn');
         const fullscreenBtn = document.getElementById('fullscreen-btn');
-        const clearBtn = document.getElementById('clear-btn');
         const historyDropdown = document.getElementById('history-dropdown');
-        const themeToggle = document.getElementById('theme-toggle');
-        const resizeHandle = document.getElementById('resize-handle');
         
         // Current data URL
         let currentDataUrl = '';
@@ -663,19 +426,6 @@
                 }
             },
             {
-                name: 'corsproxy.io',
-                fetch: async (url) => {
-                    const sourceUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-                    const response = await fetch(sourceUrl);
-                    
-                    if (!response.ok) {
-                        throw new Error(`Failed to fetch from corsproxy.io: ${response.status}`);
-                    }
-                    
-                    return await response.text();
-                }
-            },
-            {
                 name: 'cors-anywhere.herokuapp.com',
                 fetch: async (url) => {
                     const sourceUrl = `https://cors-anywhere.herokuapp.com/${url}`;
@@ -689,13 +439,13 @@
                 }
             },
             {
-                name: 'proxy.cors.sh',
+                name: 'corsproxy.io',
                 fetch: async (url) => {
-                    const sourceUrl = `https://proxy.cors.sh/${url}`;
+                    const sourceUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
                     const response = await fetch(sourceUrl);
                     
                     if (!response.ok) {
-                        throw new Error(`Failed to fetch from proxy.cors.sh: ${response.status}`);
+                        throw new Error(`Failed to fetch from corsproxy.io: ${response.status}`);
                     }
                     
                     return await response.text();
@@ -707,9 +457,6 @@
         function init() {
             // Load URL history from localStorage
             loadHistory();
-            
-            // Load theme preference
-            loadThemePreference();
             
             // Set up event listeners
             setupEventListeners();
@@ -754,50 +501,6 @@
             // Fullscreen button
             fullscreenBtn.addEventListener('click', () => {
                 openInNewTab();
-            });
-            
-            // Clear button
-            clearBtn.addEventListener('click', () => {
-                clearViewer();
-            });
-            
-            // Theme toggle
-            themeToggle.addEventListener('change', () => {
-                toggleTheme();
-            });
-            
-            // Resize handle for viewer height
-            let isResizing = false;
-            let startY, startHeight;
-            
-            resizeHandle.addEventListener('mousedown', (e) => {
-                isResizing = true;
-                startY = e.clientY;
-                startHeight = parseInt(document.defaultView.getComputedStyle(document.querySelector('.viewer')).height, 10);
-                
-                document.addEventListener('mousemove', handleMouseMove);
-                document.addEventListener('mouseup', () => {
-                    isResizing = false;
-                    document.removeEventListener('mousemove', handleMouseMove);
-                });
-            });
-            
-            function handleMouseMove(e) {
-                if (!isResizing) return;
-                const newHeight = startHeight + (e.clientY - startY);
-                if (newHeight > 200) { // Minimum height
-                    document.querySelector('.viewer').style.height = `${newHeight}px`;
-                }
-            }
-            
-            // Handle keyboard shortcuts
-            document.addEventListener('keydown', (e) => {
-                // Ctrl+Enter to submit form
-                if (e.ctrlKey && e.key === 'Enter') {
-                    if (document.activeElement === urlInput) {
-                        fetchAndDisplayPage();
-                    }
-                }
             });
         }
         
@@ -864,7 +567,6 @@
             // Try each service in order
             for (const service of sourceServices) {
                 try {
-                    showStatus(`Trying ${service.name}...`, 'loading');
                     return await service.fetch(url);
                 } catch (error) {
                     errors.push(`${service.name}: ${error.message}`);
@@ -882,39 +584,28 @@
         
         // Remove scripts from HTML
         function removeScripts(html) {
-            try {
-                // Create a DOM parser
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                
-                // Remove script tags
-                const scripts =  'text/html');
-                
-                // Remove script tags
-                const scripts = doc.querySelectorAll('script');
-                scripts.forEach(script => script.remove());
-                
-                // Remove inline event handlers
-                const allElements = doc.querySelectorAll('*');
-                allElements.forEach(el => {
-                    const attributes = el.attributes;
-                    for (let i = attributes.length - 1; i >= 0; i--) {
-                        const attrName = attributes[i].name;
-                        if (attrName.startsWith('on')) {
-                            el.removeAttribute(attrName);
-                        }
+            // Create a DOM parser
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Remove script tags
+            const scripts = doc.querySelectorAll('script');
+            scripts.forEach(script => script.remove());
+            
+            // Remove inline event handlers
+            const allElements = doc.querySelectorAll('*');
+            allElements.forEach(el => {
+                const attributes = el.attributes;
+                for (let i = attributes.length - 1; i >= 0; i--) {
+                    const attrName = attributes[i].name;
+                    if (attrName.startsWith('on')) {
+                        el.removeAttribute(attrName);
                     }
-                });
-                
-                // Return the cleaned HTML
-                return doc.documentElement.outerHTML;
-            } catch (e) {
-                // If parsing fails, use regex as fallback
-                return html
-                    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                    .replace(/on\w+="[^"]*"/gi, '')
-                    .replace(/on\w+='[^']*'/gi, '');
-            }
+                }
+            });
+            
+            // Return the cleaned HTML
+            return doc.documentElement.outerHTML;
         }
         
         // Fix relative links in HTML
@@ -971,53 +662,30 @@
         
         // Remove iframes from HTML
         function removeIframes(html) {
-            try {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                
-                // Remove iframe tags
-                doc.querySelectorAll('iframe').forEach(iframe => iframe.remove());
-                
-                return doc.documentElement.outerHTML;
-            } catch (e) {
-                // If parsing fails, use regex as fallback
-                return html.replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
-            }
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Remove iframe tags
+            doc.querySelectorAll('iframe').forEach(iframe => iframe.remove());
+            
+            return doc.documentElement.outerHTML;
         }
         
         // Display HTML in the iframe using a data URL
         function displayHtml(html) {
-            try {
-                // Convert HTML to a data URL
-                currentDataUrl = createDataUrl(html);
-                
-                // Display in iframe
-                contentFrame.src = currentDataUrl;
-                viewerContainer.style.display = 'block';
-            } catch (e) {
-                showStatus(`Error displaying content: ${e.message}`, 'error');
-            }
+            // Convert HTML to a data URL
+            currentDataUrl = createDataUrl(html);
+            
+            // Display in iframe
+            contentFrame.src = currentDataUrl;
+            viewerContainer.style.display = 'block';
         }
         
         // Create a data URL from HTML
         function createDataUrl(html) {
-            try {
-                // Base64 encode the HTML
-                const base64Html = btoa(unescape(encodeURIComponent(html)));
-                return `data:text/html;base64,${base64Html}`;
-            } catch (e) {
-                // Handle very large content
-                if (e.message.includes('Maximum call stack size exceeded') || 
-                    e.message.includes('Invalid string length')) {
-                    showStatus('Content too large for data URL. Trying alternative method...', 'warning');
-                    
-                    // Create a blob URL instead
-                    const blob = new Blob([html], { type: 'text/html' });
-                    return URL.createObjectURL(blob);
-                } else {
-                    throw e;
-                }
-            }
+            // Base64 encode the HTML
+            const base64Html = btoa(unescape(encodeURIComponent(html)));
+            return `data:text/html;base64,${base64Html}`;
         }
         
         // Show status message
@@ -1027,8 +695,8 @@
             if (type === 'loading') {
                 const spinner = document.createElement('div');
                 spinner.className = 'spinner';
-                spinner.style.borderColor = 'rgba(59, 130, 246, 0.3)';
-                spinner.style.borderTopColor = '#3b82f6';
+                spinner.style.borderColor = 'rgba(3, 105, 161, 0.3)';
+                spinner.style.borderTopColor = '#0369a1';
                 statusContainer.appendChild(spinner);
             }
             
@@ -1076,21 +744,6 @@
             window.open(currentDataUrl, '_blank');
         }
         
-        // Clear viewer
-        function clearViewer() {
-            urlInput.value = '';
-            viewerContainer.style.display = 'none';
-            currentDataUrl = '';
-            
-            // Clear iframe
-            contentFrame.src = 'about:blank';
-            
-            showStatus('Viewer cleared', 'success');
-            setTimeout(() => {
-                statusContainer.style.display = 'none';
-            }, 3000);
-        }
-        
         // Add URL to history
         function addToHistory(url) {
             // Remove if already exists
@@ -1110,23 +763,18 @@
         
         // Save history to localStorage
         function saveHistory() {
-            try {
-                localStorage.setItem('urlHistory', JSON.stringify(urlHistory));
-            } catch (e) {
-                console.error('Failed to save history:', e);
-            }
+            localStorage.setItem('urlHistory', JSON.stringify(urlHistory));
         }
         
         // Load history from localStorage
         function loadHistory() {
-            try {
-                const saved = localStorage.getItem('urlHistory');
-                if (saved) {
+            const saved = localStorage.getItem('urlHistory');
+            if (saved) {
+                try {
                     urlHistory = JSON.parse(saved);
+                } catch (e) {
+                    urlHistory = [];
                 }
-            } catch (e) {
-                console.error('Failed to load history:', e);
-                urlHistory = [];
             }
         }
         
@@ -1161,57 +809,14 @@
             const filter = urlInput.value.toLowerCase();
             
             const items = historyDropdown.querySelectorAll('.history-item');
-            let hasVisibleItems = false;
-            
             items.forEach(item => {
                 const text = item.textContent.toLowerCase();
                 if (text.includes(filter)) {
                     item.style.display = 'block';
-                    hasVisibleItems = true;
                 } else {
                     item.style.display = 'none';
                 }
             });
-            
-            // Hide dropdown if no matching items
-            if (!hasVisibleItems) {
-                hideHistoryDropdown();
-            } else {
-                historyDropdown.style.display = 'block';
-            }
-        }
-        
-        // Toggle theme
-        function toggleTheme() {
-            if (themeToggle.checked) {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                document.documentElement.setAttribute('data-theme', 'light');
-                localStorage.setItem('theme', 'light');
-            }
-        }
-        
-        // Load theme preference
-        function loadThemePreference() {
-            const savedTheme = localStorage.getItem('theme');
-            
-            if (savedTheme === 'dark') {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                themeToggle.checked = true;
-            } else {
-                document.documentElement.setAttribute('data-theme', 'light');
-                themeToggle.checked = false;
-            }
-            
-            // Also check system preference if no saved preference
-            if (!savedTheme) {
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (prefersDark) {
-                    document.documentElement.setAttribute('data-theme', 'dark');
-                    themeToggle.checked = true;
-                }
-            }
         }
         
         // Initialize the application
