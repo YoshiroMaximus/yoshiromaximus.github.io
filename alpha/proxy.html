@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Viewer</title>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f9fafb;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+            --border-color: #e5e7eb;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #4f46e5, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            color: #6b7280;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.15s ease-in-out;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .btn {
+            display: inline-block;
+            font-weight: 500;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            user-select: none;
+            border: 1px solid transparent;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            border-radius: 0.5rem;
+            transition: all 0.15s ease-in-out;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            color: #fff;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+        
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+            transition: all 0.15s ease-in-out;
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .alert-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success-color);
+            color: var(--success-color);
+        }
+        
+        .alert-error {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error-color);
+            color: var(--error-color);
+        }
+        
+        .alert-warning {
+            background-color: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--warning-color);
+            color: var(--warning-color);
+        }
+        
+        .viewer {
+            width: 100%;
+            height: 600px;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .viewer iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .viewer-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        
+        .viewer-controls button {
+            padding: 0.5rem 1rem;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            margin: 0;
+        }
+        
+        .settings-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .settings-group h3 {
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .code-block {
+            background-color: #f8f9fa;
+            border: 1px solid #eaecef;
+            border-radius: 6px;
+            padding: 16px;
+            overflow-x: auto;
+            font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+            font-size: 85%;
+            line-height: 1.45;
+            margin-bottom: 16px;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(79, 70, 229, 0.1);
+            border-radius: 50%;
+            border-left-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .card {
+                padding: 1rem;
+            }
+            
+            .viewer {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Document Viewer</h1>
+            <p>View web content securely within this domain</p>
+        </div>
+        
+        <div class="card">
+            <div class="tabs">
+                <div class="tab active" data-tab="viewer">Viewer</div>
+                <div class="tab" data-tab="settings">Settings</div>
+                <div class="tab" data-tab="advanced">Advanced</div>
+                <div class="tab" data-tab="help">Help</div>
+            </div>
+            
+            <div class="tab-content active" id="viewer-tab">
+                <div id="alert-container"></div>
+                
+                <form id="viewer-form">
+                    <div class="form-group">
+                        <label for="url-input">Enter URL or HTML Content</label>
+                        <input type="text" class="form-control" id="url-input" placeholder="https://example.com or paste HTML content">
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="use-data-url" checked>
+                        <label for="use-data-url">Use data URL (recommended for bypassing)</label>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="obfuscate-content">
+                        <label for="obfuscate-content">Obfuscate content</label>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="remove-scripts" checked>
+                        <label for="remove-scripts">Remove scripts (safer)</label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block">Load Content</button>
+                </form>
+                
+                <div class="viewer-controls" style="display: none;">
+                    <button id="refresh-btn" class="btn btn-primary">Refresh</button>
+                    <button id="clear-btn" class="btn">Clear</button>
+                </div>
+                
+                <div class="viewer" id="content-viewer" style="display: none;">
+                    <iframe id="viewer-iframe" sandbox="allow-same-origin"></iframe>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="settings-tab">
+                <div class="settings-group">
+                    <h3>Bypass Settings</h3>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="use-blob-urls" checked>
+                        <label for="use-blob-urls">Use Blob URLs when possible</label>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="use-base64-encoding" checked>
+                        <label for="use-base64-encoding">Use Base64 encoding</label>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="use-iframe-sandbox" checked>
+                        <label for="use-iframe-sandbox">Use iframe sandbox</label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="user-agent-override">User-Agent Override</label>
+                        <input type="text" class="form-control" id="user-agent-override" placeholder="Leave empty for default">
+                    </div>
+                </div>
+                
+                <div class="settings-group">
+                    <h3>Content Processing</h3>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="fix-relative-urls" checked>
+                        <label for="fix-relative-urls">Fix relative URLs</label>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="remove-metadata" checked>
+                        <label for="remove-metadata">Remove metadata</label>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="remove-frames">
+                        <label for="remove-frames">Remove iframes</label>
+                    </div>
+                </div>
+                
+                <button id="save-settings" class="btn btn-primary">Save Settings</button>
+            </div>
+            
+            <div class="tab-content" id="advanced-tab">
+                <div class="settings-group">
+                    <h3>Custom HTML Injection</h3>
+                    <p>Inject custom HTML directly into the viewer</p>
+                    
+                    <div class="form-group">
+                        <textarea class="form-control" id="custom-html" rows="10" placeholder="Enter custom HTML here"></textarea>
+                    </div>
+                    
+                    <button id="inject-html" class="btn btn-primary">Inject HTML</button>
+                </div>
+                
+                <div class="settings-group">
+                    <h3>URL Encoder</h3>
+                    <p>Encode URLs to bypass detection</p>
+                    
+                    <div class="form-group">
+                        <input type="text" class="form-control" id="url-to-encode" placeholder="Enter URL to encode">
+                    </div>
+                    
+                    <div class="form-group">
+                        <select class="form-control" id="encoding-method">
+                            <option value="base64">Base64</option>
+                            <option value="hex">Hexadecimal</option>
+                            <option value="uri">URI Component</option>
+                            <option value="binary">Binary</option>
+                        </select>
+                    </div>
+                    
+                    <button id="encode-url" class="btn btn-primary">Encode</button>
+                    
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="encoded-result">Encoded Result</label>
+                        <input type="text" class="form-control" id="encoded-result" readonly>
+                    </div>
+                </div>
+                
+                <div class="settings-group">
+                    <h3>Extension Detection</h3>
+                    <button id="detect-extensions" class="btn btn-primary">Detect Blocking Extensions</button>
+                    <div id="extension-results" class="code-block" style="margin-top: 1rem; display: none;"></div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="help-tab">
+                <div class="settings-group">
+                    <h3>How to Use</h3>
+                    <p>This tool helps you view web content that might be blocked by browser extensions. Here's how to use it:</p>
+                    <ol>
+                        <li>Enter a URL or paste HTML content in the input field</li>
+                        <li>Choose your bypass options</li>
+                        <li>Click "Load Content" to view the content</li>
+                    </ol>
+                    <p>If one method doesn't work, try different settings combinations.</p>
+                </div>
+                
+                <div class="settings-group">
+                    <h3>Bypass Techniques</h3>
+                    <p>This tool uses several techniques to bypass content blocking:</p>
+                    <ul>
+                        <li><strong>Data URLs</strong>: Converts content to a data: URL format</li>
+                        <li><strong>Blob URLs</strong>: Creates blob objects from content</li>
+                        <li><strong>Content Obfuscation</strong>: Obfuscates HTML to avoid detection</li>
+                        <li><strong>Iframe Sandboxing</strong>: Uses sandbox attributes to isolate content</li>
+                        <li><strong>Base64 Encoding</strong>: Encodes content in base64</li>
+                    </ul>
+                </div>
+                
+                <div class="settings-group">
+                    <h3>Limitations</h3>
+                    <p>While this tool attempts to bypass content blocking, it has limitations:</p>
+                    <ul>
+                        <li>Cannot bypass network-level blocks</li>
+                        <li>Some extensions may still detect and block content</li>
+                        <li>Dynamic content requiring external scripts may not work</li>
+                        <li>Content requiring authentication won't work</li>
+                    </ul>
+                </div>
+                
+                <div class="settings-group">
+                    <h3>Tips for Best Results</h3>
+                    <ul>
+                        <li>Try different combinations of settings</li>
+                        <li>For complex websites, try viewing the source and pasting it</li>
+                        <li>Use the "Remove scripts" option for safer browsing</li>
+                        <li>Some sites may work better with specific encoding methods</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Document Viewer - For educational purposes only</p>
+        </div>
+    </div>
+
+    <script>
+        // Settings object
+        let settings = {
+            useDataUrl: true,
+            obfuscateContent: false,
+            removeScripts: true,
+            useBlobUrls: true,
+            useBase64Encoding: true,
+            useIframeSandbox: true,
+            userAgentOverride: '',
+            fixRelativeUrls: true,
+            removeMetadata: true,
+            removeFrames: false
+        };
+        
+        // DOM Elements
+        const elements = {
+            tabs: document.querySelectorAll('.tab'),
+            tabContents: document.querySelectorAll('.tab-content'),
+            viewerForm: document.getElementById('viewer-form'),
+            urlInput: document.getElementById('url-input'),
+            useDataUrl: document.getElementById('use-data-url'),
+            obfuscateContent: document.getElementById('obfuscate-content'),
+            removeScripts: document.getElementById('remove-scripts'),
+            contentViewer: document.getElementById('content-viewer'),
+            viewerIframe: document.getElementById('viewer-iframe'),
+            viewerControls: document.querySelector('.viewer-controls'),
+            refreshBtn: document.getElementById('refresh-btn'),
+            clearBtn: document.getElementById('clear-btn'),
+            alertContainer: document.getElementById('alert-container'),
+            useBlobUrls: document.getElementById('use-blob-urls'),
+            useBase64Encoding: document.getElementById('use-base64-encoding'),
+            useIframeSandbox: document.getElementById('use-iframe-sandbox'),
+            userAgentOverride: document.getElementById('user-agent-override'),
+            fixRelativeUrls: document.getElementById('fix-relative-urls'),
+            removeMetadata: document.getElementById('remove-metadata'),
+            removeFrames: document.getElementById('remove-frames'),
+            saveSettings: document.getElementById('save-settings'),
+            customHtml: document.getElementById('custom-html'),
+            injectHtml: document.getElementById('inject-html'),
+            urlToEncode: document.getElementById('url-to-encode'),
+            encodingMethod: document.getElementById('encoding-method'),
+            encodeUrl: document.getElementById('encode-url'),
+            encodedResult: document.getElementById('encoded-result'),
+            detectExtensions: document.getElementById('detect-extensions'),
+            extensionResults: document.getElementById('extension-results')
+        };
+        
+        // Initialize
+        function init() {
+            // Load settings
+            loadSettings();
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Update UI based on settings
+            updateUI();
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            // Tab navigation
+            elements.tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    switchTab(tabId);
+                });
+            });
+            
+            // Viewer form submission
+            elements.viewerForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                loadContent();
+            });
+            
+            // Refresh button
+            elements.refreshBtn.addEventListener('click', () => {
+                loadContent();
+            });
+            
+            // Clear button
+            elements.clearBtn.addEventListener('click', () => {
+                clearViewer();
+            });
+            
+            // Save settings
+            elements.saveSettings.addEventListener('click', () => {
+                saveSettings();
+            });
+            
+            // Inject HTML
+            elements.injectHtml.addEventListener('click', () => {
+                injectCustomHtml();
+            });
+            
+            // Encode URL
+            elements.encodeUrl.addEventListener('click', () => {
+                encodeUrl();
+            });
+            
+            // Detect extensions
+            elements.detectExtensions.addEventListener('click', () => {
+                detectBlockingExtensions();
+            });
+        }
+        
+        // Switch tab
+        function switchTab(tabId) {
+            elements.tabs.forEach(tab => {
+                if (tab.getAttribute('data-tab') === tabId) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            elements.tabContents.forEach(content => {
+                if (content.id === `${tabId}-tab`) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+        }
+        
+        // Load content
+        async function loadContent() {
+            const input = elements.urlInput.value.trim();
+            
+            if (!input) {
+                showAlert('Please enter a URL or HTML content', 'error');
+                return;
+            }
+            
+            // Get current settings from form
+            settings.useDataUrl = elements.useDataUrl.checked;
+            settings.obfuscateContent = elements.obfuscateContent.checked;
+            settings.removeScripts = elements.removeScripts.checked;
+            
+            try {
+                // Show loading
+                showLoading();
+                
+                let content;
+                
+                // Check if input is a URL or HTML content
+                if (isUrl(input)) {
+                    // It's a URL, try to fetch it
+                    content = await fetchContent(input);
+                } else {
+                    // It's HTML content
+                    content = input;
+                }
+                
+                // Process content
+                content = processContent(content, input);
+                
+                // Display content
+                displayContent(content);
+                
+                // Show viewer controls
+                elements.viewerControls.style.display = 'flex';
+                
+                // Hide loading
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                showAlert(`Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Fetch content
+        async function fetchContent(url) {
+            try {
+                // Try to use fetch directly (will likely be blocked by extensions)
+                const response = await fetch(url, {
+                    mode: 'cors',
+                    headers: {
+                        'User-Agent': settings.userAgentOverride || navigator.userAgent
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                
+                return await response.text();
+            } catch (error) {
+                // If direct fetch fails, try alternative methods
+                
+                // Method 1: Try using a dynamically created iframe
+                try {
+                    return await fetchViaIframe(url);
+                } catch (iframeError) {
+                    // Method 2: Try using XMLHttpRequest
+                    try {
+                        return await fetchViaXhr(url);
+                    } catch (xhrError) {
+                        // Method 3: Try using a service worker if available
+                        try {
+                            return await fetchViaServiceWorker(url);
+                        } catch (swError) {
+                            // All methods failed
+                            throw new Error('Could not fetch content. Try pasting the HTML directly.');
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Fetch via iframe
+        function fetchViaIframe(url) {
+            return new Promise((resolve, reject) => {
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = url;
+                
+                const timeoutId = setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    reject(new Error('Iframe fetch timed out'));
+                }, 10000);
+                
+                iframe.onload = () => {
+                    try {
+                        clearTimeout(timeoutId);
+                        const content = iframe.contentDocument.documentElement.outerHTML;
+                        document.body.removeChild(iframe);
+                        resolve(content);
+                    } catch (error) {
+                        document.body.removeChild(iframe);
+                        reject(new Error('Could not access iframe content due to same-origin policy'));
+                    }
+                };
+                
+                iframe.onerror = () => {
+                    clearTimeout(timeoutId);
+                    document.body.removeChild(iframe);
+                    reject(new Error('Iframe failed to load'));
+                };
+                
+                document.body.appendChild(iframe);
+            });
+        }
+        
+        // Fetch via XMLHttpRequest
+        function fetchViaXhr(url) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
+                
+                if (settings.userAgentOverride) {
+                    xhr.setRequestHeader('User-Agent', settings.userAgentOverride);
+                }
+                
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve(xhr.responseText);
+                    } else {
+                        reject(new Error(`XHR error! Status: ${xhr.status}`));
+                    }
+                };
+                
+                xhr.onerror = () => {
+                    reject(new Error('XHR request failed'));
+                };
+                
+                xhr.timeout = 10000;
+                xhr.ontimeout = () => {
+                    reject(new Error('XHR request timed out'));
+                };
+                
+                xhr.send();
+            });
+        }
+        
+        // Fetch via Service Worker
+        async function fetchViaServiceWorker(url) {
+            // Check if service workers are supported
+            if (!('serviceWorker' in navigator)) {
+                throw new Error('Service Workers not supported');
+            }
+            
+            // Check if we already have a service worker
+            const registration = await navigator.serviceWorker.getRegistration();
+            
+            if (!registration) {
+                // Register a new service worker
+                const swCode = `
+                    self.addEventListener('install', event => {
+                        self.skipWaiting();
+                    });
+                    
+                    self.addEventListener('activate', event => {
+                        event.waitUntil(clients.claim());
+                    });
+                    
+                    self.addEventListener('fetch', event => {
+                        // Only handle our specific fetch requests
+                        if (event.request.url.includes('__sw_fetch__')) {
+                            const url = new URL(event.request.url).searchParams.get('url');
+                            
+                            if (url) {
+                                event.respondWith(
+                                    fetch(url, {
+                                        mode: 'cors',
+                                        credentials: 'omit'
+                                    })
+                                );
+                            }
+                        }
+                    });
+                `;
+                
+                const blob = new Blob([swCode], { type: 'text/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                
+                await navigator.serviceWorker.register(swUrl, { scope: './' });
+                await navigator.serviceWorker.ready;
+                
+                // Clean up
+                URL.revokeObjectURL(swUrl);
+            }
+            
+            // Use the service worker to fetch the URL
+            const response = await fetch(`/__sw_fetch__?url=${encodeURIComponent(url)}`);
+            
+            if (!response.ok) {
+                throw new Error(`Service Worker fetch failed! Status: ${response.status}`);
+            }
+            
+            return await response.text();
+        }
+        
+        // Process content
+        function processContent(content, sourceUrl) {
+            // Remove scripts if needed
+            if (settings.removeScripts) {
+                content = removeScriptsFromHtml(content);
+            }
+            
+            // Fix relative URLs
+            if (settings.fixRelativeUrls && isUrl(sourceUrl)) {
+                content = fixRelativeUrls(content, sourceUrl);
+            }
+            
+            // Remove metadata if needed
+            if (settings.removeMetadata) {
+                content = removeMetadata(content);
+            }
+            
+            // Remove iframes if needed
+            if (settings.removeFrames) {
+                content = removeIframes(content);
+            }
+            
+            // Obfuscate content if needed
+            if (settings.obfuscateContent) {
+                content = obfuscateHtml(content);
+            }
+            
+            return content;
+        }
+        
+        // Display content
+        function displayContent(content) {
+            // Show the viewer
+            elements.contentViewer.style.display = 'block';
+            
+            // Get the iframe document
+            const iframe = elements.viewerIframe;
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            
+            // Clear existing content
+            iframeDoc.open();
+            
+            // Set sandbox attribute based on settings
+            if (settings.useIframeSandbox) {
+                iframe.setAttribute('sandbox', 'allow-same-origin');
+            } else {
+                iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+            }
+            
+            // Use different methods to load content based on settings
+            if (settings.useDataUrl) {
+                // Use data URL
+                const dataUrl = createDataUrl(content);
+                iframe.src = dataUrl;
+            } else if (settings.useBlobUrls) {
+                // Use blob URL
+                const blobUrl = createBlobUrl(content);
+                iframe.src = blobUrl;
+            } else {
+                // Write directly to iframe
+                iframeDoc.write(content);
+                iframeDoc.close();
+            }
+        }
+        
+        // Create data URL
+        function createDataUrl(content) {
+            const base64Content = settings.useBase64Encoding ? 
+                btoa(unescape(encodeURIComponent(content))) : 
+                encodeURIComponent(content);
+            
+            return settings.use  : 
+                encodeURIComponent(content);
+            
+            return settings.useBase64Encoding ? 
+                `data:text/html;base64,${base64Content}` : 
+                `data:text/html,${base64Content}`;
+        }
+        
+        // Create blob URL
+        function createBlobUrl(content) {
+            const blob = new Blob([content], { type: 'text/html' });
+            return URL.createObjectURL(blob);
+        }
+        
+        // Clear viewer
+        function clearViewer() {
+            elements.urlInput.value = '';
+            elements.contentViewer.style.display = 'none';
+            elements.viewerControls.style.display = 'none';
+            
+            // Clear iframe
+            const iframe = elements.viewerIframe;
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            iframeDoc.open();
+            iframeDoc.write('');
+            iframeDoc.close();
+            
+            // Clear any blob URLs to prevent memory leaks
+            if (iframe.src && iframe.src.startsWith('blob:')) {
+                URL.revokeObjectURL(iframe.src);
+            }
+            
+            iframe.src = 'about:blank';
+        }
+        
+        // Show loading
+        function showLoading() {
+            // Clear any existing alerts
+            elements.alertContainer.innerHTML = '';
+            
+            // Create loading indicator
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'loading';
+            loadingDiv.innerHTML = '<div class="spinner"></div>';
+            
+            elements.alertContainer.appendChild(loadingDiv);
+        }
+        
+        // Hide loading
+        function hideLoading() {
+            elements.alertContainer.innerHTML = '';
+        }
+        
+        // Show alert
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            elements.alertContainer.innerHTML = '';
+            elements.alertContainer.appendChild(alertDiv);
+            
+            // Auto-hide after 5 seconds for success messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    if (elements.alertContainer.contains(alertDiv)) {
+                        elements.alertContainer.removeChild(alertDiv);
+                    }
+                }, 5000);
+            }
+        }
+        
+        // Save settings
+        function saveSettings() {
+            settings.useBlobUrls = elements.useBlobUrls.checked;
+            settings.useBase64Encoding = elements.useBase64Encoding.checked;
+            settings.useIframeSandbox = elements.useIframeSandbox.checked;
+            settings.userAgentOverride = elements.userAgentOverride.value;
+            settings.fixRelativeUrls = elements.fixRelativeUrls.checked;
+            settings.removeMetadata = elements.removeMetadata.checked;
+            settings.removeFrames = elements.removeFrames.checked;
+            
+            localStorage.setItem('viewerSettings', JSON.stringify(settings));
+            
+            showAlert('Settings saved successfully', 'success');
+        }
+        
+        // Load settings
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('viewerSettings');
+            if (savedSettings) {
+                settings = { ...settings, ...JSON.parse(savedSettings) };
+            }
+        }
+        
+        // Update UI based on settings
+        function updateUI() {
+            elements.useDataUrl.checked = settings.useDataUrl;
+            elements.obfuscateContent.checked = settings.obfuscateContent;
+            elements.removeScripts.checked = settings.removeScripts;
+            elements.useBlobUrls.checked = settings.useBlobUrls;
+            elements.useBase64Encoding.checked = settings.useBase64Encoding;
+            elements.useIframeSandbox.checked = settings.useIframeSandbox;
+            elements.userAgentOverride.value = settings.userAgentOverride;
+            elements.fixRelativeUrls.checked = settings.fixRelativeUrls;
+            elements.removeMetadata.checked = settings.removeMetadata;
+            elements.removeFrames.checked = settings.removeFrames;
+        }
+        
+        // Inject custom HTML
+        function injectCustomHtml() {
+            const html = elements.customHtml.value.trim();
+            
+            if (!html) {
+                showAlert('Please enter HTML content', 'error');
+                return;
+            }
+            
+            // Process and display the HTML
+            const processedHtml = processContent(html, '');
+            displayContent(processedHtml);
+            
+            // Show viewer controls
+            elements.viewerControls.style.display = 'flex';
+            
+            // Switch to viewer tab
+            switchTab('viewer');
+            
+            showAlert('Custom HTML injected successfully', 'success');
+        }
+        
+        // Encode URL
+        function encodeUrl() {
+            const url = elements.urlToEncode.value.trim();
+            
+            if (!url) {
+                showAlert('Please enter a URL to encode', 'error');
+                return;
+            }
+            
+            const method = elements.encodingMethod.value;
+            let encoded;
+            
+            switch (method) {
+                case 'base64':
+                    encoded = btoa(url);
+                    break;
+                case 'hex':
+                    encoded = Array.from(url).map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join('');
+                    break;
+                case 'uri':
+                    encoded = encodeURIComponent(url);
+                    break;
+                case 'binary':
+                    encoded = Array.from(url).map(c => c.charCodeAt(0).toString(2).padStart(8, '0')).join(' ');
+                    break;
+                default:
+                    encoded = btoa(url);
+            }
+            
+            elements.encodedResult.value = encoded;
+        }
+        
+        // Detect blocking extensions
+        async function detectBlockingExtensions() {
+            elements.extensionResults.style.display = 'block';
+            elements.extensionResults.textContent = 'Detecting extensions...';
+            
+            const results = {
+                adBlockers: false,
+                contentFilters: false,
+                scriptBlockers: false,
+                proxyBlockers: false,
+                corsRestrictions: false
+            };
+            
+            // Test for ad blockers
+            try {
+                const adDiv = document.createElement('div');
+                adDiv.className = 'ad-unit adsbox ad-slot ad-banner ad-placeholder ad-frame';
+                adDiv.style.height = '1px';
+                adDiv.style.width = '1px';
+                adDiv.style.position = 'absolute';
+                adDiv.style.left = '-999px';
+                document.body.appendChild(adDiv);
+                
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                if (adDiv.offsetHeight === 0 || adDiv.offsetWidth === 0) {
+                    results.adBlockers = true;
+                }
+                
+                document.body.removeChild(adDiv);
+            } catch (e) {
+                results.adBlockers = true;
+            }
+            
+            // Test for content filters
+            try {
+                const testUrl = 'https://example.com';
+                const response = await fetch(testUrl, { mode: 'no-cors', cache: 'no-store' });
+                // If we get here, the request wasn't blocked
+            } catch (e) {
+                results.contentFilters = true;
+            }
+            
+            // Test for script blockers
+            try {
+                const script = document.createElement('script');
+                script.textContent = 'window._testScriptExecution = true;';
+                document.head.appendChild(script);
+                document.head.removeChild(script);
+                
+                if (!window._testScriptExecution) {
+                    results.scriptBlockers = true;
+                }
+                
+                delete window._testScriptExecution;
+            } catch (e) {
+                results.scriptBlockers = true;
+            }
+            
+            // Test for proxy blockers
+            try {
+                const proxyCheckUrl = 'https://www.google.com';
+                const proxyResponse = await fetch(proxyCheckUrl, { 
+                    mode: 'cors', 
+                    cache: 'no-store',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                // If we get here without error, proxy might not be blocked
+            } catch (e) {
+                results.proxyBlockers = true;
+            }
+            
+            // Test for CORS restrictions
+            try {
+                const corsCheckUrl = 'https://api.github.com/users/octocat';
+                const corsResponse = await fetch(corsCheckUrl, { mode: 'cors' });
+                // If we get here without error, CORS might not be restricted
+            } catch (e) {
+                results.corsRestrictions = true;
+            }
+            
+            // Display results
+            let resultsHtml = '<h4>Extension Detection Results:</h4><ul>';
+            resultsHtml += `<li>Ad Blockers: ${results.adBlockers ? '✓ Detected' : '✗ Not Detected'}</li>`;
+            resultsHtml += `<li>Content Filters: ${results.contentFilters ? '✓ Detected' : '✗ Not Detected'}</li>`;
+            resultsHtml += `<li>Script Blockers: ${results.scriptBlockers ? '✓ Detected' : '✗ Not Detected'}</li>`;
+            resultsHtml += `<li>Proxy Blockers: ${results.proxyBlockers ? '✓ Detected' : '✗ Not Detected'}</li>`;
+            resultsHtml += `<li>CORS Restrictions: ${results.corsRestrictions ? '✓ Detected' : '✗ Not Detected'}</li>`;
+            resultsHtml += '</ul>';
+            
+            elements.extensionResults.innerHTML = resultsHtml;
+        }
+        
+        // Helper functions
+        
+        // Check if string is a URL
+        function isUrl(str) {
+            try {
+                new URL(str);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+        
+        // Remove scripts from HTML
+        function removeScriptsFromHtml(html) {
+            // Create a DOM parser
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Remove script tags
+            const scripts = doc.querySelectorAll('script');
+            scripts.forEach(script => script.remove());
+            
+            // Remove inline event handlers
+            const allElements = doc.querySelectorAll('*');
+            allElements.forEach(el => {
+                const attributes = el.attributes;
+                for (let i = attributes.length - 1; i >= 0; i--) {
+                    const attrName = attributes[i].name;
+                    if (attrName.startsWith('on')) {
+                        el.removeAttribute(attrName);
+                    }
+                }
+            });
+            
+            // Return the cleaned HTML
+            return doc.documentElement.outerHTML;
+        }
+        
+        // Fix relative URLs in HTML
+        function fixRelativeUrls(html, baseUrl) {
+            try {
+                const base = new URL(baseUrl);
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Fix links
+                doc.querySelectorAll('a[href]').forEach(a => {
+                    try {
+                        a.href = new URL(a.getAttribute('href'), base).href;
+                    } catch (e) {}
+                });
+                
+                // Fix images
+                doc.querySelectorAll('img[src]').forEach(img => {
+                    try {
+                        img.src = new URL(img.getAttribute('src'), base).href;
+                    } catch (e) {}
+                });
+                
+                // Fix stylesheets
+                doc.querySelectorAll('link[rel="stylesheet"][href]').forEach(link => {
+                    try {
+                        link.href = new URL(link.getAttribute('href'), base).href;
+                    } catch (e) {}
+                });
+                
+                // Fix scripts
+                doc.querySelectorAll('script[src]').forEach(script => {
+                    try {
+                        script.src = new URL(script.getAttribute('src'), base).href;
+                    } catch (e) {}
+                });
+                
+                // Fix background images in inline styles
+                doc.querySelectorAll('[style*="background"]').forEach(el => {
+                    const style = el.getAttribute('style');
+                    if (style) {
+                        const newStyle = style.replace(/url$$['"]?([^'")]+)['"]?$$/g, (match, url) => {
+                            try {
+                                const absoluteUrl = new URL(url, base).href;
+                                return `url('${absoluteUrl}')`;
+                            } catch (e) {
+                                return match;
+                            }
+                        });
+                        el.setAttribute('style', newStyle);
+                    }
+                });
+                
+                return doc.documentElement.outerHTML;
+            } catch (e) {
+                // If anything goes wrong, return the original HTML
+                return html;
+            }
+        }
+        
+        // Remove metadata from HTML
+        function removeMetadata(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Remove meta tags
+            doc.querySelectorAll('meta').forEach(meta => meta.remove());
+            
+            // Remove link tags except stylesheets
+            doc.querySelectorAll('link:not([rel="stylesheet"])').forEach(link => link.remove());
+            
+            return doc.documentElement.outerHTML;
+        }
+        
+        // Remove iframes from HTML
+        function removeIframes(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Remove iframe tags
+            doc.querySelectorAll('iframe').forEach(iframe => iframe.remove());
+            
+            return doc.documentElement.outerHTML;
+        }
+        
+        // Obfuscate HTML
+        function obfuscateHtml(html) {
+            // Simple obfuscation: convert tags to entities
+            return html
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/class=/g, 'cl\u200Bass=')
+                .replace(/id=/g, 'i\u200Bd=')
+                .replace(/style=/g, 'st\u200Byle=');
+        }
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
