@@ -86,6 +86,59 @@
       color: var(--line);
     }
 
+    .greeting.linked {
+      animation-delay: 0.4s;
+    }
+
+    .greeting a {
+      text-decoration: none;
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      width: 100%;
+    }
+
+    .greeting a .name {
+      position: relative;
+      transition: opacity 0.2s ease;
+    }
+
+    .greeting a:hover .name {
+      opacity: 0.7;
+    }
+
+    .name.yoshiro {
+      background: linear-gradient(100deg, #9b8ea0, #7a9490, #a08b7a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .now-label {
+      font-size: 0.7rem;
+      font-weight: 400;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+      padding-top: 1.5rem;
+      padding-left: 0;
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.35s forwards;
+    }
+
+    .arrow {
+      font-size: 1rem;
+      color: var(--muted);
+      margin-left: auto;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .greeting a:hover .arrow {
+      transform: translateX(4px);
+      opacity: 1;
+    }
+
     @keyframes fadeUp {
       to {
         opacity: 1;
@@ -105,6 +158,14 @@
       <span class="hello">hello</span>
       <span class="name gh">github</span>
       <span class="dot">·</span>
+    </div>
+    <p class="now-label">and now...</p>
+    <div class="greeting linked">
+      <a href="https://sn4k.org/yoshiro" target="_blank" rel="noopener">
+        <span class="hello">hello</span>
+        <span class="name yoshiro">yoshiro</span>
+        <span class="arrow">→</span>
+      </a>
     </div>
   </div>
 </body>
