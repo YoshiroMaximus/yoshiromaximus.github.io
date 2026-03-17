@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Yoshiro</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -14,9 +14,6 @@
       --text: #1a1a1a;
       --muted: #888;
       --line: #d8d6d0;
-      --accent: #9b8ea0;
-      --accent2: #7a9490;
-      --accent3: #a08b7a;
       --tag-bg: #e8e6e2;
     }
 
@@ -29,27 +26,13 @@
       line-height: 1.6;
     }
 
-    /* ── Layout ── */
     .page {
       max-width: 640px;
       margin: 0 auto;
       padding: 0 2rem;
     }
 
-    section {
-      padding: 4rem 0;
-      border-bottom: 1px solid var(--line);
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.6s ease, transform 0.6s ease;
-    }
-
-    section.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    /* ── Header ── */
+    /* Header */
     header {
       padding: 5rem 0 4rem;
       border-bottom: 1px solid var(--line);
@@ -82,10 +65,22 @@
       font-size: 1rem;
       font-weight: 300;
       color: var(--muted);
-      max-width: 380px;
     }
 
-    /* ── Section labels ── */
+    /* Sections */
+    section {
+      padding: 4rem 0;
+      border-bottom: 1px solid var(--line);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
     .section-label {
       font-family: 'DM Mono', monospace;
       font-size: 0.65rem;
@@ -95,20 +90,21 @@
       margin-bottom: 2rem;
     }
 
-    /* ── About ── */
+    /* About */
     .about-text {
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-weight: 300;
-      color: var(--text);
-      max-width: 520px;
       line-height: 1.75;
+      max-width: 520px;
     }
 
     .about-text + .about-text {
       margin-top: 1rem;
+      color: var(--muted);
+      font-size: 0.9rem;
     }
 
-    /* ── Skills ── */
+    /* Skills */
     .skills-grid {
       display: flex;
       flex-wrap: wrap;
@@ -128,7 +124,7 @@
 
     .tag:hover { background: var(--line); }
 
-    /* ── Projects ── */
+    /* Projects */
     .projects-grid {
       display: flex;
       flex-direction: column;
@@ -142,9 +138,8 @@
       padding: 1.5rem;
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.6rem;
       transition: background 0.2s ease;
-      cursor: pointer;
     }
 
     .project-card:hover { background: var(--bg2); }
@@ -174,10 +169,25 @@
       font-size: 0.875rem;
       font-weight: 300;
       color: var(--muted);
-      line-height: 1.5;
+      line-height: 1.6;
     }
 
-    /* Screenshot placeholder */
+    .project-specs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .spec {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      background: var(--tag-bg);
+      color: var(--muted);
+      padding: 0.25rem 0.6rem;
+      border-radius: 2px;
+      letter-spacing: 0.04em;
+    }
+
     .project-img {
       width: 100%;
       aspect-ratio: 16/9;
@@ -186,16 +196,14 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-top: 0.5rem;
+      margin-top: 0.25rem;
       overflow: hidden;
-      position: relative;
     }
 
     .project-img img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      display: block;
     }
 
     .project-img-label {
@@ -204,44 +212,38 @@
       color: var(--line);
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      position: absolute;
     }
 
-    .project-img img ~ .project-img-label { display: none; }
-
-    /* ── Contact ── */
+    /* Contact */
     .contact-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
       border-top: 1px solid var(--line);
     }
 
     .contact-item {
       display: flex;
       align-items: center;
-      justify-content: space-between;
       padding: 1.25rem 0;
       border-bottom: 1px solid var(--line);
       text-decoration: none;
       color: var(--text);
+      gap: 1rem;
       transition: padding-left 0.2s ease;
     }
 
     .contact-item:hover { padding-left: 0.5rem; }
 
     .contact-platform {
-      font-size: 0.7rem;
       font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--muted);
-      width: 80px;
+      width: 72px;
       flex-shrink: 0;
     }
 
     .contact-value {
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: 400;
       flex: 1;
     }
@@ -254,11 +256,9 @@
 
     .contact-item:hover .contact-arrow { transform: translateX(4px); }
 
-    /* ── Footer ── */
+    /* Footer */
     footer {
       padding: 3rem 0;
-      opacity: 0;
-      animation: fadeUp 0.6s ease 0.2s forwards;
     }
 
     .footer-text {
@@ -281,18 +281,14 @@
     <header>
       <p class="header-label">Portfolio</p>
       <h1>Yoshiro</h1>
-      <p class="tagline">Homelab dev & computer designer. High schooler building things that actually run.</p>
+      <p class="tagline">Homelab dev &amp; computer designer. High schooler building things that actually run.</p>
     </header>
 
     <!-- About -->
     <section id="about">
       <p class="section-label">About</p>
-      <p class="about-text">
-        I'm a high school student who spends way too much time in my homelab. I like spinning up self-hosted services, designing interfaces, and figuring out how things work under the hood.
-      </p>
-      <p class="about-text" style="margin-top:1rem; color: var(--muted); font-size: 0.9rem;">
-        Outside of tech — I'm into music, graphic design, and collecting things I probably don't need. I like clean, considered aesthetics: nothing cluttered, nothing loud.
-      </p>
+      <p class="about-text">I'm a high school student who spends way too much time in my homelab. I like spinning up self-hosted services, designing interfaces, and figuring out how things work under the hood.</p>
+      <p class="about-text">Outside of tech — I'm into music, graphic design, and collecting things I probably don't need. I like clean, considered aesthetics: nothing cluttered, nothing loud.</p>
     </section>
 
     <!-- Skills -->
@@ -318,35 +314,54 @@
 
         <div class="project-card">
           <div class="project-header">
-            <span class="project-name">Project one</span>
-            <span class="project-type">homelab</span>
+            <span class="project-name">Modded Minecraft Server</span>
+            <span class="project-type">game server</span>
           </div>
-          <p class="project-desc">Short description of what this is and what problem it solves. Replace this with your own project.</p>
+          <p class="project-desc">PaperMC 1.21.1 modded server running through Crafty Controller, hosted for me and my friends. Crafty handles mod management, backups, and restarts through a web UI — no touching the terminal every time something breaks.</p>
+          <div class="project-specs">
+            <span class="spec">PaperMC</span>
+            <span class="spec">Crafty Controller</span>
+            <span class="spec">1.21.1</span>
+            <span class="spec">modded</span>
+          </div>
           <div class="project-img">
-            <!-- To add a screenshot: <img src="your-screenshot.png" alt="Project one"> -->
+            <!-- To add a screenshot: replace this comment with <img src="mc-screenshot.png" alt="Minecraft server"> -->
             <span class="project-img-label">add screenshot</span>
           </div>
         </div>
 
         <div class="project-card">
           <div class="project-header">
-            <span class="project-name">Project two</span>
-            <span class="project-type">web</span>
+            <span class="project-name">DIY Homelab</span>
+            <span class="project-type">hardware</span>
           </div>
-          <p class="project-desc">Short description of what this is and what problem it solves. Replace this with your own project.</p>
+          <p class="project-desc">Self-built home server I put together myself. Runs all my self-hosted services and containers 24/7. The dual 16TB drives handle bulk storage and the SSD keeps things snappy for services that need it.</p>
+          <div class="project-specs">
+            <span class="spec">Ryzen 3400G</span>
+            <span class="spec">32GB RAM</span>
+            <span class="spec">2&#215;16TB HDD</span>
+            <span class="spec">1TB SSD</span>
+          </div>
           <div class="project-img">
-            <span class="project-img-label">add screenshot</span>
+            <!-- To add a photo: replace this comment with <img src="homelab.png" alt="Homelab"> -->
+            <span class="project-img-label">add photo</span>
           </div>
         </div>
 
         <div class="project-card">
           <div class="project-header">
-            <span class="project-name">Project three</span>
-            <span class="project-type">design</span>
+            <span class="project-name">Raspberry Pi Cluster</span>
+            <span class="project-type">cluster</span>
           </div>
-          <p class="project-desc">Short description of what this is and what problem it solves. Replace this with your own project.</p>
+          <p class="project-desc">A cluster of Raspberry Pis running DietPi — a stripped-down OS that keeps overhead minimal. Used for lightweight distributed services and learning how clustered systems actually behave in practice.</p>
+          <div class="project-specs">
+            <span class="spec">Raspberry Pi</span>
+            <span class="spec">DietPi</span>
+            <span class="spec">cluster</span>
+          </div>
           <div class="project-img">
-            <span class="project-img-label">add screenshot</span>
+            <!-- To add a photo: replace this comment with <img src="pi-cluster.png" alt="Pi cluster"> -->
+            <span class="project-img-label">add photo</span>
           </div>
         </div>
 
@@ -357,28 +372,27 @@
     <section id="contact">
       <p class="section-label">Get in touch</p>
       <div class="contact-list">
-        <a class="contact-item" href="https://github.com/" target="_blank" rel="noopener">
+        <a class="contact-item" href="https://github.com/yoshiro" target="_blank" rel="noopener">
           <span class="contact-platform">GitHub</span>
           <span class="contact-value">github.com/yoshiro</span>
-          <span class="contact-arrow">→</span>
+          <span class="contact-arrow">&#8594;</span>
         </a>
         <a class="contact-item" href="mailto:you@email.com">
           <span class="contact-platform">Email</span>
           <span class="contact-value">you@email.com</span>
-          <span class="contact-arrow">→</span>
+          <span class="contact-arrow">&#8594;</span>
         </a>
       </div>
     </section>
 
     <!-- Footer -->
     <footer>
-      <p class="footer-text">Yoshiro · sn4k.org/yoshiro</p>
+      <p class="footer-text">Yoshiro &middot; sn4k.org/yoshiro</p>
     </footer>
 
   </div>
 
   <script>
-    // Scroll-triggered fade-in
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
