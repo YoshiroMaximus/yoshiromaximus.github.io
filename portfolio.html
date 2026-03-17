@@ -10,11 +10,6 @@
   <link rel="apple-touch-icon" href="/favistuff/apple-touch-icon.png">
   <link rel="manifest" href="/favistuff/site.webmanifest">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/x-icon" href="/favistuff/favicon.ico">
-  <link rel="icon" type="image/png" sizes="16x16" href="/favistuff/favicon-16x16.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favistuff/favicon-32x32.png">
-  <link rel="apple-touch-icon" href="/favistuff/apple-touch-icon.png">
-  <link rel="manifest" href="/favistuff/site.webmanifest">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -29,6 +24,42 @@
       --accent3: #a08b7a;
       --tag-bg: #e8e6e2;
     }
+
+    body.dark {
+      --bg: #111110;
+      --bg2: #1a1917;
+      --text: #e8e6e2;
+      --muted: #666;
+      --line: #2a2926;
+      --tag-bg: #1e1d1b;
+    }
+
+    /* ── Theme toggle ── */
+    .theme-toggle {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.1rem;
+      z-index: 100;
+    }
+
+    .theme-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 1rem;
+      color: var(--line);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.15rem 0.3rem;
+      line-height: 1;
+      transition: color 0.2s ease;
+      user-select: none;
+    }
+
+    .theme-btn:hover { color: var(--muted); }
+    .theme-btn.active { color: var(--text); }
 
     html { scroll-behavior: smooth; }
 
@@ -302,6 +333,12 @@
   </style>
 </head>
 <body>
+  <!-- Theme toggle -->
+  <div class="theme-toggle">
+    <button class="theme-btn" id="btn-light" onclick="setTheme('light')" title="Light">+</button>
+    <button class="theme-btn active" id="btn-dark" onclick="setTheme('dark')" title="Dark">−</button>
+  </div>
+
   <div class="page">
 
     <!-- Header -->
@@ -424,6 +461,17 @@
   </div>
 
   <script>
+    function setTheme(theme) {
+      document.body.classList.toggle('dark', theme === 'dark');
+      document.getElementById('btn-light').classList.toggle('active', theme === 'light');
+      document.getElementById('btn-dark').classList.toggle('active', theme === 'dark');
+      localStorage.setItem('theme', theme);
+    }
+
+    // Load saved theme or default to light
+    const saved = localStorage.getItem('theme') || 'light';
+    setTheme(saved);
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
