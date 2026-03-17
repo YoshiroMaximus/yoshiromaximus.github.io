@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hello</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #f5f4f0;
+      --text: #1a1a1a;
+      --accent-cf: #F6821F;
+      --accent-gh: #1f2328;
+      --muted: #888;
+      --line: #d8d6d0;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      max-width: 480px;
+      width: 100%;
+    }
+
+    .greeting {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      padding: 2rem 0;
+      border-bottom: 1px solid var(--line);
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fadeUp 0.5s ease forwards;
+    }
+
+    .greeting:first-child {
+      border-top: 1px solid var(--line);
+      animation-delay: 0.1s;
+    }
+
+    .greeting:last-child {
+      animation-delay: 0.25s;
+    }
+
+    .hello {
+      font-size: 1rem;
+      font-weight: 300;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: lowercase;
+      flex-shrink: 0;
+    }
+
+    .name {
+      font-size: 2rem;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+
+    .name.cf { color: var(--accent-cf); }
+    .name.gh { color: var(--accent-gh); }
+
+    .dot {
+      font-size: 2rem;
+      font-weight: 300;
+      color: var(--line);
+    }
+
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="greeting">
+      <span class="hello">hello</span>
+      <span class="name cf">cloudflare</span>
+      <span class="dot">·</span>
+    </div>
+    <div class="greeting">
+      <span class="hello">hello</span>
+      <span class="name gh">github</span>
+      <span class="dot">·</span>
+    </div>
+  </div>
+</body>
+</html>
