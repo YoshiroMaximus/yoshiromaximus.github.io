@@ -129,6 +129,13 @@
       border-bottom: 1px solid var(--line);
       text-decoration: none;
       color: var(--text);
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      width: 100%;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
       transition: padding-left 0.2s ease;
     }
 
@@ -146,6 +153,77 @@
     }
 
     .game-link:hover .game-arrow { transform: translateX(4px); }
+
+    /* ── Version modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: transparent;
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+      justify-content: flex-end;
+      padding: 1.5rem;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      font-family: 'DM Mono', monospace;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+
+    .modal-overlay.open .modal {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .modal-label {
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0.6rem 1rem 0.5rem;
+      background: var(--bg);
+    }
+
+    .modal-option {
+      display: block;
+      padding: 0.7rem 1rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      text-decoration: none;
+      background: var(--bg);
+      transition: background 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .modal-option:hover { background: var(--line); }
+
+    .modal-cancel {
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0.5rem 1rem 0.6rem;
+      background: var(--bg);
+      cursor: pointer;
+      border: none;
+      font-family: 'DM Mono', monospace;
+      text-align: right;
+      width: 100%;
+      transition: color 0.15s ease;
+    }
+
+    .modal-cancel:hover { color: var(--text); }
 
     /* ── Disclaimer ── */
     .disclaimer {
@@ -177,10 +255,10 @@
     <h1>games</h1>
 
     <div class="games">
-      <a class="game-link" href="#" target="_blank" rel="noopener">
-        <span class="game-name">game one</span>
+      <button class="game-link" onclick="openModal()">
+        <span class="game-name">minecraft</span>
         <span class="game-arrow">→</span>
-      </a>
+      </button>
       <a class="game-link" href="#" target="_blank" rel="noopener">
         <span class="game-name">game two</span>
         <span class="game-arrow">→</span>
@@ -193,6 +271,16 @@
         <span class="game-name">game four</span>
         <span class="game-arrow">→</span>
       </a>
+    </div>
+
+    <!-- Version selector modal -->
+    <div class="modal-overlay" id="mc-modal" onclick="handleOverlayClick(event)">
+      <div class="modal">
+        <span class="modal-label">pick a version</span>
+        <a class="modal-option" href="/1.8-wasm.html" target="_blank" rel="noopener">1.8 &nbsp;→</a>
+        <a class="modal-option" href="/1.12-wasm.html" target="_blank" rel="noopener">1.12 →</a>
+        <button class="modal-cancel" onclick="closeModal()">cancel</button>
+      </div>
     </div>
 
     <p class="disclaimer">
@@ -211,6 +299,26 @@
 
     const saved = localStorage.getItem('theme') || 'light';
     setTheme(saved);
+
+    function openModal() {
+      const modal = document.getElementById('mc-modal');
+      modal.style.display = 'flex';
+      requestAnimationFrame(() => modal.classList.add('open'));
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('mc-modal');
+      modal.classList.remove('open');
+      setTimeout(() => modal.style.display = 'none', 150);
+    }
+
+    function handleOverlayClick(e) {
+      if (e.target === document.getElementById('mc-modal')) closeModal();
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeModal();
+    });
   </script>
 </body>
 </html>
