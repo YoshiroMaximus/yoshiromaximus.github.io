@@ -61,6 +61,22 @@
     .theme-btn:hover { color: var(--muted); }
     .theme-btn.active { color: var(--text); }
 
+    /* ── Back link ── */
+    .back-link {
+      position: fixed;
+      top: 1.5rem;
+      left: 1.5rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--line);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      transition: color 0.2s ease;
+      z-index: 100;
+    }
+
+    .back-link:hover { color: var(--muted); }
+
     html { scroll-behavior: smooth; }
 
     body {
@@ -339,6 +355,9 @@
     <button class="theme-btn active" id="btn-dark" onclick="setTheme('dark')" title="Dark">−</button>
   </div>
 
+  <!-- Back link -->
+  <a class="back-link" href="/index.html">← index</a>
+
   <div class="page">
 
     <!-- Header -->
@@ -393,7 +412,7 @@
             <span class="spec">modded</span>
           </div>
           <div class="project-img">
-            <img src="images/crafty.png" alt="Minecraft server">
+            <img src="images/mc-screenshot.jpg" alt="Minecraft server">
             <span class="project-img-label">add screenshot</span>
           </div>
         </div>
@@ -411,7 +430,7 @@
             <span class="spec">1TB SSD</span>
           </div>
           <div class="project-img">
-            <img src="images/computer.jpg" alt="Homelab build">
+            <img src="images/homelab.jpg" alt="Homelab build">
             <span class="project-img-label">add photo</span>
           </div>
         </div>
@@ -428,7 +447,7 @@
             <span class="spec">cluster</span>
           </div>
           <div class="project-img">
-            <img src="images/dietpi-nodes.jpg" alt="Pi cluster">
+            <img src="images/pi-cluster.jpg" alt="Pi cluster">
             <span class="project-img-label">add photo</span>
           </div>
         </div>
