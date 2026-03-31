@@ -42,7 +42,7 @@
       display: flex;
       align-items: center;
       gap: 0.1rem;
-      z-index: 100;
+      z-index: 300;
     }
 
     .theme-btn {
@@ -72,7 +72,7 @@
       text-decoration: none;
       letter-spacing: 0.06em;
       transition: color 0.2s ease;
-      z-index: 100;
+      z-index: 300;
     }
 
     .back-link:hover { color: var(--muted); }
@@ -84,6 +84,7 @@
       background: var(--bg);
       color: var(--text);
       line-height: 1.6;
+      transition: background 0.2s ease, color 0.2s ease;
     }
 
     /* ── Layout ── */
@@ -161,9 +162,7 @@
       line-height: 1.75;
     }
 
-    .about-text + .about-text {
-      margin-top: 1rem;
-    }
+    .about-text + .about-text { margin-top: 1rem; }
 
     /* ── Skills ── */
     .skills-grid {
@@ -201,7 +200,6 @@
       flex-direction: column;
       gap: 0.5rem;
       transition: background 0.2s ease;
-      cursor: pointer;
     }
 
     .project-card:hover { background: var(--bg2); }
@@ -251,26 +249,32 @@
       letter-spacing: 0.04em;
     }
 
-    /* Screenshot placeholder */
+    /* ── Project image ── */
     .project-img {
       width: 100%;
       aspect-ratio: 16/9;
       background: var(--tag-bg);
-      border: 1px dashed var(--line);
+      border: 1px solid var(--line);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-top: 0.5rem;
+      margin-top: 0.75rem;
       overflow: hidden;
       position: relative;
+      border-radius: 2px;
+      cursor: zoom-in;
     }
 
     .project-img img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: top;
       display: block;
+      transition: transform 0.4s ease;
     }
+
+    .project-card:hover .project-img img { transform: scale(1.02); }
 
     .project-img-label {
       font-family: 'DM Mono', monospace;
@@ -282,6 +286,101 @@
     }
 
     .project-img img ~ .project-img-label { display: none; }
+
+    /* ── Lightbox ── */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(0,0,0,0.88);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .lightbox.open { display: flex; }
+
+    .lightbox-inner {
+      position: relative;
+      max-width: min(900px, 92vw);
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .lightbox-img-wrap {
+      width: 100%;
+      position: relative;
+    }
+
+    .lightbox-img-wrap img {
+      width: 100%;
+      max-height: 70vh;
+      object-fit: contain;
+      display: block;
+      border-radius: 2px;
+    }
+
+    /* nav arrows */
+    .lightbox-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .lb-arrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.35);
+      background: none;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      padding: 0.5rem 0;
+      transition: color 0.2s ease;
+      user-select: none;
+    }
+
+    .lb-arrow:hover { color: rgba(255,255,255,0.85); }
+    .lb-arrow:disabled { opacity: 0; pointer-events: none; }
+
+    .lb-counter {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.1em;
+    }
+
+    .lb-caption {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .lb-close {
+      position: absolute;
+      top: -0.25rem;
+      right: 0;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.3);
+      background: none;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      transition: color 0.2s ease;
+      padding: 0.25rem 0;
+    }
+
+    .lb-close:hover { color: rgba(255,255,255,0.8); }
 
     /* ── Contact ── */
     .contact-list {
@@ -358,13 +457,29 @@
   <!-- Back link -->
   <a class="back-link" href="/index.html">← index</a>
 
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" onclick="handleLbClick(event)">
+    <div class="lightbox-inner">
+      <button class="lb-close" onclick="closeLightbox()">close ×</button>
+      <div class="lightbox-img-wrap">
+        <img id="lb-img" src="" alt="">
+      </div>
+      <div class="lightbox-nav">
+        <button class="lb-arrow" id="lb-prev" onclick="lbNav(-1)">← prev</button>
+        <span class="lb-counter" id="lb-counter"></span>
+        <button class="lb-arrow" id="lb-next" onclick="lbNav(1)">next →</button>
+      </div>
+      <p class="lb-caption" id="lb-caption"></p>
+    </div>
+  </div>
+
   <div class="page">
 
     <!-- Header -->
     <header>
       <p class="header-label">Portfolio</p>
       <h1>Yoshiro</h1>
-      <p class="tagline">Homelab dev &amp; computer designer. High schooler building things that actually run.</p>
+      <p class="tagline">Homelab dev &amp; computer designer. High schooler building things that i actually use.</p>
     </header>
 
     <!-- About -->
@@ -411,7 +526,7 @@
             <span class="spec">1.21.1</span>
             <span class="spec">modded</span>
           </div>
-          <div class="project-img">
+          <div class="project-img" onclick="openLightbox('images/mc-screenshot.png', 'Modded Minecraft Server')">
             <img src="images/mc-screenshot.png" alt="Minecraft server">
             <span class="project-img-label">add screenshot</span>
           </div>
@@ -429,7 +544,7 @@
             <span class="spec">2&times;16TB HDD</span>
             <span class="spec">1TB SSD</span>
           </div>
-          <div class="project-img">
+          <div class="project-img" onclick="openLightbox('images/homelab.png', 'DIY Homelab')">
             <img src="images/homelab.png" alt="Homelab build">
             <span class="project-img-label">add photo</span>
           </div>
@@ -446,7 +561,7 @@
             <span class="spec">DietPi</span>
             <span class="spec">cluster</span>
           </div>
-          <div class="project-img">
+          <div class="project-img" onclick="openLightbox('images/pi-cluster.jpg', 'Raspberry Pi Cluster')">
             <img src="images/pi-cluster.jpg" alt="Pi cluster">
             <span class="project-img-label">add photo</span>
           </div>
@@ -459,14 +574,14 @@
     <section id="contact">
       <p class="section-label">Get in touch</p>
       <div class="contact-list">
-        <a class="contact-item" href="https://github.com/yoshiro" target="_blank" rel="noopener">
+        <a class="contact-item" href="https://github.com/YoshiroMaximus" target="_blank" rel="noopener">
           <span class="contact-platform">GitHub</span>
-          <span class="contact-value">github.com/yoshiro</span>
+          <span class="contact-value">github.com/YoshiroMaximus</span>
           <span class="contact-arrow">→</span>
         </a>
-        <a class="contact-item" href="/cdn-cgi/l/email-protection#dda4b2a89db8b0bcb4b1f3beb2b0">
+        <a class="contact-item" href="mailto:nico@sendan.com">
           <span class="contact-platform">Email</span>
-          <span class="contact-value"><span class="__cf_email__" data-cfemail="9fe6f0eadffaf2fef6f3b1fcf0f2">[email&#160;protected]</span></span>
+          <span class="contact-value">nico@sendan.com</span>
           <span class="contact-arrow">→</span>
         </a>
       </div>
@@ -480,17 +595,17 @@
   </div>
 
   <script>
+    // ── Theme ──
     function setTheme(theme) {
       document.body.classList.toggle('dark', theme === 'dark');
       document.getElementById('btn-light').classList.toggle('active', theme === 'light');
       document.getElementById('btn-dark').classList.toggle('active', theme === 'dark');
       localStorage.setItem('theme', theme);
     }
-
-    // Load saved theme or default to light
     const saved = localStorage.getItem('theme') || 'light';
     setTheme(saved);
 
+    // ── Scroll observer ──
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -499,8 +614,61 @@
         }
       });
     }, { threshold: 0.1 });
-
     document.querySelectorAll('section').forEach(el => observer.observe(el));
+
+    // ── Lightbox ──
+    // Collect all images from project cards
+    const gallery = [
+      { src: 'images/mc-screenshot.png', caption: 'Modded Minecraft Server' },
+      { src: 'images/homelab.png',        caption: 'DIY Homelab' },
+      { src: 'images/pi-cluster.jpg',     caption: 'Raspberry Pi Cluster' },
+    ];
+
+    let lbIndex = 0;
+
+    function openLightbox(src, caption) {
+      lbIndex = gallery.findIndex(g => g.src === src);
+      if (lbIndex === -1) lbIndex = 0;
+      renderLb();
+      const lb = document.getElementById('lightbox');
+      lb.style.display = 'flex';
+      requestAnimationFrame(() => lb.classList.add('open'));
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      const lb = document.getElementById('lightbox');
+      lb.classList.remove('open');
+      lb.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    function lbNav(dir) {
+      lbIndex = Math.max(0, Math.min(gallery.length - 1, lbIndex + dir));
+      renderLb();
+    }
+
+    function renderLb() {
+      const item = gallery[lbIndex];
+      document.getElementById('lb-img').src = item.src;
+      document.getElementById('lb-img').alt = item.caption;
+      document.getElementById('lb-caption').textContent = item.caption;
+      document.getElementById('lb-counter').textContent = (lbIndex + 1) + ' / ' + gallery.length;
+      document.getElementById('lb-prev').disabled = lbIndex === 0;
+      document.getElementById('lb-next').disabled = lbIndex === gallery.length - 1;
+    }
+
+    function handleLbClick(e) {
+      if (e.target === document.getElementById('lightbox')) closeLightbox();
+    }
+
+    document.addEventListener('keydown', e => {
+      const lb = document.getElementById('lightbox');
+      if (!lb.classList.contains('open')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') lbNav(-1);
+      if (e.key === 'ArrowRight') lbNav(1);
+    });
   </script>
 </body>
 </html>
