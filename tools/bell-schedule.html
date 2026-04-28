@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GWHS Bell Schedule</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #C8102E;
+    --dark-red: #8B0000;
+    --black: #0a0a0a;
+    --dark: #111111;
+    --card: #181818;
+    --border: #2a2a2a;
+    --text: #f0f0f0;
+    --muted: #888;
+    --gold: #FFD700;
+    --green: #22c55e;
+    --orange: #f97316;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  header {
+    background: var(--red);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: 0 2px 20px rgba(200,16,46,0.4);
+  }
+
+  header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: white;
+  }
+
+  #live-clock {
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: 2px;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 28px 20px;
+  }
+
+  /* ── HERO COUNTDOWN ── */
+  .hero {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--red);
+    border-radius: 4px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(200,16,46,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .current-period {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    line-height: 1;
+    color: white;
+    margin-bottom: 6px;
+  }
+
+  .period-time-range {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+  }
+
+  .countdown-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .countdown-label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .countdown-time {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 64px;
+    line-height: 1;
+    letter-spacing: 2px;
+    transition: color 0.5s;
+  }
+
+  .countdown-time.urgent { color: var(--red); }
+  .countdown-time.warning { color: var(--orange); }
+  .countdown-time.ok { color: var(--green); }
+
+  .progress-bar-wrap {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--red), #ff4d6d);
+    border-radius: 2px;
+    transition: width 1s linear;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* Next up */
+  .next-up {
+    background: rgba(255,215,0,0.05);
+    border: 1px solid rgba(255,215,0,0.15);
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin-top: 18px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .next-up-dot {
+    width: 7px; height: 7px;
+    background: var(--gold);
+    border-radius: 50%;
+    flex-shrink: 0;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.7); }
+  }
+
+  .next-up strong { color: var(--gold); }
+
+  /* ── DAY TABS ── */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 7px 16px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab:hover { border-color: var(--red); color: var(--text); }
+  .tab.active { background: var(--red); border-color: var(--red); color: white; }
+  .tab.today { border-color: rgba(200,16,46,0.5); color: var(--text); }
+
+  /* ── SCHEDULE TABLE ── */
+  .schedule-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .schedule-header {
+    background: var(--red);
+    padding: 12px 20px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 2px;
+    color: white;
+  }
+
+  .schedule-row {
+    display: grid;
+    grid-template-columns: 1fr 180px 80px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    position: relative;
+  }
+
+  .schedule-row:last-child { border-bottom: none; }
+  .schedule-row:hover { background: rgba(255,255,255,0.03); }
+
+  .schedule-row.current-row {
+    background: rgba(200,16,46,0.1);
+    border-left: 3px solid var(--red);
+    padding-left: 17px;
+  }
+
+  .schedule-row.past-row { opacity: 0.4; }
+
+  .row-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .current-dot {
+    width: 6px; height: 6px;
+    background: var(--red);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+
+  .row-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+  }
+
+  .row-dur {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  /* ── STATS GRID ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px 20px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    line-height: 1;
+    color: white;
+  }
+
+  .stat-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  /* ── NO SCHOOL ── */
+  .no-school {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 48px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .no-school h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .no-school p {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* ── SCHOOL DONE ── */
+  .school-done-banner {
+    background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(34,197,94,0.05));
+    border: 1px solid rgba(34,197,94,0.3);
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  .school-done-banner h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    letter-spacing: 2px;
+    color: var(--green);
+    margin-bottom: 4px;
+  }
+
+  .school-done-banner p { color: var(--muted); font-size: 13px; }
+
+  /* ── BEFORE SCHOOL ── */
+  .before-school-banner {
+    background: rgba(200,16,46,0.06);
+    border: 1px solid rgba(200,16,46,0.2);
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: gap;
+  }
+
+  .before-school-banner h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 2px;
+    color: var(--red);
+  }
+
+  .before-school-banner .starts-in {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  footer {
+    text-align: center;
+    padding: 32px;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 1px;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 600px) {
+    .current-period { font-size: 36px; }
+    .countdown-time { font-size: 48px; }
+    header h1 { font-size: 20px; }
+    .schedule-row { grid-template-columns: 1fr 140px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>GWHS · Bell Schedule</h1>
+  <div id="live-clock">--:--:-- --</div>
+</header>
+
+<div class="container">
+
+  <!-- Hero block: dynamically replaced -->
+  <div id="hero-section"></div>
+
+  <!-- Stats row -->
+  <div class="stats-grid" id="stats-grid"></div>
+
+  <!-- Day tabs -->
+  <div class="tabs" id="day-tabs"></div>
+
+  <!-- Schedule display -->
+  <div id="schedule-display"></div>
+
+</div>
+
+<footer>GWHS · 2025–26 Academic Year · Auto-updates every second</footer>
+
+<script>
+// ────────────────────────────
+// SCHEDULE DATA
+// ────────────────────────────
+const SCHEDULES = {
+  // 0=Sun,1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat
+  1: { label: "Monday", type: "Regular", periods: [
+    { name: "1st Period",       start: "08:40", end: "09:30", dur: 50 },
+    { name: "2nd Period",       start: "09:35", end: "10:25", dur: 50 },
+    { name: "Nutrition Break",  start: "10:25", end: "10:30", dur: 5  },
+    { name: "3rd Period",       start: "10:35", end: "11:25", dur: 50 },
+    { name: "4th Period",       start: "11:30", end: "12:20", dur: 50 },
+    { name: "Lunch",            start: "12:20", end: "13:00", dur: 40 },
+    { name: "5th Period",       start: "13:05", end: "13:55", dur: 50 },
+    { name: "6th Period",       start: "14:00", end: "14:50", dur: 50 },
+    { name: "7th Period",       start: "14:55", end: "15:45", dur: 50 },
+  ]},
+  2: { label: "Tuesday", type: "Regular", periods: [] },  // same as Mon
+  3: { label: "Wednesday", type: "Block (Even)", periods: [
+    { name: "2nd Period",       start: "08:40", end: "10:10", dur: 90 },
+    { name: "Advisory",         start: "10:15", end: "10:55", dur: 40 },
+    { name: "4th Period",       start: "11:00", end: "12:30", dur: 90 },
+    { name: "Lunch",            start: "12:30", end: "13:10", dur: 40 },
+    { name: "6th Period",       start: "13:15", end: "14:45", dur: 90 },
+    { name: "CPT – Staff Plan", start: "14:55", end: "15:55", dur: 60 },
+  ]},
+  4: { label: "Thursday", type: "Block (Odd)", periods: [
+    { name: "1st Period",       start: "08:40", end: "10:10", dur: 90 },
+    { name: "Nutrition Break",  start: "10:10", end: "10:20", dur: 10 },
+    { name: "3rd Period",       start: "10:25", end: "11:55", dur: 90 },
+    { name: "Lunch",            start: "11:55", end: "12:35", dur: 40 },
+    { name: "5th Period",       start: "12:40", end: "14:10", dur: 90 },
+    { name: "7th Period",       start: "14:15", end: "15:45", dur: 90 },
+  ]},
+  5: { label: "Friday", type: "Regular", periods: [] },   // same as Mon
+};
+
+// Tuesday and Friday share Monday's schedule
+SCHEDULES[2].periods = SCHEDULES[1].periods;
+SCHEDULES[5].periods = SCHEDULES[1].periods;
+
+// ────────────────────────────
+// HELPERS
+// ────────────────────────────
+function parseTime(t) {
+  // "HH:MM" → seconds since midnight
+  const [h, m] = t.split(":").map(Number);
+  return h * 3600 + m * 60;
+}
+
+function nowSeconds() {
+  const n = new Date();
+  return n.getHours() * 3600 + n.getMinutes() * 60 + n.getSeconds();
+}
+
+function fmtHMS(secs) {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  const mm = String(m).padStart(2, '0');
+  const ss = String(s).padStart(2, '0');
+  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+
+function fmtTime12(t) {
+  // "HH:MM" → "8:40 AM"
+  let [h, m] = t.split(":").map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  if (h > 12) h -= 12;
+  if (h === 0) h = 12;
+  return `${h}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+function todayDow() { return new Date().getDay(); }
+
+function getCurrentPeriod(periods) {
+  const now = nowSeconds();
+  for (let i = 0; i < periods.length; i++) {
+    const s = parseTime(periods[i].start);
+    const e = parseTime(periods[i].end);
+    if (now >= s && now < e) return { idx: i, period: periods[i], endSec: e, startSec: s };
+  }
+  return null;
+}
+
+function getNextPeriod(periods) {
+  const now = nowSeconds();
+  for (let i = 0; i < periods.length; i++) {
+    const s = parseTime(periods[i].start);
+    if (now < s) return { idx: i, period: periods[i], startSec: s };
+  }
+  return null;
+}
+
+function schoolStartSec(periods) { return parseTime(periods[0].start); }
+function schoolEndSec(periods)   { return parseTime(periods[periods.length - 1].end); }
+
+// ────────────────────────────
+// CLOCK
+// ────────────────────────────
+function updateClock() {
+  const n = new Date();
+  const h = n.getHours(), m = n.getMinutes(), s = n.getSeconds();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hh = h > 12 ? h - 12 : h === 0 ? 12 : h;
+  document.getElementById('live-clock').textContent =
+    `${hh}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} ${ampm}`;
+}
+
+// ────────────────────────────
+// RENDER HERO
+// ────────────────────────────
+function renderHero(sched) {
+  const hero = document.getElementById('hero-section');
+  const dow = todayDow();
+
+  if (!sched) {
+    hero.innerHTML = `
+      <div class="no-school">
+        <h2>No School Today</h2>
+        <p>Enjoy your weekend! 🎉</p>
+      </div>`;
+    return;
+  }
+
+  const periods = sched.periods;
+  const now = nowSeconds();
+  const schoolStart = schoolStartSec(periods);
+  const schoolEnd   = schoolEndSec(periods);
+
+  // Before school
+  if (now < schoolStart) {
+    const diff = schoolStart - now;
+    hero.innerHTML = `
+      <div class="before-school-banner">
+        <div>
+          <div class="hero-label">School hasn't started</div>
+          <h2 class="current-period" style="font-size:32px">First bell at ${fmtTime12(periods[0].start)}</h2>
+        </div>
+        <div class="starts-in">Starts in <span id="starts-in-timer" style="color:var(--text);font-weight:600">${fmtHMS(diff)}</span></div>
+      </div>`;
+    return;
+  }
+
+  // After school
+  if (now >= schoolEnd) {
+    hero.innerHTML = `
+      <div class="school-done-banner">
+        <h2>School's Out! 🎉</h2>
+        <p>Final bell rang at ${fmtTime12(periods[periods.length-1].end)}</p>
+      </div>`;
+    return;
+  }
+
+  // During a period
+  const cur = getCurrentPeriod(periods);
+  const nxt = getNextPeriod(periods);
+
+  if (cur) {
+    const remaining = cur.endSec - now;
+    const elapsed   = now - cur.startSec;
+    const total     = cur.endSec - cur.startSec;
+    const pct       = Math.min(100, (elapsed / total) * 100);
+    const colorClass = remaining <= 120 ? 'urgent' : remaining <= 300 ? 'warning' : 'ok';
+
+    hero.innerHTML = `
+      <div class="hero">
+        <div class="hero-label">Now in Progress</div>
+        <div class="current-period">${cur.period.name}</div>
+        <div class="period-time-range">${fmtTime12(cur.period.start)} → ${fmtTime12(cur.period.end)} · ${cur.period.dur} min</div>
+
+        <div class="countdown-label">Ends in</div>
+        <div class="countdown-row">
+          <div class="countdown-time ${colorClass}" id="countdown-display">${fmtHMS(remaining)}</div>
+        </div>
+
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="progress-fill" style="width:${pct}%"></div>
+        </div>
+        <div class="progress-meta">
+          <span>${fmtHMS(elapsed)} elapsed</span>
+          <span>${fmtHMS(remaining)} left</span>
+        </div>
+
+        ${nxt ? `<div class="next-up">
+          <div class="next-up-dot"></div>
+          <span>Up next: <strong>${nxt.period.name}</strong> starts at ${fmtTime12(nxt.period.start)}</span>
+        </div>` : ''}
+      </div>`;
+  } else {
+    // Between periods (passing period)
+    const nxtP = getNextPeriod(periods);
+    if (nxtP) {
+      const till = nxtP.startSec - now;
+      hero.innerHTML = `
+        <div class="hero">
+          <div class="hero-label">Passing Period</div>
+          <div class="current-period" style="font-size:36px">Between Classes</div>
+          <div class="period-time-range" style="margin-bottom:12px"></div>
+          <div class="countdown-label">Next period in</div>
+          <div class="countdown-row">
+            <div class="countdown-time ok" id="countdown-display">${fmtHMS(till)}</div>
+          </div>
+          <div class="next-up">
+            <div class="next-up-dot"></div>
+            <span>Up next: <strong>${nxtP.period.name}</strong> at ${fmtTime12(nxtP.period.start)}</span>
+          </div>
+        </div>`;
+    }
+  }
+}
+
+// ────────────────────────────
+// RENDER STATS
+// ────────────────────────────
+function renderStats(sched) {
+  const el = document.getElementById('stats-grid');
+  if (!sched) { el.innerHTML = ''; return; }
+
+  const periods = sched.periods;
+  const now = nowSeconds();
+  const schoolEnd = schoolEndSec(periods);
+  const schoolStart = schoolStartSec(periods);
+
+  // Count academic periods only
+  const classPeriods = periods.filter(p => !p.name.includes('Lunch') && !p.name.includes('Nutrition') && !p.name.includes('Advisory') && !p.name.includes('CPT'));
+  const passedClasses = classPeriods.filter(p => parseTime(p.end) <= now).length;
+  const totalClasses  = classPeriods.length;
+  const timeLeft = Math.max(0, schoolEnd - now);
+  const schoolDur = schoolEnd - schoolStart;
+  const pctDay = Math.min(100, Math.max(0, Math.round(((now - schoolStart) / schoolDur) * 100)));
+
+  el.innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Day Progress</div>
+      <div class="stat-value">${pctDay}%</div>
+      <div class="stat-sub">of school day</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Periods Done</div>
+      <div class="stat-value">${passedClasses}/${totalClasses}</div>
+      <div class="stat-sub">class periods</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">School Ends</div>
+      <div class="stat-value" style="font-size:24px">${fmtTime12(periods[periods.length-1].end)}</div>
+      <div class="stat-sub">${timeLeft > 0 ? fmtHMS(timeLeft) + ' left' : 'Done!'}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Schedule Type</div>
+      <div class="stat-value" style="font-size:22px">${sched.type}</div>
+      <div class="stat-sub">${sched.label}</div>
+    </div>`;
+}
+
+// ────────────────────────────
+// RENDER TABS + TABLE
+// ────────────────────────────
+let activeTab = null;
+
+function renderTabs() {
+  const tabs = document.getElementById('day-tabs');
+  const dow = todayDow();
+  const days = [1,2,3,4,5];
+  const names = ['Mon','Tue','Wed','Thu','Fri'];
+
+  if (activeTab === null) activeTab = days.includes(dow) ? dow : 1;
+
+  tabs.innerHTML = days.map((d, i) => `
+    <button class="tab ${d === dow ? 'today' : ''} ${d === activeTab ? 'active' : ''}"
+      onclick="setTab(${d})">${names[i]}${d === dow ? ' ★' : ''}</button>
+  `).join('');
+}
+
+function setTab(dow) {
+  activeTab = dow;
+  renderTabs();
+  renderTable(SCHEDULES[dow]);
+}
+
+function renderTable(sched) {
+  const el = document.getElementById('schedule-display');
+  if (!sched) { el.innerHTML = ''; return; }
+
+  const periods = sched.periods;
+  const now     = nowSeconds();
+  const todayDOW = todayDow();
+  const isToday  = (activeTab === todayDOW);
+  const cur      = isToday ? getCurrentPeriod(periods) : null;
+
+  const rows = periods.map((p, i) => {
+    const endSec   = parseTime(p.end);
+    const startSec = parseTime(p.start);
+    const isCur    = cur && cur.idx === i;
+    const isPast   = isToday && endSec <= now && !isCur;
+    return `
+      <div class="schedule-row ${isCur ? 'current-row' : ''} ${isPast ? 'past-row' : ''}">
+        <div class="row-name">
+          ${isCur ? '<span class="current-dot"></span>' : ''}
+          ${p.name}
+        </div>
+        <div class="row-time">${fmtTime12(p.start)} – ${fmtTime12(p.end)}</div>
+        <div class="row-dur">${p.dur}m</div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="schedule-card">
+      <div class="schedule-header">${sched.label} — ${sched.type} Schedule</div>
+      ${rows}
+    </div>`;
+}
+
+// ────────────────────────────
+// TICK (every second)
+// ────────────────────────────
+function tick() {
+  updateClock();
+
+  const dow   = todayDow();
+  const sched = SCHEDULES[dow] || null;
+
+  renderHero(sched);
+  renderStats(sched);
+
+  // Update countdown in-place if it exists (avoids full re-render flicker)
+  const cdEl = document.getElementById('countdown-display');
+  if (cdEl && sched) {
+    const periods = sched.periods;
+    const now = nowSeconds();
+    const cur  = getCurrentPeriod(periods);
+    const nxt  = getNextPeriod(periods);
+    const startEl = document.getElementById('starts-in-timer');
+
+    if (startEl) {
+      const diff = parseTime(periods[0].start) - now;
+      startEl.textContent = fmtHMS(Math.max(0, diff));
+    } else if (cur) {
+      const remaining = cur.endSec - now;
+      const elapsed   = now - cur.startSec;
+      const total     = cur.endSec - cur.startSec;
+      const pct       = Math.min(100, (elapsed / total) * 100);
+      cdEl.textContent = fmtHMS(remaining);
+      cdEl.className = 'countdown-time ' + (remaining <= 120 ? 'urgent' : remaining <= 300 ? 'warning' : 'ok');
+      const pfill = document.getElementById('progress-fill');
+      if (pfill) pfill.style.width = pct + '%';
+    } else if (nxt) {
+      const till = nxt.startSec - now;
+      cdEl.textContent = fmtHMS(till);
+    }
+  } else if (sched) {
+    // Hero needs full redraw (state changed — e.g. period ended)
+    renderHero(sched);
+    renderStats(sched);
+  }
+
+  // Redraw table if today's tab is active (to update past/current highlights)
+  if (activeTab === dow) renderTable(sched);
+}
+
+// ────────────────────────────
+// INIT
+// ────────────────────────────
+function init() {
+  const dow = todayDow();
+  const sched = SCHEDULES[dow] || null;
+
+  renderHero(sched);
+  renderStats(sched);
+  renderTabs();
+  renderTable(SCHEDULES[activeTab !== null ? activeTab : (dow in SCHEDULES ? dow : 1)]);
+  updateClock();
+  setInterval(tick, 1000);
+}
+
+init();
+</script>
+</body>
+</html>
