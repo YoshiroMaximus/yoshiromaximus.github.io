@@ -4,459 +4,244 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GWHS Student Email Signature Builder</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --navy: #0d2b5e;
-    --gold: #c9a227;
-    --gold-light: #f5e199;
-    --bg: #f4f2ee;
-    --surface: #ffffff;
-    --border: rgba(13,43,94,0.12);
-    --text: #1a1a2e;
-    --muted: #6b7090;
-    --radius: 12px;
-  }
+:root {
+  --navy: #0d2b5e;
+  --gold: #c9a227;
+  --gold-lt: #f5e8a8;
+  --bg: #efecea;
+  --surface: #ffffff;
+  --border: rgba(13,43,94,0.11);
+  --border-med: rgba(13,43,94,0.2);
+  --text: #12152a;
+  --muted: #687082;
+  --radius: 14px;
+  --accent: #0d2b5e;
+  --accent2: #c9a227;
+}
 
-  body {
-    font-family: 'Inter', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    padding: 0;
-  }
+body {
+  font-family: 'Figtree', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
 
-  /* ── Header ── */
-  .site-header {
-    background: var(--navy);
-    padding: 0 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 64px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
+.progress-bar { height: 3px; background: rgba(13,43,94,0.1); position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--navy), var(--gold)); width: 0%; transition: width 0.4s cubic-bezier(.4,0,.2,1); border-radius: 0 2px 2px 0; }
 
-  .header-brand {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
+.header { background: var(--navy); height: 60px; display: flex; align-items: center; padding: 0 2rem; gap: 1rem; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 20px rgba(13,43,94,0.3); }
+.header-logo { height: 36px; width: 36px; object-fit: contain; filter: brightness(0) invert(1); opacity: 0.9; }
+.header-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.2); }
+.header-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: #fff; letter-spacing: 0.03em; }
+.header-sub { font-size: 12px; color: rgba(255,255,255,0.45); margin-left: 2px; }
+.header-spacer { flex: 1; }
+.header-badge { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); background: rgba(201,162,39,0.15); border: 1px solid rgba(201,162,39,0.35); padding: 5px 12px; border-radius: 100px; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GWHS Student Email Signature Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  .header-brand img {
-    height: 40px;
-    width: 40px;
-    object-fit: contain;
-    filter: brightness(0) invert(1);
-  }
+:root {
+  --navy: #0d2b5e;
+  --gold: #c9a227;
+  --gold-lt: #f5e8a8;
+  --bg: #efecea;
+  --surface: #ffffff;
+  --border: rgba(13,43,94,0.11);
+  --border-med: rgba(13,43,94,0.2);
+  --text: #12152a;
+  --muted: #687082;
+  --radius: 14px;
+  --accent: #0d2b5e;
+  --accent2: #c9a227;
+}
 
-  .brand-text {
-    display: flex;
-    flex-direction: column;
-  }
+body {
+  font-family: 'Figtree', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
 
-  .brand-school {
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--gold-light);
-    letter-spacing: 0.05em;
-    line-height: 1;
-  }
+.progress-bar { height: 3px; background: rgba(13,43,94,0.1); position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--navy), var(--gold)); width: 0%; transition: width 0.4s cubic-bezier(.4,0,.2,1); border-radius: 0 2px 2px 0; }
 
-  .brand-tool {
-    font-size: 11px;
-    color: rgba(255,255,255,0.5);
-    letter-spacing: 0.03em;
-    margin-top: 2px;
-  }
+.header { background: var(--navy); height: 60px; display: flex; align-items: center; padding: 0 2rem; gap: 1rem; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 20px rgba(13,43,94,0.3); }
+.header-logo { height: 36px; width: 36px; object-fit: contain; filter: brightness(0) invert(1); opacity: 0.9; }
+.header-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.2); }
+.header-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: #fff; letter-spacing: 0.03em; }
+.header-sub { font-size: 12px; color: rgba(255,255,255,0.45); margin-left: 2px; }
+.header-spacer { flex: 1; }
+.header-badge { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); background: rgba(201,162,39,0.15); border: 1px solid rgba(201,162,39,0.35); padding: 5px 12px; border-radius: 100px; }
 
-  .header-tag {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--gold);
-    background: rgba(201,162,39,0.15);
-    border: 1px solid rgba(201,162,39,0.3);
-    padding: 4px 12px;
-    border-radius: 100px;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
+.page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
 
-  /* ── Layout ── */
-  .page {
-    max-width: 1080px;
-    margin: 0 auto;
-    padding: 2.5rem 1.5rem;
-  }
+.hero { text-align: center; margin-bottom: 2.25rem; }
+.hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(24px, 3.5vw, 38px); font-weight: 800; color: var(--navy); line-height: 1.1; margin-bottom: 8px; }
+.hero h1 em { font-style: normal; color: var(--gold); }
+.hero p { font-size: 15px; color: var(--muted); max-width: 440px; margin: 0 auto; line-height: 1.6; }
 
-  .hero {
-    margin-bottom: 2.5rem;
-    text-align: center;
-  }
+.grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 1.25rem; align-items: start; }
+@media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
 
-  .hero h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: clamp(26px, 4vw, 40px);
-    font-weight: 700;
-    color: var(--navy);
-    line-height: 1.1;
-    margin-bottom: 8px;
-  }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.4rem; box-shadow: 0 1px 8px rgba(13,43,94,0.05); animation: fadeIn 0.35s cubic-bezier(.4,0,.2,1) both; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-  .hero h1 span {
-    color: var(--gold);
-  }
+.card-title { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--navy); opacity: 0.55; margin-bottom: 1.1rem; display: flex; align-items: center; gap: 10px; }
+.card-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-  .hero p {
-    font-size: 15px;
-    color: var(--muted);
-    max-width: 480px;
-    margin: 0 auto;
-    line-height: 1.6;
-  }
+.field { margin-bottom: 0.9rem; }
+.field:last-child { margin-bottom: 0; }
+.field label { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 5px; letter-spacing: 0.05em; text-transform: uppercase; }
+.field label .opt { font-weight: 400; color: #b0b5c4; font-size: 10px; text-transform: none; letter-spacing: 0; }
+.field input { width: 100%; padding: 9px 13px; font-family: 'Figtree', sans-serif; font-size: 14px; background: #f7f6f3; border: 1.5px solid transparent; border-radius: 9px; color: var(--text); transition: all 0.15s; outline: none; }
+.field input:hover { background: #f3f1ed; }
+.field input:focus { border-color: var(--navy); background: #fff; box-shadow: 0 0 0 3px rgba(13,43,94,0.09); }
+.field input.invalid { border-color: #e24b4a; box-shadow: 0 0 0 3px rgba(226,75,74,0.1); }
+.field input::placeholder { color: #c0c4d0; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    align-items: start;
-  }
+.grade-pills { display: flex; gap: 7px; flex-wrap: wrap; }
+.grade-pill { padding: 7px 18px; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; background: #f0efe9; border: 1.5px solid transparent; border-radius: 100px; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+.grade-pill:hover { background: #e8e5dd; color: var(--navy); }
+.grade-pill.active { background: var(--navy); color: #fff; border-color: var(--navy); }
 
-  @media (max-width: 700px) {
-    .grid { grid-template-columns: 1fr; }
-  }
+.tag-input-wrap { border: 1.5px solid transparent; border-radius: 9px; background: #f7f6f3; padding: 6px 10px; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; cursor: text; transition: all 0.15s; min-height: 42px; }
+.tag-input-wrap:focus-within { border-color: var(--navy); background: #fff; box-shadow: 0 0 0 3px rgba(13,43,94,0.09); }
+.club-tag { display: inline-flex; align-items: center; gap: 5px; background: rgba(13,43,94,0.08); color: var(--navy); font-size: 12px; font-weight: 600; padding: 3px 8px 3px 10px; border-radius: 100px; animation: tagIn 0.18s cubic-bezier(.4,0,.2,1); }
+@keyframes tagIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.club-tag button { background: none; border: none; color: var(--navy); opacity: 0.45; cursor: pointer; padding: 0; font-size: 15px; line-height: 1; transition: opacity 0.1s; }
+.club-tag button:hover { opacity: 1; }
+.tag-input { border: none; background: none; font-family: 'Figtree', sans-serif; font-size: 14px; color: var(--text); outline: none; flex: 1; min-width: 100px; padding: 2px 3px; }
+.tag-input::placeholder { color: #c0c4d0; }
 
-  /* ── Card ── */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    box-shadow: 0 2px 12px rgba(13,43,94,0.06);
-  }
+.section-label { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px; }
 
-  .card-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--navy);
-    margin-bottom: 1.25rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
+.style-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1.1rem; }
+.style-opt { border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 8px; cursor: pointer; text-align: center; transition: all 0.15s; background: #f7f6f3; }
+.style-opt:hover { background: #eeece5; }
+.style-opt.active { border-color: var(--navy); background: rgba(13,43,94,0.05); }
+.style-icon { width: 100%; height: 36px; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; }
+.style-name { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.style-opt.active .style-name { color: var(--navy); }
 
-  .card-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
+.theme-row { display: flex; gap: 8px; margin-bottom: 1.1rem; }
+.theme-swatch { flex: 1; height: 30px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: transform 0.15s, border-color 0.15s; }
+.theme-swatch:hover { transform: translateY(-2px); }
+.theme-swatch.active { border-color: var(--text); }
 
-  /* ── Form ── */
-  .field { margin-bottom: 1rem; }
-  .field:last-child { margin-bottom: 0; }
+.toggle-list { display: flex; flex-direction: column; gap: 7px; }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; background: #f7f6f3; border-radius: 9px; cursor: pointer; user-select: none; border: 1.5px solid transparent; transition: all 0.15s; }
+.toggle-row:hover { border-color: var(--border); background: #f3f1ec; }
+.toggle-label { font-size: 13px; color: var(--text); font-weight: 500; }
+.tog { width: 34px; height: 19px; background: #d0d3de; border-radius: 100px; position: relative; flex-shrink: 0; transition: background 0.2s; }
+.tog.on { background: var(--navy); }
+.tog::after { content: ''; position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 50%; background: #fff; transition: transform 0.2s cubic-bezier(.4,0,.2,1); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.tog.on::after { transform: translateX(15px); }
 
-  .field label {
-    display: block;
-    font-size: 11.5px;
-    font-weight: 500;
-    color: var(--muted);
-    margin-bottom: 5px;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-  }
+.preview-card { position: sticky; top: 76px; }
 
-  .field input, .field select {
-    width: 100%;
-    padding: 9px 13px;
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    background: #f8f7f5;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    transition: border-color 0.15s, box-shadow 0.15s;
-    outline: none;
-    appearance: none;
-  }
+.email-shell { background: #f2f2f0; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-med); margin-bottom: 1rem; box-shadow: 0 4px 20px rgba(13,43,94,0.08); }
+.email-chrome { background: #e9e8e5; border-bottom: 1px solid var(--border-med); padding: 10px 14px; }
+.email-dots { display: flex; gap: 6px; margin-bottom: 8px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.dot-r { background: #ff5f57; }
+.dot-y { background: #ffbd2e; }
+.dot-g { background: #28c840; }
+.email-field { font-size: 11px; color: #888; padding: 2px 0; display: flex; gap: 8px; }
+.email-field-lbl { font-weight: 600; color: #bbb; width: 24px; }
+.email-body { background: #fff; padding: 1.25rem 1.25rem 0; }
+.email-body-text { font-size: 13px; color: #555; line-height: 1.7; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #f0eeea; }
+.email-sig-area { padding: 1rem 0 1.25rem; }
 
-  .field input:focus, .field select:focus {
-    border-color: var(--navy);
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(13,43,94,0.1);
-  }
+.sig-wrap { display: flex; gap: 12px; align-items: flex-start; }
+.sig-logo-img { width: 50px; height: 50px; object-fit: contain; display: block; flex-shrink: 0; }
+.sig-bar-el { width: 3px; min-height: 55px; align-self: stretch; border-radius: 2px; flex-shrink: 0; }
+.sig-body { min-width: 0; }
+.sig-name { font-family: Arial, sans-serif; font-weight: 700; line-height: 1.2; margin-bottom: 2px; }
+.sig-sub { font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+.sig-detail { color: #666; line-height: 1.8; }
+.sig-school-line { font-weight: 600; margin-top: 4px; }
 
-  .field input::placeholder { color: #b0b4c4; }
+.st-classic .sig-name { font-size: 16px; }
+.st-classic .sig-sub  { font-size: 10.5px; }
+.st-classic .sig-detail { font-size: 12px; }
+.st-classic .sig-school-line { font-size: 12px; }
 
-  .field-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
+.st-bold .sig-name { font-size: 20px; }
+.st-bold .sig-sub  { font-size: 11px; }
+.st-bold .sig-detail { font-size: 12.5px; }
+.st-bold .sig-school-line { font-size: 12.5px; }
 
-  /* ── Grade selector ── */
-  .grade-pills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
+.st-compact .sig-name { font-size: 14px; }
+.st-compact .sig-sub  { font-size: 10px; margin-bottom: 3px; }
+.st-compact .sig-detail { font-size: 11.5px; }
+.st-compact .sig-school-line { font-size: 11.5px; }
 
-  .grade-pill {
-    padding: 6px 16px;
-    font-size: 13px;
-    font-weight: 500;
-    font-family: 'Inter', sans-serif;
-    background: #f0efe9;
-    border: 1px solid var(--border);
-    border-radius: 100px;
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.15s;
-  }
+.btn-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem; }
+.btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 11px 16px; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 9px; cursor: pointer; border: none; transition: all 0.15s; }
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--navy); color: var(--gold-lt); }
+.btn-primary:hover { opacity: 0.88; }
+.btn-primary.done { background: #0f6e56; color: #fff; }
+.btn-secondary { background: #f0eeea; color: var(--navy); border: 1.5px solid var(--border-med); }
+.btn-secondary:hover { background: #e8e5dd; }
+.btn-ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--border); font-size: 11.5px; }
+.btn-ghost:hover { color: var(--navy); border-color: var(--border-med); }
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
-  .grade-pill:hover { background: #e8e6de; }
+.html-block { background: #0d1117; border-radius: 10px; overflow: hidden; margin-bottom: 1rem; }
+.html-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #161b22; border-bottom: 1px solid #30363d; }
+.html-top-label { font-size: 11px; color: #8b949e; }
+.html-copy-mini { font-size: 11px; color: #58a6ff; background: none; border: none; cursor: pointer; font-family: 'Figtree', sans-serif; padding: 0; transition: opacity 0.15s; }
+.html-copy-mini:hover { opacity: 0.7; }
+.html-code { padding: 1rem; font-family: 'Courier New', monospace; font-size: 10.5px; color: #adbac7; line-height: 1.6; max-height: 140px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+.html-code::-webkit-scrollbar { width: 4px; }
+.html-code::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
 
-  .grade-pill.active {
-    background: var(--navy);
-    color: #fff;
-    border-color: var(--navy);
-  }
+.howto-wrap { background: #f7f6f3; border-radius: 10px; padding: 1rem 1.1rem; }
+.howto-title { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--navy); opacity: 0.55; margin-bottom: 10px; }
+.steps { display: flex; flex-direction: column; gap: 7px; }
+.step { display: flex; align-items: flex-start; gap: 10px; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.step-num { width: 20px; height: 20px; border-radius: 50%; background: var(--navy); color: #fff; font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
 
-  /* ── Toggles ── */
-  .toggle-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1.25rem; }
-
-  .toggle-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 9px 12px;
-    background: #f8f7f5;
-    border-radius: 8px;
-    cursor: pointer;
-    user-select: none;
-    border: 1px solid transparent;
-    transition: border-color 0.15s;
-  }
-
-  .toggle-row:hover { border-color: var(--border); }
-
-  .toggle-label { font-size: 13px; color: var(--text); }
-
-  .tog {
-    width: 34px; height: 19px;
-    background: #ccc;
-    border-radius: 100px;
-    position: relative;
-    flex-shrink: 0;
-    transition: background 0.2s;
-  }
-
-  .tog.on { background: var(--navy); }
-
-  .tog::after {
-    content: '';
-    position: absolute;
-    top: 2px; left: 2px;
-    width: 15px; height: 15px;
-    border-radius: 50%;
-    background: #fff;
-    transition: transform 0.2s;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  }
-
-  .tog.on::after { transform: translateX(15px); }
-
-  /* ── Preview ── */
-  .sig-box {
-    background: #fff;
-    border: 1px solid #e4e2dc;
-    border-radius: 10px;
-    padding: 1.25rem 1.25rem 1rem;
-    margin-bottom: 1rem;
-  }
-
-  .sig-wrap {
-    display: flex;
-    gap: 14px;
-    align-items: flex-start;
-  }
-
-  .sig-logo img {
-    width: 52px;
-    height: 52px;
-    object-fit: contain;
-    display: block;
-  }
-
-  .sig-bar {
-    width: 3px;
-    min-height: 60px;
-    align-self: stretch;
-    background: var(--navy);
-    border-radius: 2px;
-    flex-shrink: 0;
-  }
-
-  .sig-body { flex: 1; min-width: 0; }
-
-  .sig-name {
-    font-family: 'Syne', sans-serif;
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--navy);
-    line-height: 1.2;
-    margin-bottom: 2px;
-  }
-
-  .sig-subtitle {
-    font-size: 12px;
-    color: var(--gold);
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    margin-bottom: 7px;
-    text-transform: uppercase;
-  }
-
-  .sig-detail {
-    font-size: 12px;
-    color: #666;
-    line-height: 1.8;
-  }
-
-  .sig-school {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--navy);
-    margin-top: 5px;
-  }
-
-  /* ── Buttons ── */
-  .btn-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem; }
-
-  .btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    padding: 11px;
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    border-radius: 8px;
-    cursor: pointer;
-    border: none;
-    transition: opacity 0.15s, transform 0.1s;
-  }
-
-  .btn:active { transform: scale(0.98); }
-
-  .btn-primary {
-    background: var(--navy);
-    color: var(--gold-light);
-  }
-
-  .btn-primary:hover { opacity: 0.9; }
-  .btn-primary.done { background: #0f6e56; color: #fff; }
-
-  .btn-secondary {
-    background: #f0efe9;
-    color: var(--navy);
-    border: 1px solid var(--border);
-  }
-
-  .btn-secondary:hover { background: #e5e3db; }
-
-  /* ── HTML output ── */
-  .html-out {
-    background: #0d1117;
-    border-radius: 8px;
-    padding: 1rem;
-    font-family: 'Courier New', monospace;
-    font-size: 11px;
-    color: #8b9eb7;
-    line-height: 1.6;
-    max-height: 160px;
-    overflow-y: auto;
-    white-space: pre-wrap;
-    word-break: break-all;
-    margin-bottom: 1rem;
-  }
-
-  .html-out .t-tag { color: #7ee8a2; }
-  .html-out .t-attr { color: #79c0ff; }
-  .html-out .t-val { color: #ffb347; }
-
-  /* ── How-to ── */
-  .howto {
-    background: linear-gradient(135deg, rgba(13,43,94,0.04), rgba(201,162,39,0.06));
-    border: 1px solid rgba(13,43,94,0.1);
-    border-radius: 10px;
-    padding: 1rem 1.25rem;
-  }
-
-  .howto-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--navy);
-    margin-bottom: 8px;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-
-  .howto ol {
-    padding-left: 1.2rem;
-    font-size: 12.5px;
-    color: var(--muted);
-    line-height: 1.8;
-  }
-
-  .howto ol li { margin-bottom: 2px; }
-
-  /* ── Footer ── */
-  .site-footer {
-    text-align: center;
-    padding: 2rem;
-    font-size: 12px;
-    color: var(--muted);
-    border-top: 1px solid var(--border);
-    margin-top: 2rem;
-  }
+.site-footer { text-align: center; padding: 1.5rem; font-size: 12px; color: #aaa; margin-top: 1rem; }
 </style>
 </head>
 <body>
 
-<header class="site-header">
-  <div class="header-brand">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a8/Logo_from_George_Washington_High_School.png" alt="GWHS">
-    <div class="brand-text">
-      <span class="brand-school">George Washington High School</span>
-      <span class="brand-tool">Student Signature Builder</span>
-    </div>
+<div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
+
+<header class="header">
+  <img class="header-logo" src="https://upload.wikimedia.org/wikipedia/commons/a/a8/Logo_from_George_Washington_High_School.png" alt="GWHS">
+  <div class="header-divider"></div>
+  <div>
+    <div class="header-title">George Washington High School</div>
+    <div class="header-sub">Email Signature Builder</div>
   </div>
-  <span class="header-tag">Students</span>
+  <div class="header-spacer"></div>
+  <div class="header-badge">Students</div>
 </header>
 
 <div class="page">
   <div class="hero">
-    <h1>Build Your <span>Email Signature</span></h1>
-    <p>Fill in your info below and get a professional email signature you can paste straight into Gmail or Outlook.</p>
+    <h1>Your <em>Professional</em> Email Signature</h1>
+    <p>Fill in your details and grab the code — takes about 60 seconds.</p>
   </div>
 
   <div class="grid">
 
-    <!-- LEFT: Form -->
-    <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+    <!-- LEFT -->
+    <div style="display:flex;flex-direction:column;gap:1.25rem;">
 
       <div class="card">
         <div class="card-title">Your Info</div>
@@ -468,11 +253,11 @@
 
         <div class="field">
           <label>Grade</label>
-          <div class="grade-pills" id="grade-pills">
-            <button class="grade-pill" onclick="selectGrade(this,'9th Grade')">9th</button>
-            <button class="grade-pill" onclick="selectGrade(this,'10th Grade')">10th</button>
-            <button class="grade-pill" onclick="selectGrade(this,'11th Grade')">11th</button>
-            <button class="grade-pill" onclick="selectGrade(this,'12th Grade')">12th</button>
+          <div class="grade-pills">
+            <button class="grade-pill" onclick="pickGrade(this,'9th Grade')">9th</button>
+            <button class="grade-pill" onclick="pickGrade(this,'10th Grade')">10th</button>
+            <button class="grade-pill" onclick="pickGrade(this,'11th Grade')">11th</button>
+            <button class="grade-pill" onclick="pickGrade(this,'12th Grade')">12th</button>
           </div>
         </div>
 
@@ -482,7 +267,7 @@
             <input type="text" id="f-advisory" placeholder="e.g. 302" oninput="update()">
           </div>
           <div class="field">
-            <label>Grad Year</label>
+            <label>Class of</label>
             <input type="text" id="f-grad" placeholder="2027" oninput="update()">
           </div>
         </div>
@@ -493,222 +278,920 @@
         </div>
 
         <div class="field">
-          <label>Pronouns <span style="font-weight:400;color:#b0b4c4;">(optional)</span></label>
+          <label>Pronouns <span class="opt">optional</span></label>
           <input type="text" id="f-pronouns" placeholder="e.g. she/her" oninput="update()">
         </div>
 
         <div class="field">
-          <label>Activities / Clubs <span style="font-weight:400;color:#b0b4c4;">(optional)</span></label>
-          <input type="text" id="f-clubs" placeholder="e.g. Debate Team, DECA" oninput="update()">
+          <label>Portfolio / Website <span class="opt">optional</span></label>
+          <input type="text" id="f-web" placeholder="https://alexjohnson.com" oninput="update()">
+        </div>
+
+        <div class="field">
+          <label>Activities &amp; Clubs <span class="opt">type + Enter</span></label>
+          <div class="tag-input-wrap" id="tag-wrap" onclick="document.getElementById('club-input').focus()">
+            <input class="tag-input" id="club-input" placeholder="e.g. Debate Team" onkeydown="handleTag(event)">
+          </div>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-title">Options</div>
+        <div class="card-title">Customize</div>
+
+        <div class="section-label">Layout</div>
+        <div class="style-grid">
+          <div class="style-opt active" onclick="pickStyle(this,'classic')">
+            <div class="style-icon">
+              <svg width="60" height="32" viewBox="0 0 60 32" fill="none">
+                <rect x="0" y="8" width="17" height="17" rx="3" fill="#0d2b5e" opacity="0.15"/>
+                <rect x="21" y="8" width="3" height="17" rx="1.5" fill="#0d2b5e" opacity="0.4"/>
+                <rect x="28" y="9" width="28" height="4" rx="2" fill="#0d2b5e" opacity="0.5"/>
+                <rect x="28" y="15" width="20" height="2.5" rx="1.25" fill="#c9a227" opacity="0.7"/>
+                <rect x="28" y="20" width="24" height="2" rx="1" fill="#0d2b5e" opacity="0.2"/>
+                <rect x="28" y="23.5" width="16" height="2" rx="1" fill="#0d2b5e" opacity="0.2"/>
+              </svg>
+            </div>
+            <div class="style-name">Classic</div>
+          </div>
+          <div class="style-opt" onclick="pickStyle(this,'bold')">
+            <div class="style-icon">
+              <svg width="60" height="32" viewBox="0 0 60 32" fill="none">
+                <rect x="0" y="6" width="17" height="17" rx="3" fill="#0d2b5e" opacity="0.15"/>
+                <rect x="21" y="6" width="3" height="17" rx="1.5" fill="#0d2b5e" opacity="0.4"/>
+                <rect x="28" y="6" width="28" height="6" rx="2" fill="#0d2b5e" opacity="0.6"/>
+                <rect x="28" y="14" width="20" height="2.5" rx="1.25" fill="#c9a227" opacity="0.7"/>
+                <rect x="28" y="19" width="24" height="2" rx="1" fill="#0d2b5e" opacity="0.2"/>
+                <rect x="28" y="22.5" width="16" height="2" rx="1" fill="#0d2b5e" opacity="0.2"/>
+              </svg>
+            </div>
+            <div class="style-name">Bold</div>
+          </div>
+          <div class="style-opt" onclick="pickStyle(this,'compact')">
+            <div class="style-icon">
+              <svg width="60" height="32" viewBox="0 0 60 32" fill="none">
+                <rect x="2" y="10" width="3" height="14" rx="1.5" fill="#0d2b5e" opacity="0.4"/>
+                <rect x="10" y="10" width="22" height="4" rx="2" fill="#0d2b5e" opacity="0.5"/>
+                <rect x="10" y="16" width="15" height="2.5" rx="1.25" fill="#c9a227" opacity="0.7"/>
+                <rect x="10" y="20.5" width="40" height="2" rx="1" fill="#0d2b5e" opacity="0.2"/>
+                <rect x="10" y="24" width="28" height="2" rx="1" fill="#0d2b5e" opacity="0.2"/>
+              </svg>
+            </div>
+            <div class="style-name">Compact</div>
+          </div>
+        </div>
+
+        <div class="section-label">Color Theme</div>
+        <div class="theme-row">
+          <div class="theme-swatch active" onclick="pickTheme(this,'#0d2b5e','#c9a227')" style="background:linear-gradient(90deg,#0d2b5e 50%,#c9a227 50%)" title="Navy / Gold"></div>
+          <div class="theme-swatch" onclick="pickTheme(this,'#1a4a5e','#2cb67d')" style="background:linear-gradient(90deg,#1a4a5e 50%,#2cb67d 50%)" title="Slate / Teal"></div>
+          <div class="theme-swatch" onclick="pickTheme(this,'#7b1a1a','#d4a44c')" style="background:linear-gradient(90deg,#7b1a1a 50%,#d4a44c 50%)" title="Crimson / Gold"></div>
+          <div class="theme-swatch" onclick="pickTheme(this,'#1a3d2b','#a3c97d')" style="background:linear-gradient(90deg,#1a3d2b 50%,#a3c97d 50%)" title="Forest / Sage"></div>
+          <div class="theme-swatch" onclick="pickTheme(this,'#2d2d2d','#e8c84a')" style="background:linear-gradient(90deg,#2d2d2d 50%,#e8c84a 50%)" title="Charcoal / Gold"></div>
+        </div>
 
         <div class="toggle-list">
-          <div class="toggle-row" onclick="tog('logo')">
-            <span class="toggle-label">Show school logo</span>
-            <div class="tog on" id="tog-logo"></div>
-          </div>
-          <div class="toggle-row" onclick="tog('bar')">
-            <span class="toggle-label">Show divider bar</span>
-            <div class="tog on" id="tog-bar"></div>
-          </div>
-          <div class="toggle-row" onclick="tog('school')">
-            <span class="toggle-label">Show school name</span>
-            <div class="tog on" id="tog-school"></div>
-          </div>
-          <div class="toggle-row" onclick="tog('pronouns')">
-            <span class="toggle-label">Show pronouns</span>
-            <div class="tog on" id="tog-pronouns"></div>
-          </div>
-          <div class="toggle-row" onclick="tog('clubs')">
-            <span class="toggle-label">Show activities</span>
-            <div class="tog on" id="tog-clubs"></div>
-          </div>
+          <div class="toggle-row" onclick="tog('logo')"><span class="toggle-label">Show school logo</span><div class="tog on" id="tog-logo"></div></div>
+          <div class="toggle-row" onclick="tog('bar')"><span class="toggle-label">Show divider bar</span><div class="tog on" id="tog-bar"></div></div>
+          <div class="toggle-row" onclick="tog('school')"><span class="toggle-label">Show school name</span><div class="tog on" id="tog-school"></div></div>
+          <div class="toggle-row" onclick="tog('pronouns')"><span class="toggle-label">Show pronouns</span><div class="tog on" id="tog-pronouns"></div></div>
+          <div class="toggle-row" onclick="tog('clubs_show')"><span class="toggle-label">Show activities</span><div class="tog on" id="tog-clubs_show"></div></div>
+          <div class="toggle-row" onclick="tog('web')"><span class="toggle-label">Show website</span><div class="tog on" id="tog-web"></div></div>
         </div>
       </div>
 
     </div>
 
-    <!-- RIGHT: Preview + output -->
-    <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+    <!-- RIGHT -->
+    <div style="display:flex;flex-direction:column;gap:1.25rem;">
+      <div class="card preview-card">
+        <div class="card-title">Preview</div>
 
-      <div class="card">
-        <div class="card-title">Live Preview</div>
-
-        <div class="sig-box">
-          <div class="sig-wrap" id="sig-wrap">
-            <div class="sig-logo" id="sig-logo-wrap">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/a/a8/Logo_from_George_Washington_High_School.png" alt="GWHS Logo">
+        <div class="email-shell">
+          <div class="email-chrome">
+            <div class="email-dots">
+              <div class="dot dot-r"></div>
+              <div class="dot dot-y"></div>
+              <div class="dot dot-g"></div>
             </div>
-            <div class="sig-bar" id="sig-bar-el"></div>
-            <div class="sig-body">
-              <div class="sig-name" id="sig-name">Your Name</div>
-              <div class="sig-subtitle" id="sig-sub"></div>
-              <div class="sig-detail" id="sig-detail"></div>
-              <div class="sig-school" id="sig-school-el">George Washington High School</div>
+            <div class="email-field"><span class="email-field-lbl">To</span> teacher@gwhs.edu</div>
+            <div class="email-field"><span class="email-field-lbl">Re</span> Question about Friday's assignment</div>
+          </div>
+          <div class="email-body">
+            <div class="email-body-text">
+              Hi Mr. Rivera,<br><br>
+              I had a quick question about the reading due Friday — did we need to annotate chapters 4 and 5, or just chapter 4? Thanks so much!
+            </div>
+            <div class="email-sig-area">
+              <div class="sig-wrap st-classic" id="sig-wrap">
+                <div id="sig-logo-wrap">
+                  <img class="sig-logo-img" src="https://upload.wikimedia.org/wikipedia/commons/a/a8/Logo_from_George_Washington_High_School.png" alt="GWHS">
+                </div>
+                <div class="sig-bar-el" id="sig-bar-el" style="background:#0d2b5e;"></div>
+                <div class="sig-body">
+                  <div class="sig-name" id="sig-name" style="color:#0d2b5e;">Your Name</div>
+                  <div class="sig-sub" id="sig-sub" style="color:#c9a227;"></div>
+                  <div class="sig-detail" id="sig-detail"></div>
+                  <div class="sig-school-line" id="sig-school-el" style="color:#0d2b5e;">George Washington High School</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         <div class="btn-group">
           <button class="btn btn-primary" id="copy-html" onclick="copyHTML()">
-            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="4.5" y="4.5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M3 10V3a.5.5 0 01.5-.5H10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="4.5" y="4.5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M3 10V3a.5.5 0 01.5-.5H10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
             Copy HTML Signature
           </button>
-          <button class="btn btn-secondary" id="copy-plain" onclick="copyPlain()">
-            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2.5 3.5h10M2.5 7.5h10M2.5 11.5h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-            Copy Plain Text
-          </button>
+          <div class="btn-row">
+            <button class="btn btn-secondary" onclick="copyPlain()">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1.5 3h10M1.5 6.5h10M1.5 10h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              Plain Text
+            </button>
+            <button class="btn btn-secondary" onclick="downloadHTML()">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v7.5M3.5 6l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 11h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              Download
+            </button>
+          </div>
+          <button class="btn btn-ghost" onclick="resetAll()">↺ Reset everything</button>
         </div>
 
-        <div class="howto">
+        <div class="html-block">
+          <div class="html-top">
+            <span class="html-top-label">signature.html</span>
+            <button class="html-copy-mini" onclick="copyHTML()">Copy</button>
+          </div>
+          <div class="html-code" id="html-out"></div>
+        </div>
+
+        <div class="howto-wrap">
           <div class="howto-title">How to add to Gmail</div>
-          <ol>
-            <li>Open Gmail → Settings (gear icon) → <em>See all settings</em></li>
-            <li>Scroll to <strong>Signature</strong> → Create new</li>
-            <li>Click the <strong>&lt;&gt;</strong> source icon in the editor</li>
-            <li>Paste the HTML and click <strong>OK</strong></li>
-          </ol>
+          <div class="steps">
+            <div class="step"><div class="step-num">1</div><span>Open Gmail → gear icon → <strong>See all settings</strong></span></div>
+            <div class="step"><div class="step-num">2</div><span>Scroll to <strong>Signature</strong> → create a new signature</span></div>
+            <div class="step"><div class="step-num">3</div><span>Click the <strong>&lt;&gt;</strong> source icon in the editor toolbar</span></div>
+            <div class="step"><div class="step-num">4</div><span>Paste the HTML, click <strong>OK</strong>, then save settings</span></div>
+          </div>
         </div>
-      </div>
 
-      <div class="card">
-        <div class="card-title">HTML Code</div>
-        <div class="html-out" id="html-out"></div>
       </div>
-
     </div>
+
   </div>
 </div>
 
-<footer class="site-footer">
-  George Washington High School &nbsp;·&nbsp; Student Email Signature Builder
-</footer>
+<footer class="site-footer">George Washington High School &nbsp;·&nbsp; Student Email Signature Builder</footer>
 
 <script>
-  const state = {
-    grade: '',
-    logo: true, bar: true, school: true, pronouns: true, clubs: true
-  };
+const state = {
+  grade: '', clubs: [],
+  logo: true, bar: true, school: true, pronouns: true, clubs_show: true, web: true,
+  style: 'classic',
+  accent: '#0d2b5e', accent2: '#c9a227'
+};
 
-  function selectGrade(el, val) {
-    document.querySelectorAll('.grade-pill').forEach(p => p.classList.remove('active'));
-    el.classList.add('active');
-    state.grade = val;
+function pickGrade(el, val) {
+  document.querySelectorAll('.grade-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  state.grade = val;
+  update();
+}
+
+function tog(key) {
+  state[key] = !state[key];
+  const el = document.getElementById('tog-' + key);
+  if (el) state[key] ? el.classList.add('on') : el.classList.remove('on');
+  update();
+}
+
+function pickStyle(el, val) {
+  document.querySelectorAll('.style-opt').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+  state.style = val;
+  update();
+}
+
+function pickTheme(el, c1, c2) {
+  document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  state.accent = c1;
+  state.accent2 = c2;
+  update();
+}
+
+function handleTag(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const val = e.target.value.trim().replace(/,$/, '');
+    if (val && !state.clubs.includes(val)) {
+      state.clubs.push(val);
+      renderTags();
+      update();
+    }
+    e.target.value = '';
+  } else if (e.key === 'Backspace' && !e.target.value && state.clubs.length) {
+    state.clubs.pop();
+    renderTags();
     update();
   }
+}
 
-  function tog(key) {
-    state[key] = !state[key];
-    const el = document.getElementById('tog-' + key);
-    state[key] ? el.classList.add('on') : el.classList.remove('on');
-    update();
-  }
+function removeClub(i) {
+  state.clubs.splice(i, 1);
+  renderTags();
+  update();
+}
 
-  function g(id) { return (document.getElementById(id)?.value || '').trim(); }
+function renderTags() {
+  const wrap = document.getElementById('tag-wrap');
+  const input = document.getElementById('club-input');
+  wrap.querySelectorAll('.club-tag').forEach(t => t.remove());
+  state.clubs.forEach((c, i) => {
+    const tag = document.createElement('span');
+    tag.className = 'club-tag';
+    tag.innerHTML = c + '<button onclick="removeClub(' + i + ')" type="button">&times;</button>';
+    wrap.insertBefore(tag, input);
+  });
+}
 
-  function update() {
-    const name      = g('f-name')     || 'Your Name';
-    const advisory  = g('f-advisory');
-    const grad      = g('f-grad');
-    const email     = g('f-email');
-    const pronouns  = g('f-pronouns');
-    const clubs     = g('f-clubs');
+function g(id) { return (document.getElementById(id)?.value || '').trim(); }
 
-    // subtitle line
-    const subParts = [];
-    if (state.grade)  subParts.push(state.grade);
-    if (grad)         subParts.push('Class of ' + grad);
-    if (advisory)     subParts.push('Advisory ' + advisory);
-    const sub = subParts.join(' · ');
+function updateProgress() {
+  const filled = ['f-name','f-advisory','f-grad','f-email'].filter(id => g(id)).length + (state.grade ? 1 : 0);
+  document.getElementById('prog').style.width = Math.round((filled / 5) * 100) + '%';
+}
 
-    // detail lines
-    const detailParts = [];
-    if (pronouns && state.pronouns)  detailParts.push(pronouns);
-    if (email)                       detailParts.push(email);
-    if (clubs && state.clubs)        detailParts.push(clubs);
+function update() {
+  updateProgress();
 
-    // update preview
-    document.getElementById('sig-name').textContent = name;
-    document.getElementById('sig-sub').textContent  = sub;
-    document.getElementById('sig-detail').style.whiteSpace = 'pre-line';
-    document.getElementById('sig-detail').textContent = detailParts.join('\n');
-    document.getElementById('sig-logo-wrap').style.display = state.logo   ? '' : 'none';
-    document.getElementById('sig-bar-el').style.display    = state.bar    ? '' : 'none';
-    document.getElementById('sig-school-el').style.display = state.school ? '' : 'none';
+  const emailEl = document.getElementById('f-email');
+  const emailVal = emailEl.value.trim();
+  emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)
+    ? emailEl.classList.add('invalid')
+    : emailEl.classList.remove('invalid');
 
-    buildHTML(name, sub, detailParts);
-  }
+  const name     = g('f-name')     || 'Your Name';
+  const advisory = g('f-advisory');
+  const grad     = g('f-grad');
+  const email    = emailVal;
+  const pronouns = g('f-pronouns');
+  const web      = g('f-web');
 
-  function buildHTML(name, sub, detailLines) {
-    const logoHTML = state.logo
-      ? `<td style="padding-right:12px;vertical-align:top;padding-top:2px;"><img src="https://upload.wikimedia.org/wikipedia/commons/a/a8/Logo_from_George_Washington_High_School.png" width="52" height="52" style="display:block;object-fit:contain;" alt="GWHS Logo"></td>`
-      : '';
-    const barHTML = state.bar
-      ? `<td style="padding-right:12px;vertical-align:stretch;"><div style="width:3px;min-height:60px;background:#0d2b5e;border-radius:2px;"></div></td>`
-      : '';
-    const subHTML = sub
-      ? `<p style="margin:0 0 6px 0;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#c9a227;">${sub}</p>`
-      : '';
-    const detailHTML = detailLines.length
-      ? detailLines.map(l => `<span style="display:block;font-size:12px;color:#666;line-height:1.8;">${l}</span>`).join('')
-      : '';
-    const schoolHTML = state.school
-      ? `<p style="margin:5px 0 0 0;font-size:12px;font-weight:600;color:#0d2b5e;">George Washington High School</p>`
-      : '';
+  const subParts = [];
+  if (state.grade)  subParts.push(state.grade);
+  if (grad)         subParts.push('Class of ' + grad);
+  if (advisory)     subParts.push('Advisory ' + advisory);
+  const sub = subParts.join(' · ');
 
-    const html = `<table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,sans-serif;">
+  const details = [];
+  if (pronouns && state.pronouns)      details.push(pronouns);
+  if (email)                           details.push(email);
+  if (web && state.web && web)         details.push(web);
+  if (state.clubs_show && state.clubs.length) details.push(state.clubs.join(' · '));
+
+  document.getElementById('sig-name').textContent  = name;
+  document.getElementById('sig-name').style.color  = state.accent;
+  document.getElementById('sig-sub').textContent   = sub;
+  document.getElementById('sig-sub').style.color   = state.accent2;
+  document.getElementById('sig-detail').style.whiteSpace = 'pre-line';
+  document.getElementById('sig-detail').textContent = details.join('\n');
+  document.getElementById('sig-school-el').style.display = state.school ? '' : 'none';
+  document.getElementById('sig-school-el').style.color   = state.accent;
+  document.getElementById('sig-logo-wrap').style.display = state.logo   ? '' : 'none';
+  document.getElementById('sig-bar-el').style.display    = state.bar    ? '' : 'none';
+  document.getElementById('sig-bar-el').style.background = state.accent;
+
+  const wrap = document.getElementById('sig-wrap');
+  wrap.className = 'sig-wrap st-' + state.style;
+
+  buildHTML(name, sub, details);
+}
+
+function buildHTML(name, sub, details) {
+  const sz = { classic: ['16px','10.5px','12px'], bold: ['20px','11px','12.5px'], compact: ['14px','10px','11.5px'] };
+  const [nameSize, subSize, detailSize] = sz[state.style];
+
+  const logoTD = state.logo ? `<td style="padding-right:12px;vertical-align:top;padding-top:2px;"><img src="https://upload.wikimedia.org/wikipedia/commons/a/a8/Logo_from_George_Washington_High_School.png" width="50" height="50" style="display:block;object-fit:contain;" alt="GWHS Logo"></td>` : '';
+  const barTD  = state.bar  ? `<td style="padding-right:12px;"><div style="width:3px;min-height:55px;background:${state.accent};border-radius:2px;"></div></td>` : '';
+  const subHTML    = sub ? `\n      <p style="margin:0 0 6px 0;font-size:${subSize};font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${state.accent2};">${sub}</p>` : '';
+  const detailHTML = details.length ? '\n      ' + details.map(d => `<span style="display:block;font-size:${detailSize};color:#666;line-height:1.8;">${d}</span>`).join('\n      ') : '';
+  const schoolHTML = state.school ? `\n      <p style="margin:4px 0 0;font-size:${detailSize};font-weight:600;color:${state.accent};">George Washington High School</p>` : '';
+
+  const html = `<table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,sans-serif;">
   <tr>
-    ${logoHTML}${barHTML}
-    <td style="vertical-align:top;">
-      <p style="margin:0 0 2px 0;font-size:17px;font-weight:700;color:#0d2b5e;">${name}</p>
-      ${subHTML}${detailHTML}${schoolHTML}
+    ${logoTD}${barTD}<td style="vertical-align:top;">
+      <p style="margin:0 0 2px;font-size:${nameSize};font-weight:700;color:${state.accent};">${name}</p>${subHTML}${detailHTML}${schoolHTML}
     </td>
   </tr>
 </table>`;
 
-    document.getElementById('html-out').textContent = html;
-  }
+  document.getElementById('html-out').textContent = html;
+}
 
-  function copyHTML() {
-    const html = document.getElementById('html-out').textContent;
-    navigator.clipboard.writeText(html).then(() => {
-      const btn = document.getElementById('copy-html');
-      const orig = btn.innerHTML;
-      btn.textContent = '✓ Copied!';
-      btn.classList.add('done');
-      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('done'); }, 2200);
-    });
-  }
+function copyHTML() {
+  navigator.clipboard.writeText(document.getElementById('html-out').textContent).then(() => {
+    const btn = document.getElementById('copy-html');
+    const orig = btn.innerHTML;
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('done');
+    setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('done'); }, 2500);
+  });
+}
 
-  function copyPlain() {
-    const name     = g('f-name')     || 'Your Name';
-    const advisory = g('f-advisory');
-    const grad     = g('f-grad');
-    const email    = g('f-email');
-    const pronouns = g('f-pronouns');
-    const clubs    = g('f-clubs');
+function copyPlain() {
+  const name     = g('f-name')     || 'Your Name';
+  const advisory = g('f-advisory');
+  const grad     = g('f-grad');
+  const email    = g('f-email');
+  const pronouns = g('f-pronouns');
+  const web      = g('f-web');
+  const sub = [state.grade, grad ? 'Class of '+grad : '', advisory ? 'Advisory '+advisory : ''].filter(Boolean).join(' · ');
+  const lines = [name, sub].filter(Boolean);
+  if (pronouns && state.pronouns) lines.push(pronouns);
+  if (email) lines.push(email);
+  if (web && state.web) lines.push(web);
+  if (state.clubs_show && state.clubs.length) lines.push(state.clubs.join(', '));
+  if (state.school) lines.push('George Washington High School');
+  navigator.clipboard.writeText(lines.join('\n'));
+}
 
-    const lines = [name];
-    const sub = [state.grade, grad ? 'Class of ' + grad : '', advisory ? 'Advisory ' + advisory : ''].filter(Boolean).join(' · ');
-    if (sub) lines.push(sub);
-    if (pronouns && state.pronouns) lines.push(pronouns);
-    if (email) lines.push(email);
-    if (clubs && state.clubs) lines.push(clubs);
-    if (state.school) lines.push('George Washington High School');
+function downloadHTML() {
+  const blob = new Blob([document.getElementById('html-out').textContent], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'gwhs-email-signature.html';
+  a.click();
+}
 
-    navigator.clipboard.writeText(lines.join('\n')).then(() => {
-      const btn = document.getElementById('copy-plain');
-      const orig = btn.innerHTML;
-      btn.textContent = '✓ Copied!';
-      setTimeout(() => { btn.innerHTML = orig; }, 2200);
-    });
-  }
-
+function resetAll() {
+  ['f-name','f-advisory','f-grad','f-email','f-pronouns','f-web'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.value = ''; el.classList.remove('invalid'); }
+  });
+  state.grade = '';
+  state.clubs = [];
+  renderTags();
+  document.querySelectorAll('.grade-pill').forEach(p => p.classList.remove('active'));
   update();
+}
+
+update();
+</script>
+</body>
+</html>
+.page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+
+.hero { text-align: center; margin-bottom: 2.25rem; }
+.hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(24px, 3.5vw, 38px); font-weight: 800; color: var(--navy); line-height: 1.1; margin-bottom: 8px; }
+.hero h1 em { font-style: normal; color: var(--gold); }
+.hero p { font-size: 15px; color: var(--muted); max-width: 440px; margin: 0 auto; line-height: 1.6; }
+
+.grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 1.25rem; align-items: start; }
+@media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.4rem; box-shadow: 0 1px 8px rgba(13,43,94,0.05); animation: fadeIn 0.35s cubic-bezier(.4,0,.2,1) both; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+.card-title { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--navy); opacity: 0.55; margin-bottom: 1.1rem; display: flex; align-items: center; gap: 10px; }
+.card-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.field { margin-bottom: 0.9rem; }
+.field:last-child { margin-bottom: 0; }
+.field label { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 5px; letter-spacing: 0.05em; text-transform: uppercase; }
+.field label .opt { font-weight: 400; color: #b0b5c4; font-size: 10px; text-transform: none; letter-spacing: 0; }
+.field input { width: 100%; padding: 9px 13px; font-family: 'Figtree', sans-serif; font-size: 14px; background: #f7f6f3; border: 1.5px solid transparent; border-radius: 9px; color: var(--text); transition: all 0.15s; outline: none; }
+.field input:hover { background: #f3f1ed; }
+.field input:focus { border-color: var(--navy); background: #fff; box-shadow: 0 0 0 3px rgba(13,43,94,0.09); }
+.field input.invalid { border-color: #e24b4a; box-shadow: 0 0 0 3px rgba(226,75,74,0.1); }
+.field input::placeholder { color: #c0c4d0; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.grade-pills { display: flex; gap: 7px; flex-wrap: wrap; }
+.grade-pill { padding: 7px 18px; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; background: #f0efe9; border: 1.5px solid transparent; border-radius: 100px; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+.grade-pill:hover { background: #e8e5dd; color: var(--navy); }
+.grade-pill.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+.tag-input-wrap { border: 1.5px solid transparent; border-radius: 9px; background: #f7f6f3; padding: 6px 10px; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; cursor: text; transition: all 0.15s; min-height: 42px; }
+.tag-input-wrap:focus-within { border-color: var(--navy); background: #fff; box-shadow: 0 0 0 3px rgba(13,43,94,0.09); }
+.club-tag { display: inline-flex; align-items: center; gap: 5px; background: rgba(13,43,94,0.08); color: var(--navy); font-size: 12px; font-weight: 600; padding: 3px 8px 3px 10px; border-radius: 100px; animation: tagIn 0.18s cubic-bezier(.4,0,.2,1); }
+@keyframes tagIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.club-tag button { background: none; border: none; color: var(--navy); opacity: 0.45; cursor: pointer; padding: 0; font-size: 15px; line-height: 1; transition: opacity 0.1s; }
+.club-tag button:hover { opacity: 1; }
+.tag-input { border: none; background: none; font-family: 'Figtree', sans-serif; font-size: 14px; color: var(--text); outline: none; flex: 1; min-width: 100px; padding: 2px 3px; }
+.tag-input::placeholder { color: #c0c4d0; }
+
+.section-label { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px; }
+
+.style-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1.1rem; }
+.style-opt { border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 8px; cursor: pointer; text-align: center; transition: all 0.15s; background: #f7f6f3; }
+.style-opt:hover { background: #eeece5; }
+.style-opt.active { border-color: var(--navy); background: rgba(13,43,94,0.05); }
+.style-icon { width: 100%; height: 36px; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; }
+.style-name { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.style-opt.active .style-name { color: var(--navy); }
+
+.theme-row { display: flex; gap: 8px; margin-bottom: 1.1rem; }
+.theme-swatch { flex: 1; height: 30px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: transform 0.15s, border-color 0.15s; }
+.theme-swatch:hover { transform: translateY(-2px); }
+.theme-swatch.active { border-color: var(--text); }
+
+.toggle-list { display: flex; flex-direction: column; gap: 7px; }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; background: #f7f6f3; border-radius: 9px; cursor: pointer; user-select: none; border: 1.5px solid transparent; transition: all 0.15s; }
+.toggle-row:hover { border-color: var(--border); background: #f3f1ec; }
+.toggle-label { font-size: 13px; color: var(--text); font-weight: 500; }
+.tog { width: 34px; height: 19px; background: #d0d3de; border-radius: 100px; position: relative; flex-shrink: 0; transition: background 0.2s; }
+.tog.on { background: var(--navy); }
+.tog::after { content: ''; position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 50%; background: #fff; transition: transform 0.2s cubic-bezier(.4,0,.2,1); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.tog.on::after { transform: translateX(15px); }
+
+.preview-card { position: sticky; top: 76px; }
+
+.email-shell { background: #f2f2f0; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-med); margin-bottom: 1rem; box-shadow: 0 4px 20px rgba(13,43,94,0.08); }
+.email-chrome { background: #e9e8e5; border-bottom: 1px solid var(--border-med); padding: 10px 14px; }
+.email-dots { display: flex; gap: 6px; margin-bottom: 8px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.dot-r { background: #ff5f57; }
+.dot-y { background: #ffbd2e; }
+.dot-g { background: #28c840; }
+.email-field { font-size: 11px; color: #888; padding: 2px 0; display: flex; gap: 8px; }
+.email-field-lbl { font-weight: 600; color: #bbb; width: 24px; }
+.email-body { background: #fff; padding: 1.25rem 1.25rem 0; }
+.email-body-text { font-size: 13px; color: #555; line-height: 1.7; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #f0eeea; }
+.email-sig-area { padding: 1rem 0 1.25rem; }
+
+.sig-wrap { display: flex; gap: 12px; align-items: flex-start; }
+.sig-logo-img { width: 50px; height: 50px; object-fit: contain; display: block; flex-shrink: 0; }
+.sig-bar-el { width: 3px; min-height: 55px; align-self: stretch; border-radius: 2px; flex-shrink: 0; }
+.sig-body { min-width: 0; }
+.sig-name { font-family: Arial, sans-serif; font-weight: 700; line-height: 1.2; margin-bottom: 2px; }
+.sig-sub { font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+.sig-detail { color: #666; line-height: 1.8; }
+.sig-school-line { font-weight: 600; margin-top: 4px; }
+
+.st-classic .sig-name { font-size: 16px; }
+.st-classic .sig-sub  { font-size: 10.5px; }
+.st-classic .sig-detail { font-size: 12px; }
+.st-classic .sig-school-line { font-size: 12px; }
+
+.st-bold .sig-name { font-size: 20px; }
+.st-bold .sig-sub  { font-size: 11px; }
+.st-bold .sig-detail { font-size: 12.5px; }
+.st-bold .sig-school-line { font-size: 12.5px; }
+
+.st-compact .sig-name { font-size: 14px; }
+.st-compact .sig-sub  { font-size: 10px; margin-bottom: 3px; }
+.st-compact .sig-detail { font-size: 11.5px; }
+.st-compact .sig-school-line { font-size: 11.5px; }
+
+.btn-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem; }
+.btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 11px 16px; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 9px; cursor: pointer; border: none; transition: all 0.15s; }
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--navy); color: var(--gold-lt); }
+.btn-primary:hover { opacity: 0.88; }
+.btn-primary.done { background: #0f6e56; color: #fff; }
+.btn-secondary { background: #f0eeea; color: var(--navy); border: 1.5px solid var(--border-med); }
+.btn-secondary:hover { background: #e8e5dd; }
+.btn-ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--border); font-size: 11.5px; }
+.btn-ghost:hover { color: var(--navy); border-color: var(--border-med); }
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.html-block { background: #0d1117; border-radius: 10px; overflow: hidden; margin-bottom: 1rem; }
+.html-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #161b22; border-bottom: 1px solid #30363d; }
+.html-top-label { font-size: 11px; color: #8b949e; }
+.html-copy-mini { font-size: 11px; color: #58a6ff; background: none; border: none; cursor: pointer; font-family: 'Figtree', sans-serif; padding: 0; transition: opacity 0.15s; }
+.html-copy-mini:hover { opacity: 0.7; }
+.html-code { padding: 1rem; font-family: 'Courier New', monospace; font-size: 10.5px; color: #adbac7; line-height: 1.6; max-height: 140px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+.html-code::-webkit-scrollbar { width: 4px; }
+.html-code::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+
+.howto-wrap { background: #f7f6f3; border-radius: 10px; padding: 1rem 1.1rem; }
+.howto-title { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--navy); opacity: 0.55; margin-bottom: 10px; }
+.steps { display: flex; flex-direction: column; gap: 7px; }
+.step { display: flex; align-items: flex-start; gap: 10px; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.step-num { width: 20px; height: 20px; border-radius: 50%; background: var(--navy); color: #fff; font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+
+.site-footer { text-align: center; padding: 1.5rem; font-size: 12px; color: #aaa; margin-top: 1rem; }
+</style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
+
+<header class="header">
+  <img class="header-logo" src="https://upload.wikimedia.org/wikipedia/commons/a/a8/Logo_from_George_Washington_High_School.png" alt="GWHS">
+  <div class="header-divider"></div>
+  <div>
+    <div class="header-title">George Washington High School</div>
+    <div class="header-sub">Email Signature Builder</div>
+  </div>
+  <div class="header-spacer"></div>
+  <div class="header-badge">Students</div>
+</header>
+
+<div class="page">
+  <div class="hero">
+    <h1>Your <em>GWHS</em> Email Signature</h1>
+    <p>Fill in your details and grab the code - takes about 60 seconds.</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- LEFT -->
+    <div style="display:flex;flex-direction:column;gap:1.25rem;">
+
+      <div class="card">
+        <div class="card-title">Your Info</div>
+
+        <div class="field">
+          <label>Full Name</label>
+          <input type="text" id="f-name" placeholder="Alex Johnson" oninput="update()">
+        </div>
+
+        <div class="field">
+          <label>Grade</label>
+          <div class="grade-pills">
+            <button class="grade-pill" onclick="pickGrade(this,'9th Grade')">9th</button>
+            <button class="grade-pill" onclick="pickGrade(this,'10th Grade')">10th</button>
+            <button class="grade-pill" onclick="pickGrade(this,'11th Grade')">11th</button>
+            <button class="grade-pill" onclick="pickGrade(this,'12th Grade')">12th</button>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Advisory #</label>
+            <input type="text" id="f-advisory" placeholder="e.g. 302" oninput="update()">
+          </div>
+          <div class="field">
+            <label>Class of</label>
+            <input type="text" id="f-grad" placeholder="2027" oninput="update()">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Student Email</label>
+          <input type="email" id="f-email" placeholder="ajohnson27@students.gwhs.edu" oninput="update()">
+        </div>
+
+        <div class="field">
+          <label>Pronouns <span class="opt">optional</span></label>
+          <input type="text" id="f-pronouns" placeholder="e.g. she/her" oninput="update()">
+        </div>
+
+        <div class="field">
+          <label>Portfolio / Website <span class="opt">optional</span></label>
+          <input type="text" id="f-web" placeholder="https://alexjohnson.com" oninput="update()">
+        </div>
+
+        <div class="field">
+          <label>Activities &amp; Clubs <span class="opt">type + Enter</span></label>
+          <div class="tag-input-wrap" id="tag-wrap" onclick="document.getElementById('club-input').focus()">
+            <input class="tag-input" id="club-input" placeholder="e.g. Debate Team" onkeydown="handleTag(event)">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Customize</div>
+
+        <div class="section-label">Layout</div>
+        <div class="style-grid">
+          <div class="style-opt active" onclick="pickStyle(this,'classic')">
+            <div class="style-icon">
+              <svg width="60" height="32" viewBox="0 0 60 32" fill="none">
+                <rect x="0" y="8" width="17" height="17" rx="3" fill="#0d2b5e" opacity="0.15"/>
+                <rect x="21" y="8" width="3" height="17" rx="1.5" fill="#0d2b5e" opacity="0.4"/>
+                <rect x="28" y="9" width="28" height="4" rx="2" fill="#0d2b5e" opacity="0.5"/>
+                <rect x="28" y="15" width="20" height="2.5" rx="1.25" fill="#c9a227" opacity="0.7"/>
+                <rect x="28" y="20" width="24" height="2" rx="1" fill="#0d2b5e" opacity="0.2"/>
+                <rect x="28" y="23.5" width="16" height="2" rx="1" fill="#0d2b5e" opacity="0.2"/>
+              </svg>
+            </div>
+            <div class="style-name">Classic</div>
+          </div>
+          <div class="style-opt" onclick="pickStyle(this,'bold')">
+            <div class="style-icon">
+              <svg width="60" height="32" viewBox="0 0 60 32" fill="none">
+                <rect x="0" y="6" width="17" height="17" rx="3" fill="#0d2b5e" opacity="0.15"/>
+                <rect x="21" y="6" width="3" height="17" rx="1.5" fill="#0d2b5e" opacity="0.4"/>
+                <rect x="28" y="6" width="28" height="6" rx="2" fill="#0d2b5e" opacity="0.6"/>
+                <rect x="28" y="14" width="20" height="2.5" rx="1.25" fill="#c9a227" opacity="0.7"/>
+                <rect x="28" y="19" width="24" height="2" rx="1" fill="#0d2b5e" opacity="0.2"/>
+                <rect x="28" y="22.5" width="16" height="2" rx="1" fill="#0d2b5e" opacity="0.2"/>
+              </svg>
+            </div>
+            <div class="style-name">Bold</div>
+          </div>
+          <div class="style-opt" onclick="pickStyle(this,'compact')">
+            <div class="style-icon">
+              <svg width="60" height="32" viewBox="0 0 60 32" fill="none">
+                <rect x="2" y="10" width="3" height="14" rx="1.5" fill="#0d2b5e" opacity="0.4"/>
+                <rect x="10" y="10" width="22" height="4" rx="2" fill="#0d2b5e" opacity="0.5"/>
+                <rect x="10" y="16" width="15" height="2.5" rx="1.25" fill="#c9a227" opacity="0.7"/>
+                <rect x="10" y="20.5" width="40" height="2" rx="1" fill="#0d2b5e" opacity="0.2"/>
+                <rect x="10" y="24" width="28" height="2" rx="1" fill="#0d2b5e" opacity="0.2"/>
+              </svg>
+            </div>
+            <div class="style-name">Compact</div>
+          </div>
+        </div>
+
+        <div class="section-label">Color Theme</div>
+        <div class="theme-row">
+          <div class="theme-swatch active" onclick="pickTheme(this,'#0d2b5e','#c9a227')" style="background:linear-gradient(90deg,#0d2b5e 50%,#c9a227 50%)" title="Navy / Gold"></div>
+          <div class="theme-swatch" onclick="pickTheme(this,'#1a4a5e','#2cb67d')" style="background:linear-gradient(90deg,#1a4a5e 50%,#2cb67d 50%)" title="Slate / Teal"></div>
+          <div class="theme-swatch" onclick="pickTheme(this,'#7b1a1a','#d4a44c')" style="background:linear-gradient(90deg,#7b1a1a 50%,#d4a44c 50%)" title="Crimson / Gold"></div>
+          <div class="theme-swatch" onclick="pickTheme(this,'#1a3d2b','#a3c97d')" style="background:linear-gradient(90deg,#1a3d2b 50%,#a3c97d 50%)" title="Forest / Sage"></div>
+          <div class="theme-swatch" onclick="pickTheme(this,'#2d2d2d','#e8c84a')" style="background:linear-gradient(90deg,#2d2d2d 50%,#e8c84a 50%)" title="Charcoal / Gold"></div>
+        </div>
+
+        <div class="toggle-list">
+          <div class="toggle-row" onclick="tog('logo')"><span class="toggle-label">Show school logo</span><div class="tog on" id="tog-logo"></div></div>
+          <div class="toggle-row" onclick="tog('bar')"><span class="toggle-label">Show divider bar</span><div class="tog on" id="tog-bar"></div></div>
+          <div class="toggle-row" onclick="tog('school')"><span class="toggle-label">Show school name</span><div class="tog on" id="tog-school"></div></div>
+          <div class="toggle-row" onclick="tog('pronouns')"><span class="toggle-label">Show pronouns</span><div class="tog on" id="tog-pronouns"></div></div>
+          <div class="toggle-row" onclick="tog('clubs_show')"><span class="toggle-label">Show activities</span><div class="tog on" id="tog-clubs_show"></div></div>
+          <div class="toggle-row" onclick="tog('web')"><span class="toggle-label">Show website</span><div class="tog on" id="tog-web"></div></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT -->
+    <div style="display:flex;flex-direction:column;gap:1.25rem;">
+      <div class="card preview-card">
+        <div class="card-title">Preview</div>
+
+        <div class="email-shell">
+          <div class="email-chrome">
+            <div class="email-dots">
+              <div class="dot dot-r"></div>
+              <div class="dot dot-y"></div>
+              <div class="dot dot-g"></div>
+            </div>
+            <div class="email-field"><span class="email-field-lbl">To</span> teacher@gwhs.edu</div>
+            <div class="email-field"><span class="email-field-lbl">Re</span> Question about Friday's assignment</div>
+          </div>
+          <div class="email-body">
+            <div class="email-body-text">
+              Hi Mr. Rivera,<br><br>
+              I had a quick question about the reading due Friday — did we need to annotate chapters 4 and 5, or just chapter 4? Thanks so much!
+            </div>
+            <div class="email-sig-area">
+              <div class="sig-wrap st-classic" id="sig-wrap">
+                <div id="sig-logo-wrap">
+                  <img class="sig-logo-img" src="https://upload.wikimedia.org/wikipedia/commons/a/a8/Logo_from_George_Washington_High_School.png" alt="GWHS">
+                </div>
+                <div class="sig-bar-el" id="sig-bar-el" style="background:#0d2b5e;"></div>
+                <div class="sig-body">
+                  <div class="sig-name" id="sig-name" style="color:#0d2b5e;">Your Name</div>
+                  <div class="sig-sub" id="sig-sub" style="color:#c9a227;"></div>
+                  <div class="sig-detail" id="sig-detail"></div>
+                  <div class="sig-school-line" id="sig-school-el" style="color:#0d2b5e;">George Washington High School</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" id="copy-html" onclick="copyHTML()">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="4.5" y="4.5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M3 10V3a.5.5 0 01.5-.5H10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Copy HTML Signature
+          </button>
+          <div class="btn-row">
+            <button class="btn btn-secondary" onclick="copyPlain()">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1.5 3h10M1.5 6.5h10M1.5 10h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              Plain Text
+            </button>
+            <button class="btn btn-secondary" onclick="downloadHTML()">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v7.5M3.5 6l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 11h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              Download
+            </button>
+          </div>
+          <button class="btn btn-ghost" onclick="resetAll()">↺ Reset everything</button>
+        </div>
+
+        <div class="html-block">
+          <div class="html-top">
+            <span class="html-top-label">signature.html</span>
+            <button class="html-copy-mini" onclick="copyHTML()">Copy</button>
+          </div>
+          <div class="html-code" id="html-out"></div>
+        </div>
+
+        <div class="howto-wrap">
+          <div class="howto-title">How to add to Gmail</div>
+          <div class="steps">
+            <div class="step"><div class="step-num">1</div><span>Open Gmail → gear icon → <strong>See all settings</strong></span></div>
+            <div class="step"><div class="step-num">2</div><span>Scroll to <strong>Signature</strong> → create a new signature</span></div>
+            <div class="step"><div class="step-num">3</div><span>Click the <strong>&lt;&gt;</strong> source icon in the editor toolbar</span></div>
+            <div class="step"><div class="step-num">4</div><span>Paste the HTML, click <strong>OK</strong>, then save settings</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer class="site-footer">George Washington High School &nbsp;·&nbsp; Student Email Signature Builder</footer>
+
+<script>
+const state = {
+  grade: '', clubs: [],
+  logo: true, bar: true, school: true, pronouns: true, clubs_show: true, web: true,
+  style: 'classic',
+  accent: '#0d2b5e', accent2: '#c9a227'
+};
+
+function pickGrade(el, val) {
+  document.querySelectorAll('.grade-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  state.grade = val;
+  update();
+}
+
+function tog(key) {
+  state[key] = !state[key];
+  const el = document.getElementById('tog-' + key);
+  if (el) state[key] ? el.classList.add('on') : el.classList.remove('on');
+  update();
+}
+
+function pickStyle(el, val) {
+  document.querySelectorAll('.style-opt').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+  state.style = val;
+  update();
+}
+
+function pickTheme(el, c1, c2) {
+  document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  state.accent = c1;
+  state.accent2 = c2;
+  update();
+}
+
+function handleTag(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const val = e.target.value.trim().replace(/,$/, '');
+    if (val && !state.clubs.includes(val)) {
+      state.clubs.push(val);
+      renderTags();
+      update();
+    }
+    e.target.value = '';
+  } else if (e.key === 'Backspace' && !e.target.value && state.clubs.length) {
+    state.clubs.pop();
+    renderTags();
+    update();
+  }
+}
+
+function removeClub(i) {
+  state.clubs.splice(i, 1);
+  renderTags();
+  update();
+}
+
+function renderTags() {
+  const wrap = document.getElementById('tag-wrap');
+  const input = document.getElementById('club-input');
+  wrap.querySelectorAll('.club-tag').forEach(t => t.remove());
+  state.clubs.forEach((c, i) => {
+    const tag = document.createElement('span');
+    tag.className = 'club-tag';
+    tag.innerHTML = c + '<button onclick="removeClub(' + i + ')" type="button">&times;</button>';
+    wrap.insertBefore(tag, input);
+  });
+}
+
+function g(id) { return (document.getElementById(id)?.value || '').trim(); }
+
+function updateProgress() {
+  const filled = ['f-name','f-advisory','f-grad','f-email'].filter(id => g(id)).length + (state.grade ? 1 : 0);
+  document.getElementById('prog').style.width = Math.round((filled / 5) * 100) + '%';
+}
+
+function update() {
+  updateProgress();
+
+  const emailEl = document.getElementById('f-email');
+  const emailVal = emailEl.value.trim();
+  emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)
+    ? emailEl.classList.add('invalid')
+    : emailEl.classList.remove('invalid');
+
+  const name     = g('f-name')     || 'Your Name';
+  const advisory = g('f-advisory');
+  const grad     = g('f-grad');
+  const email    = emailVal;
+  const pronouns = g('f-pronouns');
+  const web      = g('f-web');
+
+  const subParts = [];
+  if (state.grade)  subParts.push(state.grade);
+  if (grad)         subParts.push('Class of ' + grad);
+  if (advisory)     subParts.push('Advisory ' + advisory);
+  const sub = subParts.join(' · ');
+
+  const details = [];
+  if (pronouns && state.pronouns)      details.push(pronouns);
+  if (email)                           details.push(email);
+  if (web && state.web && web)         details.push(web);
+  if (state.clubs_show && state.clubs.length) details.push(state.clubs.join(' · '));
+
+  document.getElementById('sig-name').textContent  = name;
+  document.getElementById('sig-name').style.color  = state.accent;
+  document.getElementById('sig-sub').textContent   = sub;
+  document.getElementById('sig-sub').style.color   = state.accent2;
+  document.getElementById('sig-detail').style.whiteSpace = 'pre-line';
+  document.getElementById('sig-detail').textContent = details.join('\n');
+  document.getElementById('sig-school-el').style.display = state.school ? '' : 'none';
+  document.getElementById('sig-school-el').style.color   = state.accent;
+  document.getElementById('sig-logo-wrap').style.display = state.logo   ? '' : 'none';
+  document.getElementById('sig-bar-el').style.display    = state.bar    ? '' : 'none';
+  document.getElementById('sig-bar-el').style.background = state.accent;
+
+  const wrap = document.getElementById('sig-wrap');
+  wrap.className = 'sig-wrap st-' + state.style;
+
+  buildHTML(name, sub, details);
+}
+
+function buildHTML(name, sub, details) {
+  const sz = { classic: ['16px','10.5px','12px'], bold: ['20px','11px','12.5px'], compact: ['14px','10px','11.5px'] };
+  const [nameSize, subSize, detailSize] = sz[state.style];
+
+  const logoTD = state.logo ? `<td style="padding-right:12px;vertical-align:top;padding-top:2px;"><img src="https://upload.wikimedia.org/wikipedia/commons/a/a8/Logo_from_George_Washington_High_School.png" width="50" height="50" style="display:block;object-fit:contain;" alt="GWHS Logo"></td>` : '';
+  const barTD  = state.bar  ? `<td style="padding-right:12px;"><div style="width:3px;min-height:55px;background:${state.accent};border-radius:2px;"></div></td>` : '';
+  const subHTML    = sub ? `\n      <p style="margin:0 0 6px 0;font-size:${subSize};font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${state.accent2};">${sub}</p>` : '';
+  const detailHTML = details.length ? '\n      ' + details.map(d => `<span style="display:block;font-size:${detailSize};color:#666;line-height:1.8;">${d}</span>`).join('\n      ') : '';
+  const schoolHTML = state.school ? `\n      <p style="margin:4px 0 0;font-size:${detailSize};font-weight:600;color:${state.accent};">George Washington High School</p>` : '';
+
+  const html = `<table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,sans-serif;">
+  <tr>
+    ${logoTD}${barTD}<td style="vertical-align:top;">
+      <p style="margin:0 0 2px;font-size:${nameSize};font-weight:700;color:${state.accent};">${name}</p>${subHTML}${detailHTML}${schoolHTML}
+    </td>
+  </tr>
+</table>`;
+
+  document.getElementById('html-out').textContent = html;
+}
+
+function copyHTML() {
+  navigator.clipboard.writeText(document.getElementById('html-out').textContent).then(() => {
+    const btn = document.getElementById('copy-html');
+    const orig = btn.innerHTML;
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('done');
+    setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('done'); }, 2500);
+  });
+}
+
+function copyPlain() {
+  const name     = g('f-name')     || 'Your Name';
+  const advisory = g('f-advisory');
+  const grad     = g('f-grad');
+  const email    = g('f-email');
+  const pronouns = g('f-pronouns');
+  const web      = g('f-web');
+  const sub = [state.grade, grad ? 'Class of '+grad : '', advisory ? 'Advisory '+advisory : ''].filter(Boolean).join(' · ');
+  const lines = [name, sub].filter(Boolean);
+  if (pronouns && state.pronouns) lines.push(pronouns);
+  if (email) lines.push(email);
+  if (web && state.web) lines.push(web);
+  if (state.clubs_show && state.clubs.length) lines.push(state.clubs.join(', '));
+  if (state.school) lines.push('George Washington High School');
+  navigator.clipboard.writeText(lines.join('\n'));
+}
+
+function downloadHTML() {
+  const blob = new Blob([document.getElementById('html-out').textContent], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'gwhs-email-signature.html';
+  a.click();
+}
+
+function resetAll() {
+  ['f-name','f-advisory','f-grad','f-email','f-pronouns','f-web'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.value = ''; el.classList.remove('invalid'); }
+  });
+  state.grade = '';
+  state.clubs = [];
+  renderTags();
+  document.querySelectorAll('.grade-pill').forEach(p => p.classList.remove('active'));
+  update();
+}
+
+update();
 </script>
 </body>
 </html>
