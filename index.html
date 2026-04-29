@@ -193,6 +193,27 @@
       opacity: 1;
     }
 
+    /* ── Sub-links (tools etc.) ── */
+    .sub-links {
+      display: flex;
+      gap: 1.25rem;
+      padding: 0.6rem 0 0;
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.52s forwards;
+    }
+
+    .sub-link {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--line);
+      text-decoration: none;
+      letter-spacing: 0.08em;
+      text-transform: lowercase;
+      transition: color 0.2s ease;
+    }
+
+    .sub-link:hover { color: var(--muted); }
+
     @keyframes fadeUp {
       to {
         opacity: 1;
@@ -228,7 +249,11 @@
         <span class="arrow">→</span>
       </a>
     </div>
+    <div class="sub-links">
+      <a class="sub-link" href="/tools.html">tools →</a>
+    </div>
   </div>
+
   <script>
     function setTheme(theme) {
       document.body.classList.toggle('dark', theme === 'dark');
