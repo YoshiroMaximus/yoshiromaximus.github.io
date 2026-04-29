@@ -1,424 +1,193 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GWHS Bell Schedule</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --red: #C8102E;
-    --dark-red: #8B0000;
-    --black: #0a0a0a;
-    --dark: #111111;
+  [data-theme="dark"] {
+    --bg: #0a0a0a;
     --card: #181818;
     --border: #2a2a2a;
     --text: #f0f0f0;
+    --text2: #cccccc;
     --muted: #888;
-    --gold: #FFD700;
-    --green: #22c55e;
-    --orange: #f97316;
+    --row-hover: rgba(255,255,255,0.03);
+    --cur-row-bg: rgba(200,16,46,0.1);
+    --shadow: rgba(0,0,0,0.4);
+    --input-bg: #111;
+  }
+  [data-theme="light"] {
+    --bg: #f4f4f6;
+    --card: #ffffff;
+    --border: #e2e2e2;
+    --text: #111111;
+    --text2: #333333;
+    --muted: #777;
+    --row-hover: rgba(0,0,0,0.02);
+    --cur-row-bg: rgba(200,16,46,0.06);
+    --shadow: rgba(0,0,0,0.08);
+    --input-bg: #f8f8f8;
+  }
+  :root {
+    --red:#C8102E; --green:#16a34a; --orange:#ea6c00; --gold:#b8860b;
   }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  *{margin:0;padding:0;box-sizing:border-box;}
 
-  body {
-    background: var(--black);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'DM Sans',sans-serif;min-height:100vh;
+    overflow-x:hidden;transition:background .3s,color .3s;
   }
 
-  /* Scanline overlay */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,0,0,0.03) 2px,
-      rgba(0,0,0,0.03) 4px
-    );
-    pointer-events: none;
-    z-index: 100;
+  header{
+    background:var(--red);padding:0 18px;
+    display:flex;align-items:center;justify-content:space-between;
+    height:52px;position:sticky;top:0;z-index:50;
+    box-shadow:0 2px 16px rgba(200,16,46,.35);
   }
-
-  header {
-    background: var(--red);
-    padding: 0 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 56px;
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    box-shadow: 0 2px 20px rgba(200,16,46,0.4);
+  header h1{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;color:white;}
+  .hright{display:flex;align-items:center;gap:10px;}
+  #live-clock{font-family:'DM Mono',monospace;font-size:13px;color:rgba(255,255,255,.9);letter-spacing:2px;}
+  .theme-btn{
+    background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);
+    border-radius:16px;padding:4px 11px;cursor:pointer;
+    display:flex;align-items:center;gap:5px;color:white;
+    font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;
+    transition:background .2s;
   }
+  .theme-btn:hover{background:rgba(255,255,255,.28);}
 
-  header h1 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 28px;
-    letter-spacing: 3px;
-    color: white;
+  .container{max-width:860px;margin:0 auto;padding:22px 16px;}
+
+  /* motive */
+  .motive{
+    background:var(--card);border:1px solid var(--border);border-radius:8px;
+    padding:10px 16px;margin-bottom:14px;
+    display:flex;align-items:center;gap:10px;
+    font-size:13px;color:var(--text2);
+    box-shadow:0 1px 4px var(--shadow);
   }
+  .motive .me{font-size:17px;}
 
-  #live-clock {
-    font-family: 'DM Mono', monospace;
-    font-size: 15px;
-    color: rgba(255,255,255,0.9);
-    letter-spacing: 2px;
+  /* hero */
+  .hero{
+    background:var(--card);border:1px solid var(--border);border-left:4px solid var(--red);
+    border-radius:8px;padding:22px 26px;margin-bottom:14px;
+    position:relative;overflow:hidden;box-shadow:0 2px 10px var(--shadow);
   }
-
-  .container {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 28px 20px;
+  .hero::after{
+    content:'';position:absolute;top:-50px;right:-50px;
+    width:220px;height:220px;
+    background:radial-gradient(circle,rgba(200,16,46,.06) 0%,transparent 70%);
+    pointer-events:none;
   }
-
-  /* ── HERO COUNTDOWN ── */
-  .hero {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-left: 4px solid var(--red);
-    border-radius: 4px;
-    padding: 28px 32px;
-    margin-bottom: 24px;
-    position: relative;
-    overflow: hidden;
+  .hl{font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+  .cp{font-family:'Bebas Neue',sans-serif;font-size:46px;line-height:1;color:var(--text);margin-bottom:4px;}
+  .ptr{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);margin-bottom:16px;}
+  .cl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:2px;}
+  .ct{font-family:'Bebas Neue',sans-serif;font-size:58px;line-height:1;letter-spacing:2px;transition:color .5s;margin-bottom:12px;}
+  .ct.urgent{color:var(--red);}
+  .ct.warning{color:var(--orange);}
+  .ct.ok{color:var(--green);}
+  .pb-wrap{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+  .pb-fill{height:100%;background:linear-gradient(90deg,var(--red),#ff4d6d);border-radius:3px;transition:width 1s linear;}
+  .pb-meta{display:flex;justify-content:space-between;margin-top:4px;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+  .nu{
+    background:rgba(184,134,11,.07);border:1px solid rgba(184,134,11,.2);
+    border-radius:6px;padding:9px 13px;margin-top:14px;font-size:13px;
+    display:flex;align-items:center;gap:8px;color:var(--text2);
   }
+  .nu-dot{width:7px;height:7px;background:var(--gold);border-radius:50%;flex-shrink:0;animation:pulse 2s infinite;}
+  .nu strong{color:var(--gold);}
+  [data-theme="light"] .nu strong{color:#7a5c00;}
+  [data-theme="light"] .nu{background:rgba(184,134,11,.06);border-color:rgba(140,100,0,.2);}
 
-  .hero::after {
-    content: '';
-    position: absolute;
-    top: -40px; right: -40px;
-    width: 200px; height: 200px;
-    background: radial-gradient(circle, rgba(200,16,46,0.08) 0%, transparent 70%);
-    pointer-events: none;
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.6);}}
+
+  /* banners */
+  .no-school{
+    background:var(--card);border:1px solid var(--border);border-radius:8px;
+    padding:46px;text-align:center;margin-bottom:14px;
   }
+  .no-school h2{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:3px;color:var(--muted);margin-bottom:6px;}
+  .no-school p{color:var(--muted);font-size:14px;}
 
-  .hero-label {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 8px;
+  .done-banner{
+    background:var(--card);border:1px solid rgba(22,163,74,.3);border-left:4px solid var(--green);
+    border-radius:8px;padding:22px 26px;margin-bottom:14px;text-align:center;
   }
+  .done-banner h2{font-family:'Bebas Neue',sans-serif;font-size:38px;letter-spacing:2px;color:var(--green);margin-bottom:4px;}
+  .done-banner p{color:var(--muted);font-size:13px;}
 
-  .current-period {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 52px;
-    line-height: 1;
-    color: white;
-    margin-bottom: 6px;
+  .before-banner{
+    background:var(--card);border:1px solid var(--border);border-left:4px solid var(--red);
+    border-radius:8px;padding:18px 22px;margin-bottom:14px;
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
   }
+  .before-banner h2{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;color:var(--red);}
+  .before-banner .si{font-family:'DM Mono',monospace;font-size:13px;color:var(--muted);}
 
-  .period-time-range {
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 20px;
-    letter-spacing: 1px;
+  /* stats */
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:14px;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:13px 17px;box-shadow:0 1px 4px var(--shadow);}
+  .slbl{font-size:9px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+  .sval{font-family:'Bebas Neue',sans-serif;font-size:28px;line-height:1;color:var(--text);}
+  .ssub{font-size:10px;color:var(--muted);margin-top:2px;}
+
+  /* tabs */
+  .tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+  .tab{
+    font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
+    padding:6px 14px;border-radius:6px;border:1px solid var(--border);
+    background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;
   }
+  .tab:hover{border-color:var(--red);color:var(--text);}
+  .tab.active{background:var(--red);border-color:var(--red);color:white;}
+  .tab.today{border-color:rgba(200,16,46,.4);color:var(--text2);font-weight:600;}
 
-  .countdown-row {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    margin-bottom: 16px;
+  /* schedule */
+  .sched-card{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:18px;box-shadow:0 1px 6px var(--shadow);}
+  .sched-hdr{background:var(--red);padding:10px 20px;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;color:white;}
+  .sched-row{display:grid;grid-template-columns:1fr 165px 55px;padding:10px 20px;border-bottom:1px solid var(--border);transition:background .15s;align-items:center;}
+  .sched-row:last-child{border-bottom:none;}
+  .sched-row:hover{background:var(--row-hover);}
+  .sched-row.cur{background:var(--cur-row-bg);border-left:3px solid var(--red);padding-left:17px;}
+  .sched-row.past{opacity:.35;}
+  .rname{font-size:14px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:7px;}
+  .rnick{font-size:11px;color:var(--muted);font-weight:400;font-style:italic;}
+  .cdot{width:6px;height:6px;background:var(--red);border-radius:50%;flex-shrink:0;animation:pulse 1.5s infinite;}
+  .rtime{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);}
+  .rdur{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:right;}
+
+  /* nickname editor */
+  .nick-section{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:18px;overflow:hidden;box-shadow:0 1px 4px var(--shadow);}
+  .nick-hdr{padding:11px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;}
+  .nick-hdr h3{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--text);}
+  .nick-hdr .chev{color:var(--muted);font-size:11px;transition:transform .2s;}
+  .nick-body{padding:14px 20px;display:none;}
+  .nick-body.open{display:block;}
+  .nick-body p{font-size:12px;color:var(--muted);margin-bottom:12px;}
+  .nick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:7px;}
+  .nick-item{display:flex;align-items:center;gap:8px;}
+  .nick-item label{font-size:11px;color:var(--muted);min-width:78px;font-family:'DM Mono',monospace;flex-shrink:0;}
+  .nick-item input{
+    flex:1;background:var(--input-bg);border:1px solid var(--border);border-radius:4px;
+    padding:5px 9px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;transition:border-color .2s;
   }
+  .nick-item input:focus{border-color:var(--red);}
+  .nick-item input::placeholder{color:var(--muted);opacity:.5;}
 
-  .countdown-label {
-    font-size: 12px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-  }
+  footer{text-align:center;padding:26px;color:var(--muted);font-size:11px;letter-spacing:1px;border-top:1px solid var(--border);}
 
-  .countdown-time {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 64px;
-    line-height: 1;
-    letter-spacing: 2px;
-    transition: color 0.5s;
-  }
-
-  .countdown-time.urgent { color: var(--red); }
-  .countdown-time.warning { color: var(--orange); }
-  .countdown-time.ok { color: var(--green); }
-
-  .progress-bar-wrap {
-    height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    overflow: hidden;
-  }
-
-  .progress-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--red), #ff4d6d);
-    border-radius: 2px;
-    transition: width 1s linear;
-  }
-
-  .progress-meta {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 6px;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-  }
-
-  /* Next up */
-  .next-up {
-    background: rgba(255,215,0,0.05);
-    border: 1px solid rgba(255,215,0,0.15);
-    border-radius: 4px;
-    padding: 10px 14px;
-    margin-top: 18px;
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .next-up-dot {
-    width: 7px; height: 7px;
-    background: var(--gold);
-    border-radius: 50%;
-    flex-shrink: 0;
-    animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.7); }
-  }
-
-  .next-up strong { color: var(--gold); }
-
-  /* ── DAY TABS ── */
-  .tabs {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-  }
-
-  .tab {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    padding: 7px 16px;
-    border-radius: 3px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .tab:hover { border-color: var(--red); color: var(--text); }
-  .tab.active { background: var(--red); border-color: var(--red); color: white; }
-  .tab.today { border-color: rgba(200,16,46,0.5); color: var(--text); }
-
-  /* ── SCHEDULE TABLE ── */
-  .schedule-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 24px;
-  }
-
-  .schedule-header {
-    background: var(--red);
-    padding: 12px 20px;
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 20px;
-    letter-spacing: 2px;
-    color: white;
-  }
-
-  .schedule-row {
-    display: grid;
-    grid-template-columns: 1fr 180px 80px;
-    padding: 12px 20px;
-    border-bottom: 1px solid var(--border);
-    transition: background 0.15s;
-    position: relative;
-  }
-
-  .schedule-row:last-child { border-bottom: none; }
-  .schedule-row:hover { background: rgba(255,255,255,0.03); }
-
-  .schedule-row.current-row {
-    background: rgba(200,16,46,0.1);
-    border-left: 3px solid var(--red);
-    padding-left: 17px;
-  }
-
-  .schedule-row.past-row { opacity: 0.4; }
-
-  .row-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .current-dot {
-    width: 6px; height: 6px;
-    background: var(--red);
-    border-radius: 50%;
-    animation: pulse 1.5s infinite;
-  }
-
-  .row-time {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-  }
-
-  .row-dur {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-  }
-
-  /* ── STATS GRID ── */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 12px;
-    margin-bottom: 24px;
-  }
-
-  .stat-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 16px 20px;
-  }
-
-  .stat-label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 2.5px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 6px;
-  }
-
-  .stat-value {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 32px;
-    line-height: 1;
-    color: white;
-  }
-
-  .stat-sub {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 3px;
-  }
-
-  /* ── NO SCHOOL ── */
-  .no-school {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 48px;
-    text-align: center;
-    margin-bottom: 24px;
-  }
-
-  .no-school h2 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 48px;
-    letter-spacing: 3px;
-    color: var(--muted);
-    margin-bottom: 8px;
-  }
-
-  .no-school p {
-    color: var(--muted);
-    font-size: 14px;
-  }
-
-  /* ── SCHOOL DONE ── */
-  .school-done-banner {
-    background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(34,197,94,0.05));
-    border: 1px solid rgba(34,197,94,0.3);
-    border-radius: 4px;
-    padding: 20px 24px;
-    margin-bottom: 24px;
-    text-align: center;
-  }
-
-  .school-done-banner h2 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 36px;
-    letter-spacing: 2px;
-    color: var(--green);
-    margin-bottom: 4px;
-  }
-
-  .school-done-banner p { color: var(--muted); font-size: 13px; }
-
-  /* ── BEFORE SCHOOL ── */
-  .before-school-banner {
-    background: rgba(200,16,46,0.06);
-    border: 1px solid rgba(200,16,46,0.2);
-    border-radius: 4px;
-    padding: 20px 24px;
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: gap;
-  }
-
-  .before-school-banner h2 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 24px;
-    letter-spacing: 2px;
-    color: var(--red);
-  }
-
-  .before-school-banner .starts-in {
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    color: var(--muted);
-  }
-
-  footer {
-    text-align: center;
-    padding: 32px;
-    color: var(--muted);
-    font-size: 11px;
-    letter-spacing: 1px;
-    border-top: 1px solid var(--border);
-  }
-
-  @media (max-width: 600px) {
-    .current-period { font-size: 36px; }
-    .countdown-time { font-size: 48px; }
-    header h1 { font-size: 20px; }
-    .schedule-row { grid-template-columns: 1fr 140px 60px; }
+  @media(max-width:600px){
+    .cp{font-size:34px;}.ct{font-size:46px;}
+    header h1{font-size:18px;}#live-clock{display:none;}
+    .sched-row{grid-template-columns:1fr 110px 40px;padding:9px 12px;}
+    .sched-row.cur{padding-left:9px;}
+    .hero{padding:16px 18px;}
   }
 </style>
 </head>
@@ -426,402 +195,281 @@
 
 <header>
   <h1>GWHS · Bell Schedule</h1>
-  <div id="live-clock">--:--:-- --</div>
+  <div class="hright">
+    <div id="live-clock">--:--:-- --</div>
+    <button class="theme-btn" onclick="toggleTheme()">
+      <span id="t-icon">☀️</span>
+      <span id="t-lbl">Light</span>
+    </button>
+  </div>
 </header>
 
 <div class="container">
+  <div id="motive" class="motive" style="display:none"><span class="me" id="me">💪</span><span id="mt">You got this!</span></div>
+  <div id="hero"></div>
+  <div class="stats-grid" id="stats"></div>
+  <div class="tabs" id="tabs"></div>
+  <div id="table"></div>
 
-  <!-- Hero block: dynamically replaced -->
-  <div id="hero-section"></div>
-
-  <!-- Stats row -->
-  <div class="stats-grid" id="stats-grid"></div>
-
-  <!-- Day tabs -->
-  <div class="tabs" id="day-tabs"></div>
-
-  <!-- Schedule display -->
-  <div id="schedule-display"></div>
-
+  <div class="nick-section">
+    <div class="nick-hdr" onclick="toggleNick()">
+      <h3>📝 My Class Names</h3>
+      <span class="chev" id="nchev">▼ show</span>
+    </div>
+    <div class="nick-body" id="nbody">
+      <p>Give your classes a nickname — shows up everywhere on the schedule.</p>
+      <div class="nick-grid" id="ngrid"></div>
+    </div>
+  </div>
 </div>
 
-<footer>GWHS · 2025–26 Academic Year · Auto-updates every second</footer>
+<footer>GWHS · 2025–26 Academic Year · Live, updates every second</footer>
 
 <script>
-// ────────────────────────────
-// SCHEDULE DATA
-// ────────────────────────────
-const SCHEDULES = {
-  // 0=Sun,1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat
-  1: { label: "Monday", type: "Regular", periods: [
-    { name: "1st Period",       start: "08:40", end: "09:30", dur: 50 },
-    { name: "2nd Period",       start: "09:35", end: "10:25", dur: 50 },
-    { name: "Nutrition Break",  start: "10:25", end: "10:30", dur: 5  },
-    { name: "3rd Period",       start: "10:35", end: "11:25", dur: 50 },
-    { name: "4th Period",       start: "11:30", end: "12:20", dur: 50 },
-    { name: "Lunch",            start: "12:20", end: "13:00", dur: 40 },
-    { name: "5th Period",       start: "13:05", end: "13:55", dur: 50 },
-    { name: "6th Period",       start: "14:00", end: "14:50", dur: 50 },
-    { name: "7th Period",       start: "14:55", end: "15:45", dur: 50 },
+// ── DATA ──
+const S = {
+  1:{label:"Monday",   type:"Regular",    p:[
+    {id:"p1",n:"1st Period",      s:"08:40",e:"09:30",d:50},
+    {id:"p2",n:"2nd Period",      s:"09:35",e:"10:25",d:50},
+    {id:"nb",n:"Nutrition Break", s:"10:25",e:"10:30",d:5 },
+    {id:"p3",n:"3rd Period",      s:"10:35",e:"11:25",d:50},
+    {id:"p4",n:"4th Period",      s:"11:30",e:"12:20",d:50},
+    {id:"ln",n:"Lunch",           s:"12:20",e:"13:00",d:40},
+    {id:"p5",n:"5th Period",      s:"13:05",e:"13:55",d:50},
+    {id:"p6",n:"6th Period",      s:"14:00",e:"14:50",d:50},
+    {id:"p7",n:"7th Period",      s:"14:55",e:"15:45",d:50},
   ]},
-  2: { label: "Tuesday", type: "Regular", periods: [] },  // same as Mon
-  3: { label: "Wednesday", type: "Block (Even)", periods: [
-    { name: "2nd Period",       start: "08:40", end: "10:10", dur: 90 },
-    { name: "Advisory",         start: "10:15", end: "10:55", dur: 40 },
-    { name: "4th Period",       start: "11:00", end: "12:30", dur: 90 },
-    { name: "Lunch",            start: "12:30", end: "13:10", dur: 40 },
-    { name: "6th Period",       start: "13:15", end: "14:45", dur: 90 },
-    { name: "CPT – Staff Plan", start: "14:55", end: "15:55", dur: 60 },
+  3:{label:"Wednesday",type:"Block (Even)",p:[
+    {id:"p2",n:"2nd Period",      s:"08:40",e:"10:10",d:90},
+    {id:"av",n:"Advisory",        s:"10:15",e:"10:55",d:40},
+    {id:"p4",n:"4th Period",      s:"11:00",e:"12:30",d:90},
+    {id:"ln",n:"Lunch",           s:"12:30",e:"13:10",d:40},
+    {id:"p6",n:"6th Period",      s:"13:15",e:"14:45",d:90},
+    {id:"cp",n:"CPT – Staff Plan",s:"14:55",e:"15:55",d:60},
   ]},
-  4: { label: "Thursday", type: "Block (Odd)", periods: [
-    { name: "1st Period",       start: "08:40", end: "10:10", dur: 90 },
-    { name: "Nutrition Break",  start: "10:10", end: "10:20", dur: 10 },
-    { name: "3rd Period",       start: "10:25", end: "11:55", dur: 90 },
-    { name: "Lunch",            start: "11:55", end: "12:35", dur: 40 },
-    { name: "5th Period",       start: "12:40", end: "14:10", dur: 90 },
-    { name: "7th Period",       start: "14:15", end: "15:45", dur: 90 },
+  4:{label:"Thursday", type:"Block (Odd)", p:[
+    {id:"p1",n:"1st Period",      s:"08:40",e:"10:10",d:90},
+    {id:"nb",n:"Nutrition Break", s:"10:10",e:"10:20",d:10},
+    {id:"p3",n:"3rd Period",      s:"10:25",e:"11:55",d:90},
+    {id:"ln",n:"Lunch",           s:"11:55",e:"12:35",d:40},
+    {id:"p5",n:"5th Period",      s:"12:40",e:"14:10",d:90},
+    {id:"p7",n:"7th Period",      s:"14:15",e:"15:45",d:90},
   ]},
-  5: { label: "Friday", type: "Regular", periods: [] },   // same as Mon
 };
+S[2]={label:"Tuesday", type:"Regular",   p:S[1].p};
+S[5]={label:"Friday",  type:"Regular",   p:S[1].p};
 
-// Tuesday and Friday share Monday's schedule
-SCHEDULES[2].periods = SCHEDULES[1].periods;
-SCHEDULES[5].periods = SCHEDULES[1].periods;
+const NKEYS=["p1","p2","p3","p4","p5","p6","p7","ln","nb","av","cp"];
+const NLBLS={p1:"1st Period",p2:"2nd Period",p3:"3rd Period",p4:"4th Period",p5:"5th Period",p6:"6th Period",p7:"7th Period",ln:"Lunch",nb:"Nutrition Brk",av:"Advisory",cp:"CPT"};
+const MOTIVES=[
+  {e:"☀️",t:"Good morning — let's get it!"},
+  {e:"🎯",t:"Stay locked in, one period at a time."},
+  {e:"💪",t:"You're doing great, keep pushing."},
+  {e:"🔥",t:"More than halfway there!"},
+  {e:"⚡",t:"Almost done — finish strong."},
+  {e:"🎉",t:"Last period! You've almost made it."},
+  {e:"🏖️",t:"School's out — go enjoy yourself!"},
+];
 
-// ────────────────────────────
-// HELPERS
-// ────────────────────────────
-function parseTime(t) {
-  // "HH:MM" → seconds since midnight
-  const [h, m] = t.split(":").map(Number);
-  return h * 3600 + m * 60;
+let nicks={};
+try{nicks=JSON.parse(localStorage.getItem('gwhs_nicks')||'{}');}catch(e){}
+function saveNicks(){try{localStorage.setItem('gwhs_nicks',JSON.stringify(nicks));}catch(e){}}
+function gn(id){return nicks[id]||'';}
+function dn(p){const k=gn(p.id);return k||p.n;}
+
+let theme=localStorage.getItem('gwhs_theme')||'dark';
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme',theme);
+  const d=theme==='dark';
+  document.getElementById('t-icon').textContent=d?'☀️':'🌙';
+  document.getElementById('t-lbl').textContent=d?'Light':'Dark';
+  try{localStorage.setItem('gwhs_theme',theme);}catch(e){}
+}
+function toggleTheme(){theme=theme==='dark'?'light':'dark';applyTheme();}
+
+function pt(t){const[h,m]=t.split(':').map(Number);return h*3600+m*60;}
+function now(){const n=new Date();return n.getHours()*3600+n.getMinutes()*60+n.getSeconds();}
+function hms(s){s=Math.max(0,s);const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;const mm=String(m).padStart(2,'0'),ss=String(sec).padStart(2,'0');return h>0?`${h}:${mm}:${ss}`:`${mm}:${ss}`;}
+function t12(t){let[h,m]=t.split(':').map(Number);const a=h>=12?'PM':'AM';if(h>12)h-=12;if(h===0)h=12;return `${h}:${String(m).padStart(2,'0')} ${a}`;}
+function dow(){return new Date().getDay();}
+function getCur(p){const n=now();for(let i=0;i<p.length;i++){const s=pt(p[i].s),e=pt(p[i].e);if(n>=s&&n<e)return{i,p:p[i],e,s};}return null;}
+function getNxt(p){const n=now();for(let i=0;i<p.length;i++){const s=pt(p[i].s);if(n<s)return{i,p:p[i],s};}return null;}
+function ss(p){return pt(p[0].s);}
+function se(p){return pt(p[p.length-1].e);}
+
+function updateClock(){
+  const n=new Date(),h=n.getHours(),m=n.getMinutes(),s=n.getSeconds();
+  const a=h>=12?'PM':'AM',hh=h>12?h-12:h===0?12:h;
+  document.getElementById('live-clock').textContent=`${hh}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} ${a}`;
 }
 
-function nowSeconds() {
-  const n = new Date();
-  return n.getHours() * 3600 + n.getMinutes() * 60 + n.getSeconds();
+function renderMotive(sched){
+  const el=document.getElementById('motive');
+  if(!sched){el.style.display='none';return;}
+  const n=now(),p=sched.p,end=se(p),start=ss(p),rem=end-n;
+  let m;
+  if(n<start)m=MOTIVES[0];
+  else if(n>=end)m=MOTIVES[6];
+  else if(rem<1800)m=MOTIVES[5];
+  else if(rem<3600)m=MOTIVES[4];
+  else{const cls=p.filter(x=>x.id.startsWith('p'));const done=cls.filter(x=>pt(x.e)<=n).length;m=done>=Math.floor(cls.length/2)?MOTIVES[3]:MOTIVES[1+Math.floor(done%2)];}
+  el.style.display='flex';
+  document.getElementById('me').textContent=m.e;
+  document.getElementById('mt').textContent=m.t;
 }
 
-function fmtHMS(secs) {
-  const h = Math.floor(secs / 3600);
-  const m = Math.floor((secs % 3600) / 60);
-  const s = secs % 60;
-  const mm = String(m).padStart(2, '0');
-  const ss = String(s).padStart(2, '0');
-  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
-}
-
-function fmtTime12(t) {
-  // "HH:MM" → "8:40 AM"
-  let [h, m] = t.split(":").map(Number);
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  if (h > 12) h -= 12;
-  if (h === 0) h = 12;
-  return `${h}:${String(m).padStart(2,'0')} ${ampm}`;
-}
-
-function todayDow() { return new Date().getDay(); }
-
-function getCurrentPeriod(periods) {
-  const now = nowSeconds();
-  for (let i = 0; i < periods.length; i++) {
-    const s = parseTime(periods[i].start);
-    const e = parseTime(periods[i].end);
-    if (now >= s && now < e) return { idx: i, period: periods[i], endSec: e, startSec: s };
-  }
-  return null;
-}
-
-function getNextPeriod(periods) {
-  const now = nowSeconds();
-  for (let i = 0; i < periods.length; i++) {
-    const s = parseTime(periods[i].start);
-    if (now < s) return { idx: i, period: periods[i], startSec: s };
-  }
-  return null;
-}
-
-function schoolStartSec(periods) { return parseTime(periods[0].start); }
-function schoolEndSec(periods)   { return parseTime(periods[periods.length - 1].end); }
-
-// ────────────────────────────
-// CLOCK
-// ────────────────────────────
-function updateClock() {
-  const n = new Date();
-  const h = n.getHours(), m = n.getMinutes(), s = n.getSeconds();
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  const hh = h > 12 ? h - 12 : h === 0 ? 12 : h;
-  document.getElementById('live-clock').textContent =
-    `${hh}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} ${ampm}`;
-}
-
-// ────────────────────────────
-// RENDER HERO
-// ────────────────────────────
-function renderHero(sched) {
-  const hero = document.getElementById('hero-section');
-  const dow = todayDow();
-
-  if (!sched) {
-    hero.innerHTML = `
-      <div class="no-school">
-        <h2>No School Today</h2>
-        <p>Enjoy your weekend! 🎉</p>
-      </div>`;
+function renderHero(sched){
+  const el=document.getElementById('hero');
+  if(!sched){el.innerHTML=`<div class="no-school"><h2>No School Today</h2><p>Enjoy the weekend! 🎉</p></div>`;return;}
+  const p=sched.p,n=now(),start=ss(p),end=se(p);
+  if(n<start){
+    const d=start-n;
+    el.innerHTML=`<div class="before-banner"><div><div class="hl">School hasn't started yet</div><h2>First bell at ${t12(p[0].s)}</h2></div><div class="si">Starts in <span id="sit" style="color:var(--text);font-weight:600">${hms(d)}</span></div></div>`;
     return;
   }
-
-  const periods = sched.periods;
-  const now = nowSeconds();
-  const schoolStart = schoolStartSec(periods);
-  const schoolEnd   = schoolEndSec(periods);
-
-  // Before school
-  if (now < schoolStart) {
-    const diff = schoolStart - now;
-    hero.innerHTML = `
-      <div class="before-school-banner">
-        <div>
-          <div class="hero-label">School hasn't started</div>
-          <h2 class="current-period" style="font-size:32px">First bell at ${fmtTime12(periods[0].start)}</h2>
-        </div>
-        <div class="starts-in">Starts in <span id="starts-in-timer" style="color:var(--text);font-weight:600">${fmtHMS(diff)}</span></div>
-      </div>`;
+  if(n>=end){
+    el.innerHTML=`<div class="done-banner"><h2>School's Out! 🎉</h2><p>Final bell rang at ${t12(p[p.length-1].e)} — enjoy your afternoon!</p></div>`;
     return;
   }
-
-  // After school
-  if (now >= schoolEnd) {
-    hero.innerHTML = `
-      <div class="school-done-banner">
-        <h2>School's Out! 🎉</h2>
-        <p>Final bell rang at ${fmtTime12(periods[periods.length-1].end)}</p>
-      </div>`;
-    return;
-  }
-
-  // During a period
-  const cur = getCurrentPeriod(periods);
-  const nxt = getNextPeriod(periods);
-
-  if (cur) {
-    const remaining = cur.endSec - now;
-    const elapsed   = now - cur.startSec;
-    const total     = cur.endSec - cur.startSec;
-    const pct       = Math.min(100, (elapsed / total) * 100);
-    const colorClass = remaining <= 120 ? 'urgent' : remaining <= 300 ? 'warning' : 'ok';
-
-    hero.innerHTML = `
+  const cur=getCur(p),nxt=getNxt(p);
+  if(cur){
+    const rem=cur.e-n,el2=n-cur.s,tot=cur.e-cur.s,pct=Math.min(100,(el2/tot)*100);
+    const cc=rem<=120?'urgent':rem<=300?'warning':'ok';
+    const nick=gn(cur.p.id);
+    const nd=nick?`${nick} <span style="font-size:22px;opacity:.45">(${cur.p.n})</span>`:cur.p.n;
+    const nxtHtml=nxt?`<div class="nu"><div class="nu-dot"></div><span>Next: <strong>${dn(nxt.p)}</strong> at ${t12(nxt.p.s)}</span></div>`:'';
+    el.innerHTML=`
       <div class="hero">
-        <div class="hero-label">Now in Progress</div>
-        <div class="current-period">${cur.period.name}</div>
-        <div class="period-time-range">${fmtTime12(cur.period.start)} → ${fmtTime12(cur.period.end)} · ${cur.period.dur} min</div>
-
-        <div class="countdown-label">Ends in</div>
-        <div class="countdown-row">
-          <div class="countdown-time ${colorClass}" id="countdown-display">${fmtHMS(remaining)}</div>
-        </div>
-
-        <div class="progress-bar-wrap">
-          <div class="progress-bar-fill" id="progress-fill" style="width:${pct}%"></div>
-        </div>
-        <div class="progress-meta">
-          <span>${fmtHMS(elapsed)} elapsed</span>
-          <span>${fmtHMS(remaining)} left</span>
-        </div>
-
-        ${nxt ? `<div class="next-up">
-          <div class="next-up-dot"></div>
-          <span>Up next: <strong>${nxt.period.name}</strong> starts at ${fmtTime12(nxt.period.start)}</span>
-        </div>` : ''}
+        <div class="hl">Now in Progress</div>
+        <div class="cp">${nd}</div>
+        <div class="ptr">${t12(cur.p.s)} → ${t12(cur.p.e)} · ${cur.p.d} min</div>
+        <div class="cl">Ends in</div>
+        <div class="ct ${cc}" id="cd">${hms(rem)}</div>
+        <div class="pb-wrap"><div class="pb-fill" id="pf" style="width:${pct}%"></div></div>
+        <div class="pb-meta"><span id="pel">${hms(el2)} elapsed</span><span id="prem">${hms(rem)} left</span></div>
+        ${nxtHtml}
       </div>`;
-  } else {
-    // Between periods (passing period)
-    const nxtP = getNextPeriod(periods);
-    if (nxtP) {
-      const till = nxtP.startSec - now;
-      hero.innerHTML = `
-        <div class="hero">
-          <div class="hero-label">Passing Period</div>
-          <div class="current-period" style="font-size:36px">Between Classes</div>
-          <div class="period-time-range" style="margin-bottom:12px"></div>
-          <div class="countdown-label">Next period in</div>
-          <div class="countdown-row">
-            <div class="countdown-time ok" id="countdown-display">${fmtHMS(till)}</div>
-          </div>
-          <div class="next-up">
-            <div class="next-up-dot"></div>
-            <span>Up next: <strong>${nxtP.period.name}</strong> at ${fmtTime12(nxtP.period.start)}</span>
-          </div>
-        </div>`;
-    }
+  } else if(nxt){
+    const till=nxt.s-n;
+    el.innerHTML=`
+      <div class="hero">
+        <div class="hl">Passing Period 🚶</div>
+        <div class="cp" style="font-size:36px">Between Classes</div>
+        <div class="ptr"></div>
+        <div class="cl">Next period in</div>
+        <div class="ct ok" id="cd">${hms(till)}</div>
+        <div class="nu"><div class="nu-dot"></div><span>Next: <strong>${dn(nxt.p)}</strong> at ${t12(nxt.p.s)}</span></div>
+      </div>`;
   }
 }
 
-// ────────────────────────────
-// RENDER STATS
-// ────────────────────────────
-function renderStats(sched) {
-  const el = document.getElementById('stats-grid');
-  if (!sched) { el.innerHTML = ''; return; }
+function renderStats(sched){
+  const el=document.getElementById('stats');
+  if(!sched){el.innerHTML='';return;}
+  const p=sched.p,n=now(),end=se(p),start=ss(p);
+  const cls=p.filter(x=>x.id.startsWith('p'));
+  const done=cls.filter(x=>pt(x.e)<=n).length;
+  const left=Math.max(0,end-n);
+  const dur=end-start;
+  const pct=n<start?0:n>=end?100:Math.min(100,Math.round(((n-start)/dur)*100));
+  el.innerHTML=`
+    <div class="stat-card"><div class="slbl">Day Progress</div><div class="sval">${pct}%</div><div class="ssub">of school day</div></div>
+    <div class="stat-card"><div class="slbl">Periods Done</div><div class="sval">${done}/${cls.length}</div><div class="ssub">class periods</div></div>
+    <div class="stat-card"><div class="slbl">School Ends</div><div class="sval" style="font-size:21px">${t12(p[p.length-1].e)}</div><div class="ssub">${left>0?hms(left)+' left':'Done!'}</div></div>
+    <div class="stat-card"><div class="slbl">Schedule</div><div class="sval" style="font-size:19px">${sched.type}</div><div class="ssub">${sched.label}</div></div>`;
+}
 
-  const periods = sched.periods;
-  const now = nowSeconds();
-  const schoolEnd = schoolEndSec(periods);
-  const schoolStart = schoolStartSec(periods);
+let activeTab=null;
+function renderTabs(){
+  const el=document.getElementById('tabs'),d=dow(),days=[1,2,3,4,5],names=['Mon','Tue','Wed','Thu','Fri'];
+  if(activeTab===null)activeTab=days.includes(d)?d:1;
+  el.innerHTML=days.map((x,i)=>`<button class="tab ${x===d?'today':''} ${x===activeTab?'active':''}" onclick="setTab(${x})">${names[i]}${x===d?' ★':''}</button>`).join('');
+}
+function setTab(d){activeTab=d;renderTabs();renderTable(S[d]);}
 
-  // Count academic periods only
-  const classPeriods = periods.filter(p => !p.name.includes('Lunch') && !p.name.includes('Nutrition') && !p.name.includes('Advisory') && !p.name.includes('CPT'));
-  const passedClasses = classPeriods.filter(p => parseTime(p.end) <= now).length;
-  const totalClasses  = classPeriods.length;
-  const timeLeft = Math.max(0, schoolEnd - now);
-  const schoolDur = schoolEnd - schoolStart;
-  const pctDay = Math.min(100, Math.max(0, Math.round(((now - schoolStart) / schoolDur) * 100)));
-
-  el.innerHTML = `
-    <div class="stat-card">
-      <div class="stat-label">Day Progress</div>
-      <div class="stat-value">${pctDay}%</div>
-      <div class="stat-sub">of school day</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Periods Done</div>
-      <div class="stat-value">${passedClasses}/${totalClasses}</div>
-      <div class="stat-sub">class periods</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">School Ends</div>
-      <div class="stat-value" style="font-size:24px">${fmtTime12(periods[periods.length-1].end)}</div>
-      <div class="stat-sub">${timeLeft > 0 ? fmtHMS(timeLeft) + ' left' : 'Done!'}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Schedule Type</div>
-      <div class="stat-value" style="font-size:22px">${sched.type}</div>
-      <div class="stat-sub">${sched.label}</div>
+function renderTable(sched){
+  const el=document.getElementById('table');
+  if(!sched){el.innerHTML='';return;}
+  const p=sched.p,n=now(),today=(activeTab===dow());
+  const cur=today?getCur(p):null;
+  const rows=p.map((x,i)=>{
+    const isCur=cur&&cur.i===i,isPast=today&&pt(x.e)<=n&&!isCur;
+    const nick=gn(x.id);
+    const nd=nick?`${nick} <span class="rnick">(${x.n})</span>`:x.n;
+    return `<div class="sched-row ${isCur?'cur':''} ${isPast?'past':''}">
+      <div class="rname">${isCur?'<span class="cdot"></span>':''}${nd}</div>
+      <div class="rtime">${t12(x.s)} – ${t12(x.e)}</div>
+      <div class="rdur">${x.d}m</div>
     </div>`;
-}
-
-// ────────────────────────────
-// RENDER TABS + TABLE
-// ────────────────────────────
-let activeTab = null;
-
-function renderTabs() {
-  const tabs = document.getElementById('day-tabs');
-  const dow = todayDow();
-  const days = [1,2,3,4,5];
-  const names = ['Mon','Tue','Wed','Thu','Fri'];
-
-  if (activeTab === null) activeTab = days.includes(dow) ? dow : 1;
-
-  tabs.innerHTML = days.map((d, i) => `
-    <button class="tab ${d === dow ? 'today' : ''} ${d === activeTab ? 'active' : ''}"
-      onclick="setTab(${d})">${names[i]}${d === dow ? ' ★' : ''}</button>
-  `).join('');
-}
-
-function setTab(dow) {
-  activeTab = dow;
-  renderTabs();
-  renderTable(SCHEDULES[dow]);
-}
-
-function renderTable(sched) {
-  const el = document.getElementById('schedule-display');
-  if (!sched) { el.innerHTML = ''; return; }
-
-  const periods = sched.periods;
-  const now     = nowSeconds();
-  const todayDOW = todayDow();
-  const isToday  = (activeTab === todayDOW);
-  const cur      = isToday ? getCurrentPeriod(periods) : null;
-
-  const rows = periods.map((p, i) => {
-    const endSec   = parseTime(p.end);
-    const startSec = parseTime(p.start);
-    const isCur    = cur && cur.idx === i;
-    const isPast   = isToday && endSec <= now && !isCur;
-    return `
-      <div class="schedule-row ${isCur ? 'current-row' : ''} ${isPast ? 'past-row' : ''}">
-        <div class="row-name">
-          ${isCur ? '<span class="current-dot"></span>' : ''}
-          ${p.name}
-        </div>
-        <div class="row-time">${fmtTime12(p.start)} – ${fmtTime12(p.end)}</div>
-        <div class="row-dur">${p.dur}m</div>
-      </div>`;
   }).join('');
-
-  el.innerHTML = `
-    <div class="schedule-card">
-      <div class="schedule-header">${sched.label} — ${sched.type} Schedule</div>
-      ${rows}
-    </div>`;
+  el.innerHTML=`<div class="sched-card"><div class="sched-hdr">${sched.label} — ${sched.type} Schedule</div>${rows}</div>`;
 }
 
-// ────────────────────────────
-// TICK (every second)
-// ────────────────────────────
-function tick() {
+let nickOpen=false;
+function toggleNick(){
+  nickOpen=!nickOpen;
+  document.getElementById('nbody').classList.toggle('open',nickOpen);
+  document.getElementById('nchev').textContent=nickOpen?'▲ hide':'▼ show';
+}
+function renderNickEditor(){
+  document.getElementById('ngrid').innerHTML=NKEYS.map(k=>`
+    <div class="nick-item">
+      <label>${NLBLS[k]}</label>
+      <input type="text" maxlength="24" placeholder="nickname" value="${gn(k)}"
+        oninput="nicks['${k}']=this.value.trim();saveNicks();renderTable(S[activeTab])">
+    </div>`).join('');
+}
+
+let lastHeroState='';
+function heroState(sched){
+  if(!sched)return'no';
+  const n=now(),p=sched.p;
+  if(n<ss(p))return'before';
+  if(n>=se(p))return'done';
+  const cur=getCur(p);
+  return cur?'cur:'+cur.p.id:'pass';
+}
+
+function tick(){
   updateClock();
+  const d=dow(),sched=S[d]||null;
+  renderMotive(sched);
 
-  const dow   = todayDow();
-  const sched = SCHEDULES[dow] || null;
-
-  renderHero(sched);
-  renderStats(sched);
-
-  // Update countdown in-place if it exists (avoids full re-render flicker)
-  const cdEl = document.getElementById('countdown-display');
-  if (cdEl && sched) {
-    const periods = sched.periods;
-    const now = nowSeconds();
-    const cur  = getCurrentPeriod(periods);
-    const nxt  = getNextPeriod(periods);
-    const startEl = document.getElementById('starts-in-timer');
-
-    if (startEl) {
-      const diff = parseTime(periods[0].start) - now;
-      startEl.textContent = fmtHMS(Math.max(0, diff));
-    } else if (cur) {
-      const remaining = cur.endSec - now;
-      const elapsed   = now - cur.startSec;
-      const total     = cur.endSec - cur.startSec;
-      const pct       = Math.min(100, (elapsed / total) * 100);
-      cdEl.textContent = fmtHMS(remaining);
-      cdEl.className = 'countdown-time ' + (remaining <= 120 ? 'urgent' : remaining <= 300 ? 'warning' : 'ok');
-      const pfill = document.getElementById('progress-fill');
-      if (pfill) pfill.style.width = pct + '%';
-    } else if (nxt) {
-      const till = nxt.startSec - now;
-      cdEl.textContent = fmtHMS(till);
+  const state=heroState(sched);
+  if(state!==lastHeroState){lastHeroState=state;renderHero(sched);}
+  else {
+    // fast-path update
+    const n=now();
+    const sit=document.getElementById('sit');
+    if(sit&&sched){sit.textContent=hms(pt(sched.p[0].s)-n);}
+    const cd=document.getElementById('cd');
+    if(cd&&sched){
+      const p=sched.p,cur=getCur(p),nxt=getNxt(p);
+      if(cur){
+        const rem=cur.e-n,el2=n-cur.s,tot=cur.e-cur.s;
+        cd.textContent=hms(rem);
+        cd.className='ct '+(rem<=120?'urgent':rem<=300?'warning':'ok');
+        const pf=document.getElementById('pf');if(pf)pf.style.width=Math.min(100,(el2/tot)*100)+'%';
+        const pe=document.getElementById('pel'),pr=document.getElementById('prem');
+        if(pe)pe.textContent=hms(el2)+' elapsed';if(pr)pr.textContent=hms(rem)+' left';
+      } else if(nxt){cd.textContent=hms(nxt.s-n);}
     }
-  } else if (sched) {
-    // Hero needs full redraw (state changed — e.g. period ended)
-    renderHero(sched);
-    renderStats(sched);
   }
 
-  // Redraw table if today's tab is active (to update past/current highlights)
-  if (activeTab === dow) renderTable(sched);
-}
-
-// ────────────────────────────
-// INIT
-// ────────────────────────────
-function init() {
-  const dow = todayDow();
-  const sched = SCHEDULES[dow] || null;
-
-  renderHero(sched);
   renderStats(sched);
-  renderTabs();
-  renderTable(SCHEDULES[activeTab !== null ? activeTab : (dow in SCHEDULES ? dow : 1)]);
-  updateClock();
-  setInterval(tick, 1000);
+  if(activeTab===d)renderTable(sched);
 }
 
+function init(){
+  applyTheme();
+  renderNickEditor();
+  const d=dow(),sched=S[d]||null;
+  lastHeroState=heroState(sched);
+  renderMotive(sched);renderHero(sched);renderStats(sched);renderTabs();
+  renderTable(S[activeTab!==null?activeTab:(d in S?d:1)]);
+  updateClock();
+  setInterval(tick,1000);
+}
 init();
 </script>
 </body>
