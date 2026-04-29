@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tools — Yoshiro</title>
+  <link rel="icon" type="image/x-icon" href="/favistuff/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favistuff/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favistuff/favicon-32x32.png">
+  <link rel="apple-touch-icon" href="/favistuff/apple-touch-icon.png">
+  <link rel="manifest" href="/favistuff/site.webmanifest">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #f5f4f0;
+      --bg2: #eeecea;
+      --text: #1a1a1a;
+      --muted: #888;
+      --line: #d8d6d0;
+      --accent: #9b8ea0;
+      --accent2: #7a9490;
+      --accent3: #a08b7a;
+      --tag-bg: #e8e6e2;
+    }
+
+    body.dark {
+      --bg: #111110;
+      --bg2: #1a1917;
+      --text: #e8e6e2;
+      --muted: #666;
+      --line: #2a2926;
+      --tag-bg: #1e1d1b;
+    }
+
+    /* ── Theme toggle ── */
+    .theme-toggle {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.1rem;
+      z-index: 300;
+    }
+
+    .theme-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 1rem;
+      color: var(--line);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.15rem 0.3rem;
+      line-height: 1;
+      transition: color 0.2s ease;
+      user-select: none;
+    }
+
+    .theme-btn:hover { color: var(--muted); }
+    .theme-btn.active { color: var(--text); }
+
+    /* ── Back link ── */
+    .back-link {
+      position: fixed;
+      top: 1.5rem;
+      left: 1.5rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--line);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      transition: color 0.2s ease;
+      z-index: 300;
+    }
+
+    .back-link:hover { color: var(--muted); }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    /* ── Layout ── */
+    .page {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    section {
+      padding: 4rem 0;
+      border-bottom: 1px solid var(--line);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 5rem 0 4rem;
+      border-bottom: 1px solid var(--line);
+      opacity: 0;
+      animation: fadeUp 0.6s ease 0.1s forwards;
+    }
+
+    .header-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: clamp(2.8rem, 8vw, 4rem);
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      background: linear-gradient(100deg, #9b8ea0, #7a9490, #a08b7a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1.25rem;
+    }
+
+    .tagline {
+      font-size: 1rem;
+      font-weight: 300;
+      color: var(--muted);
+      max-width: 380px;
+    }
+
+    /* ── Section labels ── */
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 2rem;
+    }
+
+    /* ── Tools grid ── */
+    .tools-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+
+    .tool-card {
+      background: var(--bg);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      text-decoration: none;
+      color: inherit;
+      transition: background 0.2s ease;
+    }
+
+    .tool-card:hover { background: var(--bg2); }
+
+    .tool-card:hover .tool-arrow {
+      transform: translateX(4px);
+    }
+
+    .tool-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .tool-name {
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .tool-type {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .tool-desc {
+      font-size: 0.875rem;
+      font-weight: 300;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .tool-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 0.25rem;
+    }
+
+    .tool-specs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .spec {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      background: var(--tag-bg);
+      color: var(--muted);
+      padding: 0.25rem 0.6rem;
+      border-radius: 2px;
+      letter-spacing: 0.04em;
+    }
+
+    .tool-arrow {
+      font-size: 0.85rem;
+      color: var(--line);
+      transition: transform 0.2s ease, color 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .tool-card:hover .tool-arrow { color: var(--muted); }
+
+    /* ── Footer ── */
+    footer {
+      padding: 3rem 0;
+      opacity: 0;
+      animation: fadeUp 0.6s ease 0.2s forwards;
+    }
+
+    .footer-text {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--line);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Theme toggle -->
+  <div class="theme-toggle">
+    <button class="theme-btn" id="btn-light" onclick="setTheme('light')" title="Light">+</button>
+    <button class="theme-btn active" id="btn-dark" onclick="setTheme('dark')" title="Dark">−</button>
+  </div>
+
+  <!-- Back link -->
+  <a class="back-link" href="/index.html">← index</a>
+
+  <div class="page">
+
+    <header>
+      <p class="header-label">Yoshiro</p>
+      <h1>Tools</h1>
+      <p class="tagline">Small web tools I made. Pretty neat at school, cause i actually use them.</p>
+    </header>
+
+    <section id="tools">
+      <p class="section-label">All tools</p>
+      <div class="tools-grid">
+
+        <a class="tool-card" href="bell-schedule.html">
+          <div class="tool-header">
+            <span class="tool-name">GWHS Bell Schedule</span>
+            <span class="tool-type">school</span>
+          </div>
+          <p class="tool-desc">Live countdown to the end of each class, with seconds. Shows your current period, what's next, and the full schedule for every day of the week.</p>
+          <div class="tool-footer">
+            <div class="tool-specs">
+              <span class="spec">live clock</span>
+              <span class="spec">countdown</span>
+              <span class="spec">all days</span>
+              <span class="spec">SFUSD - GWHS</span>
+            </div>
+            <span class="tool-arrow">→</span>
+          </div>
+        </a>
+
+        <a class="tool-card" href="email-signature.html">
+          <div class="tool-header">
+            <span class="tool-name">GWHS Email Signature</span>
+            <span class="tool-type">utility</span>
+          </div>
+          <p class="tool-desc">A clean, copy-ready email signature generator. Fill in your details and grab the HTML to drop into Gmail.</p>
+          <div class="tool-footer">
+            <div class="tool-specs">
+              <span class="spec">html</span>
+              <span class="spec">email</span>
+              <span class="spec">easy</span>
+              <span class="spec">SFUSD - GWHS</span>
+            </div>
+            <span class="tool-arrow">→</span>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <footer>
+      <p class="footer-text">Yoshiro &middot; sn4k.org/yoshiro</p>
+    </footer>
+
+  </div>
+
+  <script>
+    // ── Theme ──
+    function setTheme(theme) {
+      document.body.classList.toggle('dark', theme === 'dark');
+      document.getElementById('btn-light').classList.toggle('active', theme === 'light');
+      document.getElementById('btn-dark').classList.toggle('active', theme === 'dark');
+      localStorage.setItem('theme', theme);
+    }
+    const saved = localStorage.getItem('theme') || 'light';
+    setTheme(saved);
+
+    // ── Scroll observer ──
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('section').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
