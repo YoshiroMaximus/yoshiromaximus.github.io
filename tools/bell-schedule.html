@@ -48,7 +48,13 @@
     height:52px;position:sticky;top:0;z-index:50;
     box-shadow:0 2px 16px rgba(200,16,46,.35);
   }
-  header h1{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;color:white;}
+  .hleft{display:flex;align-items:center;gap:10px;min-width:0;}
+  .logo{
+    width:30px;height:30px;border-radius:6px;flex:0 0 auto;
+    object-fit:contain;background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.22);
+  }
+  header h1{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .hright{display:flex;align-items:center;gap:10px;}
   #live-clock{font-family:'DM Mono',monospace;font-size:13px;color:rgba(255,255,255,.9);letter-spacing:2px;}
   .theme-btn{
@@ -185,6 +191,7 @@
   @media(max-width:600px){
     .cp{font-size:34px;}.ct{font-size:46px;}
     header h1{font-size:18px;}#live-clock{display:none;}
+    .logo{width:26px;height:26px;border-radius:5px;}
     .sched-row{grid-template-columns:1fr 110px 40px;padding:9px 12px;}
     .sched-row.cur{padding-left:9px;}
     .hero{padding:16px 18px;}
@@ -194,7 +201,10 @@
 <body>
 
 <header>
-  <h1>GWHS · Bell Schedule</h1>
+  <div class="hleft">
+    <img class="logo" src="https://www.sfusd.edu/sites/default/files/school-logos/School%20logo_0.jpg" alt="GWHS logo" loading="eager" decoding="async" referrerpolicy="no-referrer">
+    <h1>GWHS · Bell Schedule</h1>
+  </div>
   <div class="hright">
     <div id="live-clock">--:--:-- --</div>
     <button class="theme-btn" onclick="toggleTheme()">
@@ -323,7 +333,7 @@ function renderHero(sched){
   const p=sched.p,n=now(),start=ss(p),end=se(p);
   if(n<start){
     const d=start-n;
-    el.innerHTML=`<div class="before-banner"><div><div class="hl">School hasn't started yet</div><h2>First bell at ${t12(p[0].s)}</h2></div><div class="si">Starts in <span id="sit" style="color:var(--text);font-weight:600">${hms(d)}</span></div></div>`;
+    el.innerHTML=`<div class="before-banner"><div><div class="hl">School hasn't started yet</div><h2>First bell at ${t12(p[0].s)}</h2></div><div class="si">Starts in <span id="sit" style="color:var(--red)">${hms(d)}</span></div></div>`;
     return;
   }
   if(n>=end){
