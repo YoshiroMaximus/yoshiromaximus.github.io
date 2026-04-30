@@ -180,7 +180,7 @@ body {
 <div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
 
 <header class="header">
-  <img class="header-logo" src="https://upload.wikimedia.org/wikipedia/commons/a/a8/Logo_from_George_Washington_High_School.png" alt="GWHS">
+  <img class="header-logo" src="https://www.sfusd.edu/sites/default/files/school-logos/School%20logo_0.jpg" alt="GWHS">
   <div class="header-divider"></div>
   <div>
     <div class="header-title">George Washington High School</div>
@@ -342,7 +342,7 @@ body {
             <div class="email-sig-area">
               <div class="sig-wrap st-classic" id="sig-wrap">
                 <div id="sig-logo-wrap">
-                  <img class="sig-logo-img" src="https://upload.wikimedia.org/wikipedia/commons/a/a8/Logo_from_George_Washington_High_School.png" alt="GWHS">
+                  <img class="sig-logo-img" src="https://www.sfusd.edu/sites/default/files/school-logos/School%20logo_0.jpg" alt="GWHS">
                 </div>
                 <div class="sig-bar-el" id="sig-bar-el" style="background:#0d2b5e;"></div>
                 <div class="sig-body">
@@ -529,7 +529,7 @@ function buildHTML(name, sub, details) {
   const sz = { classic: ['16px','10.5px','12px'], bold: ['20px','11px','12.5px'], compact: ['14px','10px','11.5px'] };
   const [nameSize, subSize, detailSize] = sz[state.style];
 
-  const logoTD = state.logo ? `<td style="padding-right:12px;vertical-align:top;padding-top:2px;"><img src="https://upload.wikimedia.org/wikipedia/commons/a/a8/Logo_from_George_Washington_High_School.png" width="50" height="50" style="display:block;object-fit:contain;" alt="GWHS Logo"></td>` : '';
+  const logoTD = state.logo ? `<td style="padding-right:12px;vertical-align:top;padding-top:2px;"><img src="https://www.sfusd.edu/sites/default/files/school-logos/School%20logo_0.jpg" width="50" height="50" style="display:block;object-fit:contain;" alt="GWHS Logo"></td>` : '';
   const barTD  = state.bar  ? `<td style="padding-right:12px;"><div style="width:3px;min-height:55px;background:${state.accent};border-radius:2px;"></div></td>` : '';
   const subHTML    = sub ? `\n      <p style="margin:0 0 6px 0;font-size:${subSize};font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${state.accent2};">${sub}</p>` : '';
   const detailHTML = details.length ? '\n      ' + details.map(d => `<span style="display:block;font-size:${detailSize};color:#666;line-height:1.8;">${d}</span>`).join('\n      ') : '';
