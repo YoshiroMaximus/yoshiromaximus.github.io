@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>◈ jellyfin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080808;--surface:#0f0f0f;--surface2:#161616;--surface3:#202020;
+  --border:#252525;--border2:#333;
+  --text:#e0ddd8;--muted:#525252;--muted2:#383838;
+  --accent:#c8a96e;--accent-dim:rgba(200,169,110,0.12);--accent-glow:rgba(200,169,110,0.06);
+  --danger:#b55;--ok:#6a9;
+  --font:'JetBrains Mono',monospace;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;line-height:1.5;overflow:hidden}
+button{cursor:pointer;font-family:var(--font)}
+input{font-family:var(--font)}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+scrollbar-width:thin;scrollbar-color:var(--border2) transparent;
+
+/* ── App shell ─────────────────────────── */
+#app{
+  display:grid;
+  grid-template-rows:1fr 68px;
+  grid-template-columns:50px 1fr;
+  height:100vh;
+  display:none;
+}
+
+/* ── Sidebar ─────────────────────────── */
+#sidebar{
+  grid-row:1/3;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;
+  padding:12px 0 16px;gap:2px;
+}
+.s-logo{
+  font-size:15px;font-weight:600;color:var(--accent);
+  letter-spacing:0.05em;padding:10px 0 18px;
+}
+.s-sep{width:20px;height:1px;background:var(--border);margin:8px 0}
+.nav-btn{
+  width:34px;height:34px;background:none;border:none;
+  color:var(--muted);font-size:15px;
+  border-radius:5px;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;position:relative;
+}
+.nav-btn:hover{color:var(--text);background:var(--surface2)}
+.nav-btn.active{color:var(--accent);background:var(--accent-glow);box-shadow:inset 1px 0 0 var(--accent)}
+.nav-btn.bottom{margin-top:auto}
+.nav-btn[title]:hover::after{
+  content:attr(title);position:absolute;
+  left:calc(100% + 10px);top:50%;transform:translateY(-50%);
+  background:var(--surface2);border:1px solid var(--border);
+  padding:4px 10px;border-radius:3px;font-size:10px;
+  color:var(--text);white-space:nowrap;letter-spacing:0.05em;
+  z-index:99;pointer-events:none;
+}
+
+/* ── Main content ─────────────────────── */
+#main{
+  overflow-y:auto;padding:24px 28px 12px;
+}
+.section-wrap{display:none}
+.section-wrap.visible{display:block}
+
+.page-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:22px;
+}
+.page-title{
+  font-size:18px;font-weight:500;letter-spacing:-0.03em;color:var(--text);
+}
+.search-pill{
+  display:flex;align-items:center;gap:8px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:4px;
+  padding:6px 12px;color:var(--muted);font-size:11px;
+  transition:border-color .15s;
+}
+.search-pill:hover{border-color:var(--border2)}
+.search-pill input{
+  background:none;border:none;outline:none;
+  color:var(--text);font-size:11px;width:160px;
+  font-family:var(--font);
+}
+.search-pill input::placeholder{color:var(--muted)}
+
+/* Library filter pills */
+.lib-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px}
+.lib-pill{
+  padding:5px 12px;background:none;
+  border:1px solid var(--border);border-radius:2px;
+  font-size:10px;letter-spacing:0.08em;color:var(--muted);
+  transition:all .15s;
+}
+.lib-pill:hover{color:var(--text);border-color:var(--border2)}
+.lib-pill.active{color:var(--accent);border-color:var(--accent);background:var(--accent-dim)}
+
+/* Sections */
+.sec{margin-bottom:32px}
+.sec-label{
+  font-size:9px;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:12px;font-weight:500;
+}
+
+/* Media grids */
+.grid-poster{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:14px}
+.grid-wide{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+.grid-list{display:flex;flex-direction:column;gap:1px}
+
+/* Cards */
+.card{cursor:pointer;user-select:none}
+.card-poster-art{
+  aspect-ratio:2/3;background:var(--surface2);
+  border:1px solid var(--border);border-radius:3px;
+  overflow:hidden;position:relative;margin-bottom:7px;
+  transition:border-color .15s;
+}
+.card:hover .card-poster-art{border-color:var(--border2)}
+.card-thumb-art{
+  aspect-ratio:16/9;background:var(--surface2);
+  border:1px solid var(--border);border-radius:3px;
+  overflow:hidden;position:relative;margin-bottom:7px;
+  transition:border-color .15s;
+}
+.card:hover .card-thumb-art{border-color:var(--border2)}
+
+.card-ph{
+  width:100%;height:100%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;
+}
+.card-ph-icon{font-size:22px;color:var(--muted2)}
+.card-ph-label{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.card-img{width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0}
+.card-play{
+  position:absolute;inset:0;background:rgba(0,0,0,.65);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .15s;
+  font-size:20px;color:white;
+}
+.card:hover .card-play{opacity:1}
+.prog{position:absolute;bottom:0;left:0;height:2px;background:var(--accent)}
+.card-title{
+  font-size:11px;font-weight:500;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;
+}
+.card-meta{font-size:10px;color:var(--muted)}
+
+/* Badge */
+.badge{
+  display:inline-block;padding:1px 5px;
+  border-radius:2px;font-size:9px;letter-spacing:0.07em;
+  margin-left:5px;vertical-align:middle;
+}
+.b-hd{color:var(--accent);border:1px solid var(--accent);background:var(--accent-dim)}
+.b-new{color:var(--ok);border:1px solid var(--ok);background:rgba(100,180,140,.08)}
+
+/* List row */
+.list-row{
+  display:grid;grid-template-columns:24px 1fr 80px 60px 32px;
+  align-items:center;gap:12px;
+  padding:9px 10px;border-radius:3px;
+  transition:background .1s;cursor:pointer;
+}
+.list-row:hover{background:var(--surface2)}
+.list-num{font-size:10px;color:var(--muted);text-align:right}
+.list-title{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-artist{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-dur{font-size:10px;color:var(--muted);text-align:right}
+.list-play-btn{
+  width:26px;height:26px;background:none;border:none;
+  color:var(--muted);font-size:12px;border-radius:3px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;opacity:0;
+}
+.list-row:hover .list-play-btn{opacity:1;color:var(--text)}
+
+/* Empty state */
+.empty{color:var(--muted);font-size:11px;padding:30px 0;display:flex;align-items:center;gap:8px}
+.spin{
+  width:14px;height:14px;border:1px solid var(--border);
+  border-top-color:var(--muted);border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Player bar ─────────────────────── */
+#player{
+  background:var(--surface);border-top:1px solid var(--border);
+  display:grid;grid-template-columns:1fr auto 1fr;
+  align-items:center;padding:0 20px;gap:16px;
+}
+.np{display:flex;flex-direction:column;gap:1px;min-width:0}
+.np-title{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.np-sub{font-size:10px;color:var(--muted)}
+.ctrl{display:flex;flex-direction:column;align-items:center;gap:6px}
+.ctrl-row{display:flex;align-items:center;gap:2px}
+.c-btn{
+  width:30px;height:30px;background:none;border:none;
+  color:var(--muted);font-size:13px;border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.c-btn:hover{color:var(--text);background:var(--surface2)}
+.c-btn.primary{
+  width:34px;height:34px;font-size:14px;
+  color:var(--text);border:1px solid var(--border);
+}
+.c-btn.primary:hover{border-color:var(--border2)}
+.seek{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--muted)}
+.seek-track{
+  width:220px;height:2px;background:var(--surface3);
+  border-radius:1px;cursor:pointer;position:relative;
+}
+.seek-fill{height:100%;background:var(--accent);border-radius:1px;width:0%;pointer-events:none}
+.p-right{display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.vol-track{
+  width:64px;height:2px;background:var(--surface3);
+  border-radius:1px;cursor:pointer;position:relative;
+}
+.vol-fill{height:100%;background:var(--muted2);border-radius:1px;width:70%}
+
+/* ── Setup screen ──────────────────── */
+#setup{
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;z-index:100;
+}
+.setup-box{width:340px}
+.setup-wordmark{
+  font-size:11px;letter-spacing:0.35em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:44px;
+}
+.setup-h{font-size:17px;font-weight:400;letter-spacing:-0.02em;margin-bottom:6px}
+.setup-sub{font-size:11px;color:var(--muted);margin-bottom:28px;line-height:1.9}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.field input{
+  width:100%;background:var(--surface);border:1px solid var(--border);
+  border-radius:3px;padding:9px 11px;color:var(--text);font-size:12px;outline:none;
+  transition:border-color .15s;
+}
+.field input:focus{border-color:var(--border2)}
+.field input::placeholder{color:var(--muted)}
+.setup-btns{display:flex;gap:8px;margin-top:20px}
+.btn-p{
+  flex:1;padding:9px;background:var(--accent-dim);
+  border:1px solid var(--accent);border-radius:3px;
+  color:var(--accent);font-size:11px;letter-spacing:0.06em;
+  transition:background .15s;
+}
+.btn-p:hover{background:rgba(200,169,110,.22)}
+.btn-s{
+  padding:9px 14px;background:none;border:1px solid var(--border);
+  border-radius:3px;color:var(--muted);font-size:11px;
+  transition:all .15s;
+}
+.btn-s:hover{color:var(--text);border-color:var(--border2)}
+.setup-err{font-size:11px;color:var(--danger);margin-top:10px;display:none}
+
+/* ── Video overlay ─────────────────── */
+#vid-overlay{
+  display:none;position:fixed;inset:0;background:#000;z-index:200;
+  flex-direction:column;
+}
+#vid-overlay.on{display:flex}
+#vid-el{flex:1;width:100%;object-fit:contain}
+.vid-ui{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  justify-content:space-between;padding:18px 22px;
+  background:linear-gradient(to bottom,rgba(0,0,0,.65) 0%,transparent 25%,transparent 72%,rgba(0,0,0,.85) 100%);
+  opacity:0;transition:opacity .2s;
+}
+#vid-overlay:hover .vid-ui{opacity:1}
+.vid-top{display:flex;align-items:center;gap:14px}
+.vid-wordmark{font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,.4)}
+.vid-title{font-size:14px;font-weight:500;color:white}
+.vid-close{
+  margin-left:auto;background:none;border:1px solid rgba(255,255,255,.25);
+  border-radius:3px;width:30px;height:30px;color:white;font-size:13px;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s;
+}
+.vid-close:hover{background:rgba(255,255,255,.1)}
+.vid-bottom{display:flex;flex-direction:column;gap:10px}
+.vid-seek{height:2px;background:rgba(255,255,255,.2);border-radius:1px;cursor:pointer;position:relative}
+.vid-seek-fill{height:100%;background:var(--accent);border-radius:1px;pointer-events:none}
+.vid-ctrls{display:flex;align-items:center;gap:6px}
+.v-btn{
+  background:none;border:none;color:rgba(255,255,255,.75);
+  font-size:15px;padding:4px 7px;border-radius:3px;
+  transition:all .1s;
+}
+.v-btn:hover{color:white;background:rgba(255,255,255,.1)}
+.v-big{font-size:20px}
+.v-time{font-size:10px;color:rgba(255,255,255,.5);margin-left:4px}
+.v-right{margin-left:auto;display:flex;gap:4px}
+
+/* Detail panel (right sidebar) */
+#detail-panel{
+  display:none;position:fixed;right:0;top:0;bottom:68px;width:300px;
+  background:var(--surface);border-left:1px solid var(--border);
+  z-index:50;overflow-y:auto;padding:24px 20px;
+}
+#detail-panel.on{display:block}
+.detail-close{
+  position:absolute;top:16px;right:16px;background:none;border:none;
+  color:var(--muted);font-size:14px;width:28px;height:28px;
+  border-radius:3px;display:flex;align-items:center;justify-content:center;
+}
+.detail-close:hover{color:var(--text);background:var(--surface2)}
+.detail-type{font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.detail-title{font-size:16px;font-weight:500;letter-spacing:-0.02em;margin-bottom:4px}
+.detail-meta{font-size:11px;color:var(--muted);margin-bottom:16px}
+.detail-poster{
+  aspect-ratio:2/3;background:var(--surface2);border:1px solid var(--border);
+  border-radius:3px;overflow:hidden;margin-bottom:16px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:36px;color:var(--muted2);
+}
+.detail-overview{font-size:11px;color:var(--muted);line-height:1.9;margin-bottom:20px}
+.detail-play{
+  width:100%;padding:10px;background:var(--accent-dim);
+  border:1px solid var(--accent);border-radius:3px;
+  color:var(--accent);font-size:12px;letter-spacing:0.06em;
+  transition:background .15s;margin-bottom:8px;display:block;text-align:center;
+}
+.detail-play:hover{background:rgba(200,169,110,.22)}
+.detail-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:6px 0;border-bottom:1px solid var(--border);
+  font-size:10px;
+}
+.detail-row span:first-child{color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- ── Setup ─────────────────────────── -->
+<div id="setup">
+  <div class="setup-box">
+    <div class="setup-wordmark">◈ jellyfin</div>
+    <div class="setup-h">connect to server</div>
+    <div class="setup-sub">Enter your Jellyfin server details below.<br>Or try demo mode to explore the interface.</div>
+    <div class="field">
+      <label>Server URL</label>
+      <input type="text" id="srv-url" placeholder="http://localhost:8096" value="http://localhost:8096">
+    </div>
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="srv-user" placeholder="admin">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="srv-pass" placeholder="">
+    </div>
+    <div class="setup-err" id="setup-err"></div>
+    <div class="setup-btns">
+      <button class="btn-p" onclick="doConnect()">⎋ connect</button>
+      <button class="btn-s" onclick="demoMode()">demo →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── App ───────────────────────────── -->
+<div id="app">
+
+  <!-- Sidebar -->
+  <nav id="sidebar">
+    <div class="s-logo">◈</div>
+    <button class="nav-btn active" onclick="goTo('home',this)" title="home">⌂</button>
+    <div class="s-sep"></div>
+    <button class="nav-btn" onclick="goTo('movies',this)" title="movies">▣</button>
+    <button class="nav-btn" onclick="goTo('shows',this)" title="tv shows">⊟</button>
+    <button class="nav-btn" onclick="goTo('music',this)" title="music">♫</button>
+    <div class="s-sep"></div>
+    <button class="nav-btn" onclick="goTo('search',this)" title="search">◎</button>
+    <button class="nav-btn bottom" onclick="goTo('settings',this)" title="settings">⚙</button>
+  </nav>
+
+  <!-- Main -->
+  <main id="main">
+
+    <!-- Home -->
+    <div id="sec-home" class="section-wrap visible">
+      <div class="page-header">
+        <div class="page-title">home</div>
+        <div class="search-pill">
+          <span style="color:var(--muted)">◎</span>
+          <input type="text" placeholder="search library..." id="home-search" oninput="liveSearch(this.value)">
+        </div>
+      </div>
+      <div class="lib-pills" id="lib-pills"></div>
+      <div class="sec">
+        <div class="sec-label">continue watching</div>
+        <div class="grid-wide" id="cw-grid"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-label">recently added</div>
+        <div class="grid-poster" id="rec-grid"></div>
+      </div>
+    </div>
+
+    <!-- Movies -->
+    <div id="sec-movies" class="section-wrap">
+      <div class="page-header">
+        <div class="page-title">movies</div>
+        <div style="display:flex;gap:6px">
+          <button class="lib-pill active" onclick="sortMovies('name',this)">↕ name</button>
+          <button class="lib-pill" onclick="sortMovies('year',this)">year</button>
+          <button class="lib-pill" onclick="sortMovies('genre',this)">genre</button>
+        </div>
+      </div>
+      <div class="grid-poster" id="mov-grid"></div>
+    </div>
+
+    <!-- Shows -->
+    <div id="sec-shows" class="section-wrap">
+      <div class="page-header"><div class="page-title">tv shows</div></div>
+      <div class="grid-poster" id="sho-grid"></div>
+    </div>
+
+    <!-- Music -->
+    <div id="sec-music" class="section-wrap">
+      <div class="page-header"><div class="page-title">music</div></div>
+      <div class="sec">
+        <div class="sec-label">albums</div>
+        <div class="grid-poster" id="alb-grid"></div>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div id="sec-search" class="section-wrap">
+      <div class="page-header"><div class="page-title">search</div></div>
+      <div class="field" style="margin-bottom:22px">
+        <input type="text" id="main-search" placeholder="movies, shows, music..." oninput="runSearch(this.value)" style="max-width:380px">
+      </div>
+      <div id="search-results"></div>
+    </div>
+
+    <!-- Settings -->
+    <div id="sec-settings" class="section-wrap">
+      <div class="page-header"><div class="page-title">settings</div></div>
+      <div style="max-width:360px">
+        <div class="sec-label" style="margin-bottom:16px">server</div>
+        <div class="field">
+          <label>Server URL</label>
+          <input type="text" id="set-url" placeholder="http://localhost:8096">
+        </div>
+        <div class="field">
+          <label>API Token</label>
+          <input type="text" id="set-token" placeholder="paste api key here">
+        </div>
+        <div class="setup-btns" style="margin-top:16px">
+          <button class="btn-p" onclick="reconnect()">⎋ reconnect</button>
+          <button class="btn-s" onclick="demoMode()">switch to demo</button>
+        </div>
+        <div style="height:32px"></div>
+        <div class="sec-label" style="margin-bottom:14px">about</div>
+        <div class="detail-row"><span>client</span><span>jf-minimal v1.0</span></div>
+        <div class="detail-row"><span>theme</span><span>monochrome · amber</span></div>
+        <div class="detail-row"><span>font</span><span>JetBrains Mono</span></div>
+        <div class="detail-row" style="border:none"><span>mode</span><span id="mode-label">demo</span></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Player bar -->
+  <footer id="player">
+    <div class="np">
+      <div class="np-title" id="np-title">— nothing playing</div>
+      <div class="np-sub" id="np-sub">select something to watch</div>
+    </div>
+
+    <div class="ctrl">
+      <div class="ctrl-row">
+        <button class="c-btn" onclick="prev()" title="Previous">⏮</button>
+        <button class="c-btn" onclick="toggleShuffle()" id="shuf-btn" title="Shuffle">⇌</button>
+        <button class="c-btn primary" onclick="togglePlay()" id="play-btn">▶</button>
+        <button class="c-btn" onclick="toggleRepeat()" id="rep-btn" title="Repeat">↺</button>
+        <button class="c-btn" onclick="next()" title="Next">⏭</button>
+      </div>
+      <div class="seek">
+        <span id="t-cur">0:00</span>
+        <div class="seek-track" id="seek-track" onclick="handleSeek(event)">
+          <div class="seek-fill" id="seek-fill"></div>
+        </div>
+        <span id="t-tot">0:00</span>
+      </div>
+    </div>
+
+    <div class="p-right">
+      <button class="c-btn" id="mut-btn" onclick="toggleMute()" title="Mute">◁</button>
+      <div class="vol-track" id="vol-track" onclick="handleVol(event)">
+        <div class="vol-fill" id="vol-fill"></div>
+      </div>
+      <button class="c-btn" style="margin-left:8px;font-size:11px" onclick="openDetail(currentItem)" title="Info">⊡</button>
+      <button class="c-btn" onclick="openVideo()" title="Fullscreen">⛶</button>
+    </div>
+  </footer>
+</div>
+
+<!-- Detail panel -->
+<div id="detail-panel">
+  <button class="detail-close" onclick="closeDetail()">✕</button>
+  <div class="detail-type" id="d-type"></div>
+  <div class="detail-title" id="d-title"></div>
+  <div class="detail-meta" id="d-meta"></div>
+  <div class="detail-poster" id="d-poster"></div>
+  <div class="detail-overview" id="d-overview"></div>
+  <button class="detail-play" onclick="playCurrentDetail()">▶ play</button>
+  <div id="d-rows"></div>
+</div>
+
+<!-- Video overlay -->
+<div id="vid-overlay">
+  <video id="vid-el" preload="metadata"></video>
+  <div class="vid-ui">
+    <div class="vid-top">
+      <span class="vid-wordmark">◈ jellyfin</span>
+      <div class="vid-title" id="vid-title"></div>
+      <button class="vid-close" onclick="closeVideo()">✕</button>
+    </div>
+    <div class="vid-bottom">
+      <div class="vid-seek" id="vid-seek" onclick="vidSeek(event)">
+        <div class="vid-seek-fill" id="vid-seek-fill" style="width:0%"></div>
+      </div>
+      <div class="vid-ctrls">
+        <button class="v-btn v-big" id="v-play" onclick="togglePlay()">▶</button>
+        <button class="v-btn" onclick="vidSkip(-10)" title="-10s">⏪ 10</button>
+        <button class="v-btn" onclick="vidSkip(10)" title="+10s">10 ⏩</button>
+        <span class="v-time" id="v-time">0:00 / 0:00</span>
+        <div class="v-right">
+          <button class="v-btn" onclick="toggleMute()">◁</button>
+          <button class="v-btn" onclick="vidEl.requestFullscreen()">⛶</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────
+let SERVER = '', TOKEN = '', USER_ID = '';
+let DEMO = false;
+let playing = false, muted = false, shuffled = false, looping = false;
+let currentItem = null, currentDetail = null;
+let seekAnim = null, seekPct = 0;
+const vidEl = document.getElementById('vid-el');
+
+// ── Demo data ─────────────────────────────────────
+const DEMO_MOVIES = [
+  {id:'m1',name:'Blade Runner 2049',year:2017,genre:'sci-fi',hd:true,runtime:163,overview:'A young blade runner discovers a long-buried secret that leads him to find former blade runner Rick Deckard.'},
+  {id:'m2',name:'Oppenheimer',year:2023,genre:'drama',hd:true,runtime:180,overview:'The story of J. Robert Oppenheimer and his role in the development of the atomic bomb.'},
+  {id:'m3',name:'Dune: Part Two',year:2024,genre:'sci-fi',hd:true,runtime:166,overview:'Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family.'},
+  {id:'m4',name:'Poor Things',year:2023,genre:'drama',runtime:141,overview:'The incredible tale about the fantastical evolution of Bella Baxter, a young woman brought back to life.'},
+  {id:'m5',name:'Zone of Interest',year:2023,genre:'drama',runtime:105,overview:'The commandant of Auschwitz and his wife build a dream life for their family next to the camp.'},
+  {id:'m6',name:'Past Lives',year:2023,genre:'romance',runtime:106,overview:'Two deeply connected childhood friends face the choices they have made to different trajectories in their lives.'},
+  {id:'m7',name:'The Holdovers',year:2023,genre:'comedy',hd:true,runtime:133,overview:'A curmudgeonly teacher at a New England prep school is forced to stay on campus over the holidays.'},
+  {id:'m8',name:'Killers of the Flower Moon',year:2023,genre:'crime',runtime:206,overview:'Members of the Osage Nation in 1920s Oklahoma are murdered under mysterious circumstances.'},
+  {id:'m9',name:'Alien: Romulus',year:2024,genre:'horror',hd:true,runtime:119,overview:'A group of young space colonizers encounter the most terrifying life form in the universe.'},
+  {id:'m10',name:'Conclave',year:2024,genre:'thriller',runtime:120,overview:'One of the world\'s most secretive and ancient events unfolds after the Pope dies.'},
+  {id:'m11',name:'Nosferatu',year:2024,genre:'horror',hd:true,runtime:132,overview:'A gothic tale of obsession between a haunted young woman and the terrifying vampire who ensnares her.'},
+  {id:'m12',name:'The Brutalist',year:2024,genre:'drama',hd:true,runtime:215,overview:'A visionary Hungarian architect flees post-war Europe and his singular vision transforms a wealthy patron\'s life.'},
+];
+const DEMO_SHOWS = [
+  {id:'s1',name:'Shogun',year:2024,genre:'historical',hd:true,seasons:1,overview:'In feudal Japan, an ambitious lord exploits a conflict among rival warlords to seize power.'},
+  {id:'s2',name:'The Bear',year:2022,genre:'drama',hd:true,seasons:3,overview:'A young chef from the fine dining world comes to run his family\'s sandwich shop in Chicago.'},
+  {id:'s3',name:'Severance',year:2022,genre:'thriller',hd:true,seasons:2,isNew:true,overview:'Mark leads a team at Lumon Industries whose employees have undergone a severance procedure.'},
+  {id:'s4',name:'True Detective',year:2023,genre:'crime',seasons:4,isNew:true,overview:'A case involving the disappearance of six men working at a research station in Alaska.'},
+  {id:'s5',name:'House of the Dragon',year:2022,genre:'fantasy',hd:true,seasons:2,overview:'The Targaryen civil war known as the Dance of the Dragons begins.'},
+  {id:'s6',name:'The Last of Us',year:2023,genre:'drama',hd:true,seasons:2,overview:'Joel smuggles Ellie across a post-apocalyptic America infected by a dangerous fungal disease.'},
+  {id:'s7',name:'Succession',year:2018,genre:'drama',seasons:4,overview:'The Roy family, owners of a global media company, fight for power.'},
+  {id:'s8',name:'Dark',year:2017,genre:'sci-fi',seasons:3,overview:'A family saga with a supernatural twist, set in a German town where the disappearance of two young children exposes the double lives of four families.'},
+];
+const DEMO_MUSIC = [
+  {id:'a1',name:'CHROMAKOPIA',artist:'Tyler, the Creator',year:2024,genre:'hip-hop',isNew:true,tracks:14},
+  {id:'a2',name:'GNX',artist:'Kendrick Lamar',year:2024,genre:'hip-hop',isNew:true,tracks:12},
+  {id:'a3',name:"Short n' Sweet",artist:'Sabrina Carpenter',year:2024,genre:'pop',tracks:12},
+  {id:'a4',name:'Radical Optimism',artist:'Dua Lipa',year:2024,genre:'pop',tracks:11},
+  {id:'a5',name:'Imaginal Disk',artist:'Magdalena Bay',year:2024,genre:'synth-pop',isNew:true,tracks:17},
+  {id:'a6',name:'Bright Future',artist:'Adrianne Lenker',year:2024,genre:'folk',tracks:12},
+];
+const DEMO_CONTINUE = [
+  {id:'c1',name:'Blade Runner 2049',type:'Movie',year:2017,genre:'sci-fi',progress:45,runtime:163},
+  {id:'c2',name:'The Bear',type:'Episode',year:2022,genre:'drama',progress:72,episode:'S02E04'},
+  {id:'c3',name:'Severance',type:'Episode',year:2022,genre:'thriller',progress:18,episode:'S02E01'},
+];
+const DEMO_RECENT = [...DEMO_MOVIES.slice(0,4), ...DEMO_SHOWS.slice(0,4)];
+
+// ── Icon mapping ───────────────────────────────────
+const genreIcon = g => ({'sci-fi':'◈','horror':'☽','crime':'◆','thriller':'◆','fantasy':'⬡','comedy':'◎','romance':'♡','historical':'◉','drama':'▣','hip-hop':'♬','pop':'♬','synth-pop':'♬','folk':'♩','music':'♫'}[g] || '▣');
+const typeIcon = item => item.artist ? '♫' : item.episode ? '⊟' : genreIcon((item.genre||'').toLowerCase());
+
+// ── Card builders ──────────────────────────────────
+function makeCard(item, wide=false) {
+  const c = document.createElement('div');
+  c.className = 'card';
+
+  const artClass = wide ? 'card-thumb-art' : 'card-poster-art';
+  const progHtml = item.progress ? `<div class="prog" style="width:${item.progress}%"></div>` : '';
+
+  let badges = '';
+  if (item.hd) badges += '<span class="badge b-hd">hd</span>';
+  if (item.isNew||item.new) badges += '<span class="badge b-new">new</span>';
+
+  let meta = '';
+  if (item.artist) meta = `${item.artist} · ${item.year}`;
+  else if (item.episode) meta = `${item.episode} · ${item.progress}% watched`;
+  else meta = `${item.year||''}${item.runtime?' · '+item.runtime+'m':''}${item.seasons?' · '+item.seasons+' season'+(item.seasons>1?'s':''):''}${item.progress?' · '+item.progress+'% watched':''}`;
+
+  c.innerHTML = `
+    <div class="${artClass}">
+      <div class="card-ph">
+        <div class="card-ph-icon">${typeIcon(item)}</div>
+        <div class="card-ph-label">${(item.genre||item.type||'').toLowerCase()}</div>
+      </div>
+      <div class="card-play">▶</div>
+      ${progHtml}
+    </div>
+    <div class="card-title">${item.name}${badges}</div>
+    <div class="card-meta">${meta}</div>
+  `;
+
+  // Load real image if server connected
+  if (!DEMO && SERVER) {
+    const img = document.createElement('img');
+    img.className = 'card-img';
+    img.src = `${SERVER}/Items/${item.id}/Images/Primary?api_key=${TOKEN}&maxWidth=300`;
+    img.onload = () => {
+      const ph = c.querySelector('.card-ph');
+      if (ph) { ph.parentNode.insertBefore(img, ph); ph.remove(); }
+    };
+  }
+
+  c.onclick = (e) => {
+    if (e.shiftKey) { openDetail(item); }
+    else { playItem(item); }
+  };
+  c.ondblclick = () => openDetail(item);
+
+  return c;
+}
+
+function makeListRow(item, idx) {
+  const r = document.createElement('div');
+  r.className = 'list-row';
+  r.innerHTML = `
+    <span class="list-num">${idx+1}</span>
+    <div style="min-width:0">
+      <div class="list-title">${item.name}</div>
+      <div class="list-artist">${item.artist||''}</div>
+    </div>
+    <span class="list-dur" style="color:var(--muted)">${item.genre||''}</span>
+    <span class="list-dur">${item.tracks ? item.tracks+' trk' : ''}</span>
+    <button class="list-play-btn" onclick="event.stopPropagation();playItem(event,${JSON.stringify(item).replace(/"/g,'&quot;')})">▶</button>
+  `;
+  r.onclick = () => playItem(item);
+  return r;
+}
+
+// ── Populate grids ─────────────────────────────────
+function loadDemoData() {
+  // Lib pills
+  const pp = document.getElementById('lib-pills');
+  pp.innerHTML = '';
+  ['all','movies','tv shows','music','anime'].forEach((l,i) => {
+    const b = document.createElement('button');
+    b.className = 'lib-pill'+(i===0?' active':'');
+    b.textContent = l;
+    b.onclick = () => { pp.querySelectorAll('.lib-pill').forEach(x=>x.classList.remove('active')); b.classList.add('active'); };
+    pp.appendChild(b);
+  });
+
+  populateGrid('cw-grid', DEMO_CONTINUE, true);
+  populateGrid('rec-grid', DEMO_RECENT, false);
+  populateGrid('mov-grid', DEMO_MOVIES, false);
+  populateGrid('sho-grid', DEMO_SHOWS, false);
+  populateGrid('alb-grid', DEMO_MUSIC, false);
+}
+
+function populateGrid(id, items, wide) {
+  const g = document.getElementById(id);
+  g.innerHTML = '';
+  items.forEach(item => g.appendChild(makeCard(item, wide)));
+}
+
+// ── Navigation ─────────────────────────────────────
+function goTo(sec, btn) {
+  document.querySelectorAll('.section-wrap').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-'+sec).classList.add('visible');
+  btn.classList.add('active');
+  if (sec==='search') document.getElementById('main-search').focus();
+  if (sec==='settings') {
+    document.getElementById('set-url').value = SERVER;
+    document.getElementById('set-token').value = TOKEN;
+    document.getElementById('mode-label').textContent = DEMO ? 'demo' : 'live · '+SERVER;
+  }
+  closeDetail();
+}
+
+// ── Sort movies ────────────────────────────────────
+function sortMovies(by, btn) {
+  btn.closest('.page-header').querySelectorAll('.lib-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const arr = [...DEMO_MOVIES].sort((a,b)=>by==='year'?b.year-a.year:by==='genre'?a.genre.localeCompare(b.genre):a.name.localeCompare(b.name));
+  populateGrid('mov-grid', arr, false);
+}
+
+// ── Search ─────────────────────────────────────────
+function liveSearch(val) {
+  if (!val.trim()) return;
+  goTo('search', document.querySelector('.nav-btn[title="search"]'));
+  document.getElementById('main-search').value = val;
+  runSearch(val);
+}
+function runSearch(val) {
+  const el = document.getElementById('search-results');
+  el.innerHTML = '';
+  if (!val.trim()) return;
+  const all = [...DEMO_MOVIES,...DEMO_SHOWS,...DEMO_MUSIC,...DEMO_CONTINUE];
+  const seen = new Set();
+  const results = all.filter(i => { if(seen.has(i.id)) return false; seen.add(i.id); return i.name.toLowerCase().includes(val.toLowerCase())||(i.artist||'').toLowerCase().includes(val.toLowerCase()); });
+  const g = document.createElement('div');
+  g.className = 'grid-poster';
+  results.forEach(item => g.appendChild(makeCard(item,false)));
+  el.appendChild(g);
+  if (!results.length) el.innerHTML = '<div class="empty">— no results for "'+val+'"</div>';
+}
+
+// ── Playback ───────────────────────────────────────
+function playItem(item) {
+  if (!item || typeof item !== 'object') return;
+  currentItem = item;
+  document.getElementById('np-title').textContent = item.name;
+  document.getElementById('np-sub').textContent = item.artist || (item.episode||'') || (item.year?String(item.year):'') || '';
+  document.getElementById('vid-title').textContent = item.name;
+  playing = true;
+  updatePlayBtns();
+
+  if (!DEMO && SERVER && item.id) {
+    vidEl.src = `${SERVER}/Videos/${item.id}/stream?static=true&api_key=${TOKEN}`;
+    openVideo();
+    vidEl.play().catch(()=>{});
+  } else {
+    openVideo();
+    startFakeSeek();
+  }
+}
+
+let fakeTimer = null, fakePct = 0;
+function startFakeSeek() {
+  clearInterval(fakeTimer);
+  fakePct = currentItem?.progress || 0;
+  fakeTimer = setInterval(()=>{
+    if (!playing) return;
+    fakePct = (fakePct+0.05)%100;
+    setSeek(fakePct);
+    const s = Math.floor(fakePct*1.08*60);
+    const tot = Math.floor(1.08*60*100);
+    document.getElementById('t-cur').textContent = fmt(s);
+    document.getElementById('t-tot').textContent = fmt(tot);
+    document.getElementById('v-time').textContent = fmt(s)+' / '+fmt(tot);
+  },200);
+}
+function fmt(s){ return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+function setSeek(p){
+  document.getElementById('seek-fill').style.width = p+'%';
+  document.getElementById('vid-seek-fill').style.width = p+'%';
+}
+
+function togglePlay() {
+  playing = !playing;
+  updatePlayBtns();
+  if (!DEMO && vidEl.src) { playing ? vidEl.play() : vidEl.pause(); }
+}
+function updatePlayBtns() {
+  const s = playing ? '⏸' : '▶';
+  document.getElementById('play-btn').textContent = s;
+  document.getElementById('v-play').textContent = s;
+}
+function prev(){}
+function next(){}
+function toggleShuffle(){
+  shuffled=!shuffled;
+  document.getElementById('shuf-btn').style.color=shuffled?'var(--accent)':'var(--muted)';
+}
+function toggleRepeat(){
+  looping=!looping;
+  document.getElementById('rep-btn').style.color=looping?'var(--accent)':'var(--muted)';
+}
+function toggleMute(){
+  muted=!muted;
+  vidEl.muted=muted;
+  document.getElementById('mut-btn').textContent=muted?'○':'◁';
+}
+function handleSeek(e){
+  const t=document.getElementById('seek-track');
+  const r=t.getBoundingClientRect();
+  const p=Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100));
+  fakePct=p; setSeek(p);
+  if(!DEMO&&vidEl.duration) vidEl.currentTime=vidEl.duration*p/100;
+}
+function handleVol(e){
+  const t=document.getElementById('vol-track');
+  const r=t.getBoundingClientRect();
+  const p=Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100));
+  document.getElementById('vol-fill').style.width=p+'%';
+  vidEl.volume=p/100;
+}
+
+// ── Video overlay ──────────────────────────────────
+function openVideo(){
+  if(!currentItem) return;
+  document.getElementById('vid-overlay').classList.add('on');
+}
+function closeVideo(){
+  document.getElementById('vid-overlay').classList.remove('on');
+  if(!DEMO){ vidEl.pause(); vidEl.removeAttribute('src'); }
+  clearInterval(fakeTimer);
+  playing=false; updatePlayBtns();
+}
+function vidSeek(e){
+  const t=document.getElementById('vid-seek');
+  const r=t.getBoundingClientRect();
+  const p=Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100));
+  fakePct=p; setSeek(p);
+  if(!DEMO&&vidEl.duration) vidEl.currentTime=vidEl.duration*p/100;
+}
+function vidSkip(s){ if(!DEMO) vidEl.currentTime=Math.max(0,vidEl.currentTime+s); }
+
+vidEl.addEventListener('timeupdate',()=>{
+  if(!vidEl.duration) return;
+  const p=vidEl.currentTime/vidEl.duration*100;
+  setSeek(p);
+  document.getElementById('t-cur').textContent=fmt(Math.floor(vidEl.currentTime));
+  document.getElementById('t-tot').textContent=fmt(Math.floor(vidEl.duration));
+  document.getElementById('v-time').textContent=fmt(Math.floor(vidEl.currentTime))+' / '+fmt(Math.floor(vidEl.duration));
+});
+
+// ── Detail panel ───────────────────────────────────
+function openDetail(item){
+  if(!item) return;
+  currentDetail=item;
+  document.getElementById('d-type').textContent=(item.type||item.artist?'album · '+item.genre:item.seasons?'series · '+item.genre:'film · '+item.genre).toLowerCase();
+  document.getElementById('d-title').textContent=item.name;
+  let meta='';
+  if(item.artist) meta=item.artist+' · '+item.year+(item.tracks?' · '+item.tracks+' tracks':'');
+  else if(item.seasons) meta=item.year+' · '+item.seasons+' season'+(item.seasons>1?'s':'');
+  else meta=item.year+(item.runtime?' · '+item.runtime+'m':'');
+  document.getElementById('d-meta').textContent=meta;
+  document.getElementById('d-poster').innerHTML=`<div style="font-size:40px;color:var(--muted2)">${typeIcon(item)}</div>`;
+  document.getElementById('d-overview').textContent=item.overview||'No overview available.';
+  const rows=document.getElementById('d-rows');
+  rows.innerHTML='';
+  if(item.year){const r=document.createElement('div');r.className='detail-row';r.innerHTML=`<span>year</span><span>${item.year}</span>`;rows.appendChild(r);}
+  if(item.genre){const r=document.createElement('div');r.className='detail-row';r.innerHTML=`<span>genre</span><span>${item.genre}</span>`;rows.appendChild(r);}
+  if(item.runtime){const r=document.createElement('div');r.className='detail-row';r.innerHTML=`<span>runtime</span><span>${item.runtime}m</span>`;rows.appendChild(r);}
+  if(item.hd){const r=document.createElement('div');r.className='detail-row';r.innerHTML=`<span>quality</span><span>1080p hd</span>`;rows.appendChild(r);}
+  if(item.seasons){const r=document.createElement('div');r.className='detail-row';r.innerHTML=`<span>seasons</span><span>${item.seasons}</span>`;rows.appendChild(r);}
+  document.getElementById('detail-panel').classList.add('on');
+}
+function closeDetail(){ document.getElementById('detail-panel').classList.remove('on'); }
+function playCurrentDetail(){ if(currentDetail) playItem(currentDetail); }
+
+// ── Connection ─────────────────────────────────────
+async function doConnect(){
+  const url=(document.getElementById('srv-url').value||'').trim().replace(/\/$/,'');
+  const user=(document.getElementById('srv-user').value||'').trim();
+  const pass=document.getElementById('srv-pass').value;
+  const err=document.getElementById('setup-err');
+  err.style.display='none';
+  try{
+    const res=await fetch(`${url}/Users/AuthenticateByName`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Emby-Authorization':'MediaBrowser Client="JF-Minimal",Device="Browser",DeviceId="jfm1",Version="1.0"'},
+      body:JSON.stringify({Username:user,Pw:pass})
+    });
+    if(!res.ok) throw new Error('auth failed ('+res.status+')');
+    const d=await res.json();
+    SERVER=url; TOKEN=d.AccessToken; USER_ID=d.User.Id; DEMO=false;
+    startApp(); fetchRealData();
+  }catch(e){
+    err.style.display='block';
+    err.textContent='— '+(e.message||'connection failed');
+  }
+}
+function reconnect(){
+  SERVER=document.getElementById('set-url').value.trim().replace(/\/$/,'');
+  TOKEN=document.getElementById('set-token').value.trim();
+  if(SERVER&&TOKEN){ DEMO=false; fetchRealData(); }
+}
+function demoMode(){
+  DEMO=true; SERVER=''; TOKEN=''; USER_ID='';
+  startApp(); loadDemoData();
+}
+function startApp(){
+  document.getElementById('setup').style.display='none';
+  document.getElementById('app').style.display='grid';
+}
+
+async function fetchRealData(){
+  const h={'X-Emby-Token':TOKEN};
+  try{
+    const lr=await fetch(`${SERVER}/Library/VirtualFolders`,{headers:h});
+    const libs=await lr.json();
+    const pp=document.getElementById('lib-pills'); pp.innerHTML='';
+    ['all',...libs.map(l=>l.Name.toLowerCase())].forEach((l,i)=>{
+      const b=document.createElement('button');
+      b.className='lib-pill'+(i===0?' active':'');b.textContent=l;
+      b.onclick=()=>{pp.querySelectorAll('.lib-pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');};
+      pp.appendChild(b);
+    });
+  }catch(e){}
+
+  async function load(gridId,params,wide){
+    const g=document.getElementById(gridId);
+    g.innerHTML='<div class="empty"><div class="spin"></div><span>loading...</span></div>';
+    try{
+      const res=await fetch(`${SERVER}/Users/${USER_ID}/Items?${params}`,{headers:h});
+      const data=await res.json();
+      g.innerHTML='';
+      (data.Items||[]).forEach(item=>{
+        const m={
+          id:item.Id,name:item.Name,type:item.Type,year:item.ProductionYear,
+          genre:(item.Genres||[])[0]||'',
+          progress:item.UserData?.PlayedPercentage||0,
+          episode:item.Type==='Episode'?`S${String(item.ParentIndexNumber||0).padStart(2,'0')}E${String(item.IndexNumber||0).padStart(2,'0')}`:null,
+          artist:item.AlbumArtist||'',hd:item.Width>=1920,
+          runtime:item.RunTimeTicks?Math.floor(item.RunTimeTicks/600000000):null,
+          overview:item.Overview||'',
+        };
+        g.appendChild(makeCard(m,wide));
+      });
+      if(!(data.Items||[]).length) g.innerHTML='<div class="empty">— nothing here yet</div>';
+    }catch(e){g.innerHTML='<div class="empty">— failed to load</div>';}
+  }
+
+  load('cw-grid','Filters=IsResumable&SortBy=DatePlayed&SortOrder=Descending&Limit=6&Recursive=true&IncludeItemTypes=Movie,Episode',true);
+  load('rec-grid','SortBy=DateCreated&SortOrder=Descending&Limit=12&Recursive=true&IncludeItemTypes=Movie,Series',false);
+  load('mov-grid','Recursive=true&IncludeItemTypes=Movie&SortBy=SortName&SortOrder=Ascending&Limit=100',false);
+  load('sho-grid','Recursive=true&IncludeItemTypes=Series&SortBy=SortName&SortOrder=Ascending&Limit=100',false);
+  load('alb-grid','Recursive=true&IncludeItemTypes=MusicAlbum&SortBy=SortName&SortOrder=Ascending&Limit=100',false);
+}
+
+// ── Keyboard shortcuts ─────────────────────────────
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  if(e.key===' '){ e.preventDefault(); togglePlay(); }
+  if(e.key==='Escape'){ if(document.getElementById('vid-overlay').classList.contains('on')) closeVideo(); else closeDetail(); }
+  if(e.key==='m') toggleMute();
+  if(e.key==='f'&&document.getElementById('vid-overlay').classList.contains('on')) vidEl.requestFullscreen();
+});
+</script>
+</body>
+</html>
