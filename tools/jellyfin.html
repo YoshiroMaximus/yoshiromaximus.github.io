@@ -30,7 +30,6 @@ scrollbar-width:thin;scrollbar-color:var(--border2) transparent;
   grid-template-rows:1fr 68px;
   grid-template-columns:50px 1fr;
   height:100vh;
-  display:none;
 }
 
 /* ── Sidebar ─────────────────────────── */
@@ -460,7 +459,7 @@ scrollbar-width:thin;scrollbar-color:var(--border2) transparent;
         </div>
         <div class="setup-btns" style="margin-top:16px">
           <button class="btn-p" onclick="reconnect()">⎋ reconnect</button>
-          <button class="btn-s" onclick="demoMode()">switch to demo</button>
+          <button class="btn-s" onclick="logout()">logout</button>
         </div>
         <div style="height:32px"></div>
         <div class="sec-label" style="margin-bottom:14px">about</div>
@@ -556,6 +555,22 @@ let currentItem = null, currentDetail = null;
 let seekAnim = null, seekPct = 0;
 const vidEl = document.getElementById('vid-el');
 
+// ── Storage ────────────────────────────────────────
+const saveConnection = (url, token) => {
+  localStorage.setItem('jf_server', url);
+  localStorage.setItem('jf_token', token);
+};
+const loadConnection = () => {
+  return {
+    server: localStorage.getItem('jf_server') || '',
+    token: localStorage.getItem('jf_token') || ''
+  };
+};
+const clearConnection = () => {
+  localStorage.removeItem('jf_server');
+  localStorage.removeItem('jf_token');
+};
+
 // ── Demo data ─────────────────────────────────────
 const DEMO_MOVIES = [
   {id:'m1',name:'Blade Runner 2049',year:2017,genre:'sci-fi',hd:true,runtime:163,overview:'A young blade runner discovers a long-buried secret that leads him to find former blade runner Rick Deckard.'},
@@ -631,13 +646,17 @@ function makeCard(item, wide=false) {
   `;
 
   // Load real image if server connected
-  if (!DEMO && SERVER) {
+  if (!DEMO && SERVER && item.id) {
     const img = document.createElement('img');
     img.className = 'card-img';
     img.src = `${SERVER}/Items/${item.id}/Images/Primary?api_key=${TOKEN}&maxWidth=300`;
     img.onload = () => {
       const ph = c.querySelector('.card-ph');
       if (ph) { ph.parentNode.insertBefore(img, ph); ph.remove(); }
+    };
+    img.onerror = () => {
+      // Keep placeholder if image fails
+      console.warn('Failed to load image for', item.id);
     };
   }
 
@@ -748,9 +767,17 @@ function playItem(item) {
   updatePlayBtns();
 
   if (!DEMO && SERVER && item.id) {
-    vidEl.src = `${SERVER}/Videos/${item.id}/stream?static=true&api_key=${TOKEN}`;
+    const streamUrl = `${SERVER}/Videos/${item.id}/stream?static=true&api_key=${TOKEN}`;
+    vidEl.src = streamUrl;
+    vidEl.onerror = () => {
+      console.error('Failed to load video:', item.name);
+      startFakeSeek();
+    };
     openVideo();
-    vidEl.play().catch(()=>{});
+    vidEl.play().catch((err) => {
+      console.error('Video playback failed:', err);
+      startFakeSeek();
+    });
   } else {
     openVideo();
     startFakeSeek();
@@ -879,6 +906,19 @@ async function doConnect(){
   const pass=document.getElementById('srv-pass').value;
   const err=document.getElementById('setup-err');
   err.style.display='none';
+
+  if(!url||!user||!pass){
+    err.style.display='block';
+    err.textContent='— all fields are required';
+    return;
+  }
+
+  if(!url.startsWith('http://') && !url.startsWith('https://')){
+    err.style.display='block';
+    err.textContent='— server URL must start with http:// or https://';
+    return;
+  }
+
   try{
     const res=await fetch(`${url}/Users/AuthenticateByName`,{
       method:'POST',
@@ -887,31 +927,76 @@ async function doConnect(){
     });
     if(!res.ok) throw new Error('auth failed ('+res.status+')');
     const d=await res.json();
+    if(!d.AccessToken||!d.User) throw new Error('invalid response from server');
     SERVER=url; TOKEN=d.AccessToken; USER_ID=d.User.Id; DEMO=false;
-    startApp(); fetchRealData();
+    saveConnection(SERVER, TOKEN);
+    startApp();
+    fetchRealData();
   }catch(e){
     err.style.display='block';
     err.textContent='— '+(e.message||'connection failed');
+    console.error('Connection error:', e);
   }
 }
 function reconnect(){
-  SERVER=document.getElementById('set-url').value.trim().replace(/\/$/,'');
-  TOKEN=document.getElementById('set-token').value.trim();
-  if(SERVER&&TOKEN){ DEMO=false; fetchRealData(); }
+  const url=document.getElementById('set-url').value.trim().replace(/\/$/,'');
+  const token=document.getElementById('set-token').value.trim();
+  if(!url||!token){
+    alert('Server URL and API Token are required');
+    return;
+  }
+  SERVER=url;
+  TOKEN=token;
+  DEMO=false;
+  saveConnection(SERVER, TOKEN);
+  fetchRealData();
+}
+function logout(){
+  if(confirm('Are you sure you want to disconnect?')){
+    clearConnection();
+    SERVER='';
+    TOKEN='';
+    USER_ID='';
+    DEMO=true;
+    document.getElementById('setup').style.display='flex';
+    document.getElementById('app').style.display='none';
+    document.getElementById('srv-url').value='http://localhost:8096';
+    document.getElementById('srv-user').value='';
+    document.getElementById('srv-pass').value='';
+    document.getElementById('setup-err').style.display='none';
+    loadDemoData();
+  }
 }
 function demoMode(){
   DEMO=true; SERVER=''; TOKEN=''; USER_ID='';
-  startApp(); loadDemoData();
+  clearConnection();
+  startApp();
+  loadDemoData();
 }
 function startApp(){
   document.getElementById('setup').style.display='none';
   document.getElementById('app').style.display='grid';
 }
 
+// ── Initialization ─────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = loadConnection();
+  if(saved.server && saved.token){
+    SERVER = saved.server;
+    TOKEN = saved.token;
+    DEMO = false;
+    startApp();
+    fetchRealData();
+  }
+  // Setup screen is shown by default, user can click demo or connect
+});
+
 async function fetchRealData(){
   const h={'X-Emby-Token':TOKEN};
   try{
+    startApp();
     const lr=await fetch(`${SERVER}/Library/VirtualFolders`,{headers:h});
+    if(!lr.ok) throw new Error('Failed to fetch libraries ('+lr.status+')');
     const libs=await lr.json();
     const pp=document.getElementById('lib-pills'); pp.innerHTML='';
     ['all',...libs.map(l=>l.Name.toLowerCase())].forEach((l,i)=>{
@@ -920,18 +1005,27 @@ async function fetchRealData(){
       b.onclick=()=>{pp.querySelectorAll('.lib-pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');};
       pp.appendChild(b);
     });
-  }catch(e){}
+  }catch(e){
+    console.error('Failed to fetch libraries:', e);
+    startApp();
+    document.getElementById('lib-pills').innerHTML = '<div class="empty" style="margin: 0; padding: 16px 0;">— failed to connect to server</div>';
+  }
 
   async function load(gridId,params,wide){
     const g=document.getElementById(gridId);
     g.innerHTML='<div class="empty"><div class="spin"></div><span>loading...</span></div>';
     try{
       const res=await fetch(`${SERVER}/Users/${USER_ID}/Items?${params}`,{headers:h});
+      if(!res.ok) throw new Error('Request failed ('+res.status+')');
       const data=await res.json();
       g.innerHTML='';
+      if(!(data.Items||[]).length){
+        g.innerHTML='<div class="empty">— nothing here yet</div>';
+        return;
+      }
       (data.Items||[]).forEach(item=>{
         const m={
-          id:item.Id,name:item.Name,type:item.Type,year:item.ProductionYear,
+          id:item.Id,name:item.Name||'Untitled',type:item.Type,year:item.ProductionYear,
           genre:(item.Genres||[])[0]||'',
           progress:item.UserData?.PlayedPercentage||0,
           episode:item.Type==='Episode'?`S${String(item.ParentIndexNumber||0).padStart(2,'0')}E${String(item.IndexNumber||0).padStart(2,'0')}`:null,
@@ -941,8 +1035,10 @@ async function fetchRealData(){
         };
         g.appendChild(makeCard(m,wide));
       });
-      if(!(data.Items||[]).length) g.innerHTML='<div class="empty">— nothing here yet</div>';
-    }catch(e){g.innerHTML='<div class="empty">— failed to load</div>';}
+    }catch(e){
+      console.error('Failed to load grid '+gridId+':', e);
+      g.innerHTML='<div class="empty">— failed to load</div>';
+    }
   }
 
   load('cw-grid','Filters=IsResumable&SortBy=DatePlayed&SortOrder=Descending&Limit=6&Recursive=true&IncludeItemTypes=Movie,Episode',true);
