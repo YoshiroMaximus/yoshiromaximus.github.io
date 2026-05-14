@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>run</title>
+  <link rel="icon" type="image/x-icon" href="/favistuff/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favistuff/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favistuff/favicon-32x32.png">
+  <link rel="apple-touch-icon" href="/favistuff/apple-touch-icon.png">
+  <link rel="manifest" href="/favistuff/site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --bg: #f5f4f0; --text: #1a1a1a; --muted: #888; --line: #d8d6d0; }
+    body.dark { --bg: #111110; --text: #e8e6e2; --muted: #666; --line: #2a2926; }
+    body { background: var(--bg); overflow: hidden; height: 100vh; }
+    canvas { display: block; cursor: none; }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <script>
+  // Apply stored theme, no toggle UI
+  if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
+
+  function cssVar(v) { return getComputedStyle(document.body).getPropertyValue(v).trim(); }
+
+  const canvas = document.getElementById('c');
+  const ctx    = canvas.getContext('2d');
+  let W, H, GY;
+
+  // Colors cached on resize (never changes mid-session without UI)
+  let C = {};
+  function cacheColors() {
+    C.bg = cssVar('--bg'); C.text = cssVar('--text');
+    C.muted = cssVar('--muted'); C.line = cssVar('--line');
+  }
+
+  // ── Background layer data ──────────────────────────────────────────────
+  const FAR_W = 2200, MID_W = 1100;
+  let farShapes = [], midShapes = [];
+  let farOff = 0, midOff = 0;
+
+  function generateBg() {
+    farShapes = [];
+    for (let x = 0; x < FAR_W; x += 70 + Math.random() * 160) {
+      const h = 40 + Math.random() * GY * 0.52;
+      farShapes.push({ x, w: 8 + Math.random() * 24, h, y: GY - h });
+    }
+    midShapes = [];
+    for (let x = 0; x < MID_W; x += 22 + Math.random() * 70) {
+      midShapes.push({ x, y: 20 + Math.random() * (GY - 90), h: 8 + Math.random() * 32 });
+    }
+  }
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    GY = Math.round(H * 0.78);
+    cacheColors();
+    generateBg();
+  }
+  window.addEventListener('resize', resize);
+
+  // ── Constants ─────────────────────────────────────────────────────────
+  const PS    = 24;
+  const GRAV  = 2500;
+  const J1    = -780;
+  const J2    = -610;
+  const V0    = 460;
+  const VMAX  = 1400;
+  const VRAMP = 22;
+
+  // [w, h] obstacle profiles
+  const OBS = [
+    [18,32],[20,48],[22,62],[18,28],[20,54],[22,72],[24,42],[18,80],[20,96]
+  ];
+
+  const TICK_GAP     = 80;
+  const TRAIL_MAX    = 7;
+  const STREAK_SPAWN = 0.45; // chance per frame when at max speed
+
+  // ── State ─────────────────────────────────────────────────────────────
+  let state, score, spd, tickOff;
+  let spawnTimer, spawnMode, clusterLeft;  // cluster spawn state
+  let player, obstacles, particles, streaks, trail;
+  let shakeX, shakeY, lastT;
+  let hiScore = +localStorage.getItem('run_hi') || 0;
+
+  function init() {
+    state = 'idle'; score = 0; spd = V0; tickOff = 0;
+    spawnTimer = 1.0; spawnMode = 'gap'; clusterLeft = 0;
+    player    = { x: W * 0.14, y: GY - PS, vy: 0, jumps: 2, sy: 1 };
+    obstacles = []; particles = []; streaks = []; trail = [];
+    shakeX = shakeY = 0;
+  }
+
+  // ── Input ─────────────────────────────────────────────────────────────
+  function onAction() {
+    if (state === 'idle') { state = 'run'; doJump(); return; }
+    if (state === 'dead') { init(); return; }
+    doJump();
+  }
+  function doJump() {
+    if (player.jumps <= 0) return;
+    player.vy = player.jumps === 2 ? J1 : J2;
+    player.sy = 1.3;
+    player.jumps--;
+    spawnDust(player.x + PS / 2, player.y + PS, 6);
+  }
+
+  window.addEventListener('keydown', e => {
+    if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); onAction(); }
+  });
+  canvas.addEventListener('pointerdown', e => { e.preventDefault(); onAction(); });
+
+  // ── Particles ─────────────────────────────────────────────────────────
+  function spawnDust(x, y, n) {
+    for (let i = 0; i < n; i++)
+      particles.push({ x, y, vx: (Math.random()-0.5)*110, vy: -Math.random()*90-20, life: 1, r: 1.5+Math.random()*2.5 });
+  }
+  function spawnBurst(x, y) {
+    for (let i = 0; i < 28; i++) {
+      const a = (i/28)*Math.PI*2, s = 110+Math.random()*320;
+      particles.push({ x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s, life: 1, r: 1.5+Math.random()*4 });
+    }
+  }
+
+  // ── Update ────────────────────────────────────────────────────────────
+  function update(dt) {
+    // Background always drifts — slower when not running
+    const fsRunning = state === 'run';
+    farOff = (farOff + (fsRunning ? spd*0.08 : 22) * dt) % FAR_W;
+    midOff = (midOff + (fsRunning ? spd*0.24 : 60) * dt) % MID_W;
+
+    if (state !== 'run') return;
+
+    score += dt * spd * 0.05;
+    spd = Math.min(V0 + (score/1000) * VRAMP, VMAX);
+    tickOff = (tickOff + spd * dt) % TICK_GAP;
+
+    // Player physics
+    player.vy += GRAV * dt;
+    player.y  += player.vy * dt;
+
+    if (player.y >= GY - PS) {
+      const hard = player.vy > 300;
+      player.y = GY - PS;
+      if (hard) { player.sy = 0.48; spawnDust(player.x + PS/2, GY, 11); }
+      player.vy = 0; player.jumps = 2;
+    }
+    player.sy += (1 - player.sy) * 16 * dt;
+
+    // Trail
+    trail.unshift({ x: player.x, y: player.y });
+    if (trail.length > TRAIL_MAX) trail.pop();
+
+    // Speed streaks
+    const sf = Math.max(0, (spd - 600) / (VMAX - 600));
+    if (sf > 0 && Math.random() < sf * STREAK_SPAWN) {
+      streaks.push({ x: W + 20, y: Math.random() * GY * 0.95, len: 50 + Math.random() * 140, life: 1 });
+    }
+    for (let i = streaks.length-1; i >= 0; i--) {
+      streaks[i].x -= spd * dt * 1.4;
+      streaks[i].life -= 4 * dt;
+      if (streaks[i].life <= 0 || streaks[i].x + streaks[i].len < 0) streaks.splice(i, 1);
+    }
+
+    // Obstacles — cluster spawn system (Crossy Road train feel)
+    // Obstacles arrive in tight bursts separated by breathing gaps.
+    // Gap between obstacles within a cluster shrinks as score grows.
+    spawnTimer -= dt;
+    if (spawnTimer <= 0) {
+      if (spawnMode === 'gap') {
+        // Start a new cluster — size grows with score (2 early, up to 6 later)
+        const maxSize = 2 + Math.min(4, Math.floor(score / 600));
+        clusterLeft = 2 + Math.floor(Math.random() * (maxSize - 1));
+        spawnMode = 'cluster';
+      }
+      // Spawn one obstacle from the current cluster
+      const [w, h] = OBS[Math.floor(Math.random() * OBS.length)];
+      obstacles.push({ x: W + 10, y: GY - h, w, h });
+      clusterLeft--;
+      if (clusterLeft <= 0) {
+        // Cluster done — long breathing gap before next one
+        spawnMode = 'gap';
+        spawnTimer = (380 + Math.random() * 220) / spd;
+      } else {
+        // Within cluster — tight gap (shrinks as score grows, min 140px)
+        const gap = Math.max(140, 230 - score / 120);
+        spawnTimer = gap / spd;
+      }
+    }
+    for (let i = obstacles.length-1; i >= 0; i--) {
+      obstacles[i].x -= spd * dt;
+      if (obstacles[i].x + obstacles[i].w < -10) obstacles.splice(i, 1);
+    }
+
+    // Particles
+    for (let i = particles.length-1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx*dt; p.y += p.vy*dt; p.vy += 500*dt; p.life -= 2.5*dt;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+
+    shakeX *= 0.74; shakeY *= 0.74;
+
+    // Collision (inset hitbox)
+    const hx = player.x+4, hy = player.y+4, hw = PS-8, hh = PS-5;
+    for (const o of obstacles) {
+      if (hx < o.x+o.w && hx+hw > o.x && hy < o.y+o.h && hy+hh > o.y) {
+        state = 'dead';
+        hiScore = Math.max(hiScore, Math.floor(score));
+        localStorage.setItem('run_hi', hiScore);
+        spawnBurst(player.x + PS/2, player.y + PS/2);
+        shakeX = 10; shakeY = 8;
+        break;
+      }
+    }
+  }
+
+  // Tiling draw helper — draws a shape at its tiled position
+  function tileRect(x0, lw, y, w, h) {
+    const nx = ((x0 % lw) + lw) % lw;
+    if (nx < W + w) ctx.fillRect(nx, y, w, h);
+    const nx2 = nx - lw;
+    if (nx2 + w > 0) ctx.fillRect(nx2, y, w, h);
+  }
+
+  // ── Draw ──────────────────────────────────────────────────────────────
+  function draw() {
+    const { bg, text, muted, line } = C;
+    const ox = shakeX * (Math.random()*2-1);
+    const oy = shakeY * (Math.random()*2-1);
+
+    ctx.save();
+    ctx.translate(ox, oy);
+
+    // Background fill
+    ctx.fillStyle = bg;
+    ctx.fillRect(-20, -20, W+40, H+40);
+
+    // Far layer — ghostly architectural columns
+    ctx.fillStyle = line;
+    ctx.globalAlpha = 0.38;
+    for (const s of farShapes) tileRect(s.x - farOff, FAR_W, s.y, s.w, s.h);
+
+    // Mid layer — thin vertical dashes
+    ctx.fillStyle = muted;
+    ctx.globalAlpha = 0.11;
+    for (const s of midShapes) tileRect(s.x - midOff, MID_W, s.y, 1.5, s.h);
+
+    ctx.globalAlpha = 1;
+
+    // Speed streaks
+    ctx.strokeStyle = line;
+    ctx.lineWidth = 0.8;
+    for (const s of streaks) {
+      ctx.globalAlpha = s.life * 0.22;
+      ctx.beginPath();
+      ctx.moveTo(s.x, s.y);
+      ctx.lineTo(s.x + s.len, s.y);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // Player trail (ghost images, only at speed)
+    const speedF = Math.max(0, (spd - 520) / (VMAX - 520));
+    if (speedF > 0 && trail.length > 1) {
+      ctx.fillStyle = text;
+      for (let i = 1; i < trail.length; i++) {
+        ctx.globalAlpha = speedF * (1 - i / trail.length) * 0.22;
+        ctx.fillRect(trail[i].x, trail[i].y, PS, PS);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // Obstacles — drawn BEFORE ground line
+    ctx.fillStyle = text;
+    for (const o of obstacles) ctx.fillRect(o.x, o.y, o.w, o.h);
+
+    // Player — squish/stretch anchored to bottom edge
+    if (state !== 'dead') {
+      const bx = player.x + PS / 2;
+      const by = player.y + PS;
+      const scaleX = Math.max(0.65, 2 - player.sy);
+      ctx.save();
+      ctx.translate(bx, by);
+      ctx.scale(scaleX, player.sy);
+      ctx.fillStyle = text;
+      ctx.fillRect(-PS/2, -PS, PS, PS);
+      ctx.restore();
+    }
+
+    // Particles
+    for (const p of particles) {
+      ctx.globalAlpha = Math.max(0, p.life) * 0.72;
+      ctx.fillStyle = muted;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // Ground ticks — scroll with game speed
+    ctx.fillStyle = line;
+    for (let x = (TICK_GAP - tickOff % TICK_GAP) % TICK_GAP; x < W + TICK_GAP; x += TICK_GAP) {
+      ctx.fillRect(Math.round(x) - 2, GY + 5, 4, 4);
+    }
+
+    // Ground line — drawn on top so obstacles don't appear to float
+    ctx.strokeStyle = line;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, GY);
+    ctx.lineTo(W, GY);
+    ctx.stroke();
+
+    // HUD
+    ctx.textAlign = 'right';
+    ctx.font = '400 13px "DM Mono", monospace';
+    ctx.fillStyle = text;
+    ctx.fillText(String(Math.floor(score)).padStart(6, '0'), W - 22, 38);
+    ctx.font = '300 10px "DM Mono", monospace';
+    ctx.fillStyle = muted;
+    ctx.fillText('hi  ' + String(hiScore).padStart(6, '0'), W - 22, 56);
+
+    // State overlays — vertically centered in the play area above ground
+    const midY = GY / 2;
+    ctx.textAlign = 'center';
+    if (state === 'idle') {
+      ctx.font = '400 32px "DM Mono", monospace';
+      ctx.fillStyle = text;
+      ctx.fillText('run', W/2, midY - 16);
+      ctx.font = '300 11px "DM Mono", monospace';
+      ctx.fillStyle = muted;
+      ctx.fillText('space  ·  click  ·  tap', W/2, midY + 12);
+      ctx.fillText('double jump available', W/2, midY + 30);
+    } else if (state === 'dead') {
+      ctx.font = '400 32px "DM Mono", monospace';
+      ctx.fillStyle = text;
+      ctx.fillText('—', W/2, midY - 16);
+      ctx.font = '300 11px "DM Mono", monospace';
+      ctx.fillStyle = muted;
+      const isNew = Math.floor(score) === hiScore && hiScore > 0;
+      ctx.fillText(String(Math.floor(score)) + (isNew ? '  ← best' : ''), W/2, midY + 12);
+      ctx.fillText('space  ·  click  ·  tap  to retry', W/2, midY + 30);
+    }
+
+    ctx.restore();
+  }
+
+  // ── Loop ──────────────────────────────────────────────────────────────
+  function loop(t) {
+    const dt = Math.min((t - lastT) / 1000, 0.05);
+    lastT = t;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  resize();
+  init();
+  lastT = performance.now();
+  requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
