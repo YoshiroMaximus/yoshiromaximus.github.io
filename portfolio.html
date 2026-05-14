@@ -9,6 +9,9 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favistuff/favicon-32x32.png">
   <link rel="apple-touch-icon" href="/favistuff/apple-touch-icon.png">
   <link rel="manifest" href="/favistuff/site.webmanifest">
+  <meta name="description" content="Yoshiro — homelab dev and computer designer. Projects include self-hosted servers, Minecraft, and Raspberry Pi clusters.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -129,11 +132,13 @@
       font-weight: 500;
       letter-spacing: -0.03em;
       line-height: 1;
-      background: linear-gradient(100deg, #9b8ea0, #7a9490, #a08b7a);
+      background: linear-gradient(100deg, #9b8ea0, #7a9490, #a08b7a, #9b8ea0);
+      background-size: 200% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
       margin-bottom: 1.25rem;
+      animation: gradientShift 8s linear infinite;
     }
 
     .tagline {
@@ -199,7 +204,9 @@
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
-      transition: background 0.2s ease;
+      transition: background 0.2s ease, transform 0.4s ease;
+      transform-style: preserve-3d;
+      will-change: transform;
     }
 
     .project-card:hover { background: var(--bg2); }
@@ -445,6 +452,10 @@
     @keyframes fadeUp {
       to { opacity: 1; transform: translateY(0); }
     }
+
+    @keyframes gradientShift {
+      to { background-position: 200% center; }
+    }
   </style>
 </head>
 <body>
@@ -527,7 +538,7 @@
             <span class="spec">modded</span>
           </div>
           <div class="project-img" onclick="openLightbox('images/mc-screenshot.png', 'Modded Minecraft Server')">
-            <img src="images/mc-screenshot.png" alt="Minecraft server">
+            <img src="images/mc-screenshot.png" alt="Minecraft server" loading="lazy" decoding="async">
             <span class="project-img-label">add screenshot</span>
           </div>
         </div>
@@ -545,7 +556,7 @@
             <span class="spec">1TB SSD</span>
           </div>
           <div class="project-img" onclick="openLightbox('images/homelab.png', 'DIY Homelab')">
-            <img src="images/homelab.png" alt="Homelab build">
+            <img src="images/homelab.png" alt="Homelab build" loading="lazy" decoding="async">
             <span class="project-img-label">add photo</span>
           </div>
         </div>
@@ -561,8 +572,8 @@
             <span class="spec">DietPi</span>
             <span class="spec">cluster</span>
           </div>
-          <div class="project-img" onclick="openLightbox('images/pi-cluster.jpg', 'Raspberry Pi Cluster')">
-            <img src="images/pi-cluster.jpg" alt="Pi cluster">
+          <div class="project-img" onclick="openLightbox('images/pi-cluster.png', 'Raspberry Pi Cluster')">
+            <img src="images/pi-cluster.png" alt="Pi cluster" loading="lazy" decoding="async">
             <span class="project-img-label">add photo</span>
           </div>
         </div>
@@ -621,7 +632,7 @@
     const gallery = [
       { src: 'images/mc-screenshot.png', caption: 'Modded Minecraft Server' },
       { src: 'images/homelab.png',        caption: 'DIY Homelab' },
-      { src: 'images/pi-cluster.jpg',     caption: 'Raspberry Pi Cluster' },
+      { src: 'images/pi-cluster.png',     caption: 'Raspberry Pi Cluster' },
     ];
 
     let lbIndex = 0;
@@ -668,6 +679,25 @@
       if (e.key === 'Escape') closeLightbox();
       if (e.key === 'ArrowLeft') lbNav(-1);
       if (e.key === 'ArrowRight') lbNav(1);
+    });
+  </script>
+
+  <script>
+    // 3D card tilt
+    document.querySelectorAll('.project-card').forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        card.style.transition = 'background 0.2s ease, transform 0.12s ease';
+      });
+      card.addEventListener('mousemove', e => {
+        const r = card.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5;
+        const y = (e.clientY - r.top) / r.height - 0.5;
+        card.style.transform = `perspective(700px) rotateY(${x * 7}deg) rotateX(${-y * 5}deg) translateZ(6px)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transition = 'background 0.2s ease, transform 0.5s ease';
+        card.style.transform = 'perspective(700px) rotateX(0) rotateY(0) translateZ(0)';
+      });
     });
   </script>
 </body>

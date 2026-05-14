@@ -9,6 +9,9 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favistuff/favicon-32x32.png">
   <link rel="apple-touch-icon" href="/favistuff/apple-touch-icon.png">
   <link rel="manifest" href="/favistuff/site.webmanifest">
+  <meta name="description" content="Yoshiro — homelab dev and computer designer. Building things I actually use.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after {
@@ -46,7 +49,7 @@
     }
 
     .theme-btn {
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'DM Mono', monospace;
       font-size: 1rem;
       color: var(--line);
       background: none;
@@ -79,6 +82,7 @@
       font-family: 'DM Sans', sans-serif;
       background: var(--bg);
       color: var(--text);
+      transition: background 0.2s ease, color 0.2s ease;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
