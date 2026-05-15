@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>gambit</title>
+<link rel="icon" type="image/x-icon" href="/favistuff/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="/favistuff/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favistuff/favicon-32x32.png">
+<link rel="apple-touch-icon" href="/favistuff/apple-touch-icon.png">
+<link rel="manifest" href="/favistuff/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--bg:#f5f4f0;--text:#1a1a1a;--muted:#888;--line:#d8d6d0;--sq-light:#ede9e4;--sq-dark:#b5a898;--enemy:#7a3030;}
+body.dark{--bg:#111110;--text:#e8e6e2;--muted:#666;--line:#2a2926;--sq-light:#2a2926;--sq-dark:#1a1816;--enemy:#b06040;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);}
+canvas{display:block;cursor:default;}
+#theme{position:fixed;top:12px;right:12px;background:none;border:none;font-family:'DM Mono',monospace;font-size:1.1rem;color:var(--muted);cursor:pointer;padding:4px;}
+#back{position:fixed;top:12px;left:12px;font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--muted);text-decoration:none;}
+#back:hover{color:var(--text);}
+</style>
+</head>
+<body>
+<a href="../break.html" id="back">← break</a>
+<button id="theme" onclick="toggleTheme()">+</button>
+<canvas id="c"></canvas>
+<script>
+// ─── theme ───────────────────────────────────────────────────────────────
+function getTheme(){return localStorage.getItem('theme')||'light';}
+function applyTheme(t){
+  document.body.classList.toggle('dark',t==='dark');
+  document.getElementById('theme').textContent=t==='dark'?'−':'+';
+  cacheColors();
+}
+function toggleTheme(){const t=getTheme()==='dark'?'light':'dark'; localStorage.setItem('theme',t); applyTheme(t);}
+
+// ─── canvas ───────────────────────────────────────────────────────────────
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+let W=0,H=0,SQ=72,lastT=0;
+let C={};
+function cacheColors(){
+  const s=getComputedStyle(document.body);
+  C={bg:s.getPropertyValue('--bg').trim(),text:s.getPropertyValue('--text').trim(),
+     muted:s.getPropertyValue('--muted').trim(),line:s.getPropertyValue('--line').trim(),
+     sqLight:s.getPropertyValue('--sq-light').trim(),sqDark:s.getPropertyValue('--sq-dark').trim(),
+     enemy:s.getPropertyValue('--enemy').trim()};
+}
+function resize(){
+  const dpr=window.devicePixelRatio||1;
+  W=window.innerWidth; H=window.innerHeight;
+  canvas.width=Math.round(W*dpr); canvas.height=Math.round(H*dpr);
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  SQ=Math.min(Math.floor(Math.min(W*0.56,H*0.8)/6),90);
+  cacheColors();
+}
+window.addEventListener('resize',resize);
+resize();
+applyTheme(getTheme());
+
+// ─── constants ───────────────────────────────────────────────────────────
+const GLYPHS={
+  white:{king:'♔',queen:'♕',rook:'♖',bishop:'♗',knight:'♘',pawn:'♙'},
+  black:{king:'♚',queen:'♛',rook:'♜',bishop:'♝',knight:'♞',pawn:'♟'}
+};
+const PIECE_VALUE={pawn:1,knight:3,bishop:3,rook:5,queen:9,king:100};
+
+const ENCOUNTERS=[
+  {name:'Squire',    boss:false,goldReward:40,
+   black:[{type:'king',row:5,col:5},{type:'knight',row:5,col:2},{type:'pawn',row:4,col:1},{type:'pawn',row:4,col:4}]},
+  {name:'Guard',     boss:false,goldReward:55,
+   black:[{type:'king',row:5,col:5},{type:'bishop',row:5,col:2},{type:'knight',row:5,col:3},{type:'pawn',row:4,col:1},{type:'pawn',row:4,col:3},{type:'pawn',row:4,col:5}]},
+  {name:'Duelist',   boss:false,goldReward:70,
+   black:[{type:'king',row:5,col:4},{type:'rook',row:5,col:0},{type:'knight',row:5,col:1},{type:'bishop',row:5,col:3},{type:'pawn',row:4,col:0},{type:'pawn',row:4,col:2},{type:'pawn',row:4,col:4}]},
+  {name:'Commander', boss:true, goldReward:150,
+   black:[{type:'king',row:5,col:5},{type:'queen',row:5,col:3},{type:'rook',row:5,col:0},{type:'knight',row:5,col:1},{type:'bishop',row:5,col:2},{type:'pawn',row:4,col:0},{type:'pawn',row:4,col:2},{type:'pawn',row:4,col:4}]},
+  {name:'Champion',  boss:false,goldReward:85,
+   black:[{type:'king',row:5,col:5},{type:'queen',row:5,col:4},{type:'rook',row:5,col:0},{type:'bishop',row:5,col:2},{type:'pawn',row:4,col:1},{type:'pawn',row:4,col:3},{type:'pawn',row:4,col:5}]},
+  {name:'Warlord',   boss:false,goldReward:100,
+   black:[{type:'king',row:5,col:4},{type:'queen',row:5,col:2},{type:'rook',row:5,col:0},{type:'rook',row:5,col:5},{type:'knight',row:4,col:1},{type:'bishop',row:4,col:3},{type:'pawn',row:3,col:0},{type:'pawn',row:3,col:2},{type:'pawn',row:3,col:4}]},
+  {name:'The King',  boss:true, goldReward:0,
+   black:[{type:'king',row:5,col:3},{type:'queen',row:5,col:2},{type:'rook',row:5,col:0},{type:'rook',row:5,col:5},{type:'knight',row:5,col:1},{type:'knight',row:5,col:4},{type:'bishop',row:4,col:0},{type:'bishop',row:4,col:5},{type:'pawn',row:3,col:1},{type:'pawn',row:3,col:2},{type:'pawn',row:3,col:3},{type:'pawn',row:3,col:4}]},
+];
+
+const ALL_GAMBITS=[
+  {id:'necromancer',   name:'Necromancer',    desc:'Capture → spawn pawn on your back rank.'},
+  {id:'pawn_rush',     name:'Pawn Rush',      desc:'Your pawns always advance 2 squares.'},
+  {id:'bloodlust',     name:'Bloodlust',      desc:'After capturing, take one free bonus move.'},
+  {id:'promotion_rush',name:'Promotion Rush', desc:'Pawns promote at rank 4 instead of 5.'},
+  {id:'fortune',       name:'Fortune',        desc:'Gold tiles appear. Stand on them for +12g.'},
+  {id:'regicide',      name:'Regicide',       desc:'Your King moves and attacks as a Queen.'},
+  {id:'iron_curtain',  name:'Iron Curtain',   desc:'Enemy pieces cannot enter your first two rows.'},
+  {id:'mutation',      name:'Mutation',       desc:'Your piece transforms into what it captures.'},
+  {id:'hex',           name:'Hex',            desc:'Once per battle: press H to remove any enemy piece.'},
+  {id:'chaos_theory',  name:'Chaos Theory',   desc:'Random events fire every 3 moves instead of 5.'},
+  {id:'gamblers_mark', name:"Gambler's Mark", desc:'Wager rewards are doubled.'},
+];
+
+const SHOP_CATALOG=[
+  {id:'pawn',  name:'+1 Pawn',  cost:40, desc:'Add a pawn to your roster.'},
+  {id:'knight',name:'+1 Knight',cost:120,desc:'Add a knight to your roster.'},
+  {id:'bishop',name:'+1 Bishop',cost:120,desc:'Add a bishop to your roster.'},
+  {id:'rook',  name:'+1 Rook',  cost:160,desc:'Add a rook to your roster.'},
+  {id:'queen', name:'+1 Queen', cost:280,desc:'Add a queen to your roster.'},
+];
+
+const MODIFIER_POOL=[null,null,null,'fog','mines','kinghill'];
+
+// ─── run state ───────────────────────────────────────────────────────────
+let phase='title';
+let encounter=0, gold=50, ownedGambits=[];
+let roster={queen:0,rook:1,bishop:0,knight:0,pawns:3};
+let hiEncounter=+localStorage.getItem('gambit_hi')||0;
+
+// wager state
+let wager=0, wagerMult=1;
+
+// battle state
+let board,turnColor,selected,validMoves,lastMove;
+let aiThinking=false,aiTimer=0;
+let bloodlustBonus=false;
+let goldTiles=[];
+let moveCount=0;
+let battleModifier=null;
+let mineSquares=[];
+let hexUsed=false, hexMode=false;
+
+// event system
+let eventTimer=5;
+let eventTitle='',eventSub='',eventFlash=0;
+
+// modifier intro flash
+let modFlash=0;
+
+// gambit pick / shop
+let gambitOptions=[],gambitPicksLeft=0,gambitHover=-1;
+let shopHover=-1;
+let hitAreas=[];
+
+// ─── chess engine ────────────────────────────────────────────────────────
+function inBounds(r,c){return r>=0&&r<6&&c>=0&&c<6;}
+
+function rawMoves(board,row,col){
+  const p=board[row][col]; if(!p) return [];
+  const {type,color}=p;
+  const enemy=color==='white'?'black':'white';
+  const dir=color==='white'?1:-1;
+  const moves=[];
+  const slide=(dr,dc)=>{
+    let r=row+dr,c=col+dc;
+    while(inBounds(r,c)){if(board[r][c]){if(board[r][c].color===enemy) moves.push([r,c]); break;} moves.push([r,c]); r+=dr; c+=dc;}
+  };
+  const step=(dr,dc)=>{
+    const r=row+dr,c=col+dc;
+    if(inBounds(r,c)&&(!board[r][c]||board[r][c].color===enemy)) moves.push([r,c]);
+  };
+  const orth=[[0,1],[0,-1],[1,0],[-1,0]],diag=[[1,1],[1,-1],[-1,1],[-1,-1]];
+  if(type==='pawn'){
+    const nr=row+dir;
+    if(inBounds(nr,col)&&!board[nr][col]){
+      moves.push([nr,col]);
+      const alwaysDouble=ownedGambits.includes('pawn_rush')&&color==='white';
+      const r2=row+dir*2;
+      if((row===(color==='white'?1:4)||alwaysDouble)&&inBounds(r2,col)&&!board[r2][col]) moves.push([r2,col]);
+    }
+    [-1,1].forEach(dc=>{if(inBounds(nr,col+dc)&&board[nr][col+dc]?.color===enemy) moves.push([nr,col+dc]);});
+  } else if(type==='knight'){
+    [[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]].forEach(([dr,dc])=>step(dr,dc));
+  } else if(type==='rook'){orth.forEach(([dr,dc])=>slide(dr,dc));}
+  else if(type==='bishop'){diag.forEach(([dr,dc])=>slide(dr,dc));}
+  else if(type==='queen'){[...orth,...diag].forEach(([dr,dc])=>slide(dr,dc));}
+  else if(type==='king'){
+    const queenLike=ownedGambits.includes('regicide')&&color==='white';
+    if(queenLike)[...orth,...diag].forEach(([dr,dc])=>slide(dr,dc));
+    else[...orth,...diag].forEach(([dr,dc])=>step(dr,dc));
+  }
+  return moves;
+}
+
+function cloneBoard(b){return b.map(r=>r.map(c=>c?{...c}:null));}
+function applyMove(board,fr,fc,tr,tc){
+  const nb=cloneBoard(board);
+  nb[tr][tc]=nb[fr][fc]; nb[fr][fc]=null;
+  if(nb[tr][tc]) nb[tr][tc].moved=true;
+  return nb;
+}
+function findKing(board,color){
+  for(let r=0;r<6;r++) for(let c=0;c<6;c++)
+    if(board[r][c]?.type==='king'&&board[r][c]?.color===color) return [r,c];
+  return null;
+}
+function inCheck(board,color){
+  const k=findKing(board,color); if(!k) return false;
+  const enemy=color==='white'?'black':'white';
+  for(let r=0;r<6;r++) for(let c=0;c<6;c++){
+    if(board[r][c]?.color!==enemy) continue;
+    if(rawMoves(board,r,c).some(([mr,mc])=>mr===k[0]&&mc===k[1])) return true;
+  }
+  return false;
+}
+function legalMoves(board,row,col){
+  const p=board[row][col]; if(!p) return [];
+  let moves=rawMoves(board,row,col).filter(([tr,tc])=>!inCheck(applyMove(board,row,col,tr,tc),p.color));
+  if(p.color==='black'&&ownedGambits.includes('iron_curtain')) moves=moves.filter(([r])=>r>1);
+  return moves;
+}
+function getAllLegal(board,color){
+  const moves=[];
+  for(let r=0;r<6;r++) for(let c=0;c<6;c++){
+    if(board[r][c]?.color!==color) continue;
+    legalMoves(board,r,c).forEach(([tr,tc])=>moves.push({from:[r,c],to:[tr,tc]}));
+  }
+  return moves;
+}
+
+// ─── events ──────────────────────────────────────────────────────────────
+function showEvent(title,sub){eventTitle=title; eventSub=sub; eventFlash=2.8;}
+
+function triggerRandomEvent(){
+  const pool=['summon_pawn','enemy_blunder','earthquake','power_up','gold_drop','enemy_summon','mirror','swap_sides'];
+  const id=pool[Math.floor(Math.random()*pool.length)];
+
+  if(id==='summon_pawn'){
+    for(let c=5;c>=0;c--) if(!board[1][c]){board[1][c]={type:'pawn',color:'white',moved:false}; showEvent('Reinforcements!','A pawn appears on your side.'); return;}
+    showEvent('Reinforcements!','...but no room. +15g instead.'); gold+=15;
+
+  } else if(id==='enemy_blunder'){
+    let best=null,bestVal=0;
+    for(let r=0;r<6;r++) for(let c=0;c<6;c++){
+      const p=board[r][c];
+      if(p?.color==='black'&&p.type!=='king'&&PIECE_VALUE[p.type]>bestVal){bestVal=PIECE_VALUE[p.type]; best=[r,c];}
+    }
+    if(best){board[best[0]][best[1]]=null; showEvent('Enemy Blunder!','Their strongest piece self-destructs.');}
+    else showEvent('Enemy Blunder!','Nothing left to blunder.');
+
+  } else if(id==='earthquake'){
+    const pieces=[];
+    for(let r=0;r<6;r++) for(let c=0;c<6;c++) if(board[r][c]&&board[r][c].type!=='king') pieces.push([r,c]);
+    if(pieces.length){
+      const [r,c]=pieces[Math.floor(Math.random()*pieces.length)];
+      const name=board[r][c].color+' '+board[r][c].type;
+      board[r][c]=null;
+      showEvent('Earthquake!',`A ${name} crumbles.`);
+    }
+
+  } else if(id==='power_up'){
+    let worst=null,worstVal=999;
+    for(let r=0;r<6;r++) for(let c=0;c<6;c++){
+      const p=board[r][c];
+      if(p?.color==='white'&&p.type!=='king'&&p.type!=='queen'&&PIECE_VALUE[p.type]<worstVal){worstVal=PIECE_VALUE[p.type]; worst=[r,c];}
+    }
+    if(worst){
+      const old=board[worst[0]][worst[1]].type;
+      board[worst[0]][worst[1]].type='queen';
+      showEvent('Power Surge!',`Your ${old} ascends to queen.`);
+    } else {gold+=40; showEvent('Power Surge!','+40 gold (nothing to upgrade).');}
+
+  } else if(id==='gold_drop'){
+    const amt=20+Math.floor(Math.random()*35);
+    gold+=amt;
+    showEvent('Gold Rain!',`+${amt} gold falls from the sky.`);
+
+  } else if(id==='enemy_summon'){
+    for(let c=0;c<6;c++) if(!board[4][c]){board[4][c]={type:'pawn',color:'black',moved:false}; showEvent('Enemy Reinforcements!','They summon a pawn...'); return;}
+    showEvent('Enemy Reinforcements!','...but no room.');
+
+  } else if(id==='mirror'){
+    for(let r=0;r<6;r++) for(let c=0;c<3;c++){const tmp=board[r][c]; board[r][c]=board[r][5-c]; board[r][5-c]=tmp;}
+    showEvent('Mirror!','The board flips horizontally.');
+
+  } else if(id==='swap_sides'){
+    // Swap one random white and one random black non-king piece
+    const wp=[],bp=[];
+    for(let r=0;r<6;r++) for(let c=0;c<6;c++){
+      const p=board[r][c];
+      if(p?.color==='white'&&p.type!=='king') wp.push([r,c]);
+      if(p?.color==='black'&&p.type!=='king') bp.push([r,c]);
+    }
+    if(wp.length&&bp.length){
+      const [wr,wc]=wp[Math.floor(Math.random()*wp.length)];
+      const [br,bc]=bp[Math.floor(Math.random()*bp.length)];
+      const tmp=board[wr][wc]; board[wr][wc]=board[br][bc]; board[br][bc]=tmp;
+      if(board[wr][wc]) board[wr][wc].color='black';
+      if(board[br][bc]) board[br][bc].color='white';
+      showEvent('Chaos Swap!','Two pieces change allegiance.');
+    }
+  }
+}
+
+// ─── battle setup ────────────────────────────────────────────────────────
+function setupBattle(){
+  board=Array.from({length:6},()=>Array(6).fill(null));
+  ENCOUNTERS[encounter].black.forEach(({type,row,col})=>{board[row][col]={type,color:'black',moved:false};});
+
+  const backRow=[];
+  for(let i=0;i<roster.queen;i++) backRow.push('queen');
+  for(let i=0;i<roster.rook;i++) backRow.push('rook');
+  for(let i=0;i<roster.bishop;i++) backRow.push('bishop');
+  for(let i=0;i<roster.knight;i++) backRow.push('knight');
+  let col=0;
+  backRow.forEach(type=>{if(col<5){board[0][col]={type,color:'white',moved:false};col++;}});
+  board[0][5]={type:'king',color:'white',moved:false};
+  for(let i=0;i<Math.min(roster.pawns,6);i++) board[1][i]={type:'pawn',color:'white',moved:false};
+
+  turnColor='white'; selected=null; validMoves=[]; lastMove=null;
+  aiThinking=false; bloodlustBonus=false; moveCount=0;
+  hexUsed=false; hexMode=false;
+
+  // Fortune gambit
+  goldTiles=[];
+  if(ownedGambits.includes('fortune')){
+    const empty=[];
+    for(let r=2;r<5;r++) for(let c=0;c<6;c++) if(!board[r][c]) empty.push([r,c]);
+    for(let i=0;i<2&&empty.length;i++) goldTiles.push(empty.splice(Math.floor(Math.random()*empty.length),1)[0]);
+  }
+
+  // Battle modifier
+  battleModifier=MODIFIER_POOL[Math.floor(Math.random()*MODIFIER_POOL.length)];
+  mineSquares=[];
+  if(battleModifier==='mines'){
+    const candidates=[];
+    for(let r=2;r<5;r++) for(let c=0;c<6;c++) if(!board[r][c]) candidates.push([r,c]);
+    for(let i=0;i<2&&candidates.length;i++) mineSquares.push(candidates.splice(Math.floor(Math.random()*candidates.length),1)[0]);
+  }
+  modFlash = battleModifier ? 3 : 0;
+
+  const eventInterval=ownedGambits.includes('chaos_theory')?3:5;
+  eventTimer=eventInterval;
+}
+
+// ─── after move shared logic ──────────────────────────────────────────────
+function checkMineAndKinghill(movedRow,movedCol,color){
+  // Mine check
+  const mi=mineSquares.findIndex(([mr,mc])=>mr===movedRow&&mc===movedCol);
+  if(mi>=0){
+    const p=board[movedRow][movedCol];
+    if(p){
+      const isKing=p.type==='king';
+      board[movedRow][movedCol]=null;
+      mineSquares.splice(mi,1);
+      showEvent('Minefield!',`A ${color} ${p.type} hit a mine!`);
+      if(isKing){endBattle(color==='black'); return true;}
+    }
+  }
+  // King of the Hill
+  if(battleModifier==='kinghill'){
+    const p=board[movedRow][movedCol];
+    if(p?.type==='king'&&movedRow>=2&&movedRow<=3&&movedCol>=2&&movedCol<=3){
+      endBattle(p.color==='white'); return true;
+    }
+  }
+  return false;
+}
+
+// ─── player move ─────────────────────────────────────────────────────────
+function doPlayerMove(fr,fc,tr,tc,isBonus=false){
+  const captured=board[tr][tc];
+  lastMove={fr,fc,tr,tc};
+  const pieceType=board[fr][fc]?.type;
+  board=applyMove(board,fr,fc,tr,tc);
+
+  // Pawn promotion
+  const promRow=ownedGambits.includes('promotion_rush')?4:5;
+  if(board[tr][tc]?.type==='pawn'&&board[tr][tc]?.color==='white'&&tr>=promRow) board[tr][tc].type='queen';
+
+  // Mutation: transform into captured piece
+  if(captured&&ownedGambits.includes('mutation')&&captured.type!=='king'&&board[tr][tc]?.type!=='king'){
+    board[tr][tc].type=captured.type;
+  }
+
+  // Necromancer
+  if(captured&&ownedGambits.includes('necromancer')){
+    for(let c=0;c<6;c++) if(!board[0][c]){board[0][c]={type:'pawn',color:'white',moved:false}; break;}
+  }
+
+  // Fortune
+  const gi=goldTiles.findIndex(([r,c])=>r===tr&&c===tc);
+  if(gi>=0){gold+=12; goldTiles.splice(gi,1);}
+
+  selected=null; validMoves=[];
+
+  if(checkMineAndKinghill(tr,tc,'white')) return;
+
+  if(!findKing(board,'black')){endBattle(true); return;}
+  if(getAllLegal(board,'black').length===0){endBattle(true); return;}
+
+  // Events
+  moveCount++;
+  const eventInterval=ownedGambits.includes('chaos_theory')?3:5;
+  if(moveCount%eventInterval===0) triggerRandomEvent();
+
+  if(captured&&ownedGambits.includes('bloodlust')&&!isBonus){
+    bloodlustBonus=true; return;
+  }
+
+  bloodlustBonus=false;
+  turnColor='black'; aiThinking=true; aiTimer=0.55;
+}
+
+// ─── AI ──────────────────────────────────────────────────────────────────
+function doAIMove(){
+  const moves=getAllLegal(board,'black');
+  if(!moves.length){endBattle(true); return;}
+
+  const enc=ENCOUNTERS[encounter];
+
+  // Checkmate in 1 — always take it
+  for(const m of moves){
+    const nb=applyMove(board,m.from[0],m.from[1],m.to[0],m.to[1]);
+    if(getAllLegal(nb,'white').length===0&&inCheck(nb,'white')){execAI(m); return;}
+  }
+
+  // Score moves
+  const scored=moves.map(m=>{
+    const [fr,fc]=m.from,[tr,tc]=m.to;
+    const piece=board[fr][fc], target=board[tr][tc];
+    let score=0;
+
+    // Capture value
+    if(target) score+=PIECE_VALUE[target.type]*10;
+
+    const nb=applyMove(board,fr,fc,tr,tc);
+
+    // Check bonus
+    if(inCheck(nb,'white')) score+=8;
+
+    // Trade eval: if piece can be recaptured, was it worth it?
+    const canBeCapt=getAllLegal(nb,'white').some(wm=>wm.to[0]===tr&&wm.to[1]===tc);
+    if(canBeCapt){
+      const loss=PIECE_VALUE[piece.type];
+      const gain=target?PIECE_VALUE[target.type]:0;
+      score+=(gain-loss)*7;
+    }
+
+    // Aggression: advance toward white king
+    const wk=findKing(nb,'white');
+    if(wk){
+      const dist=Math.abs(tr-wk[0])+Math.abs(tc-wk[1]);
+      score+=(7-dist)*0.9;
+    }
+
+    // Pawn push
+    if(piece.type==='pawn') score+=(5-tr)*1.5;
+
+    // Sacrifice bonus: if piece is already threatened, use it aggressively
+    const alreadyThreatened=getAllLegal(board,'white').some(wm=>wm.to[0]===fr&&wm.to[1]===fc);
+    if(alreadyThreatened&&target) score+=PIECE_VALUE[piece.type]*3;
+
+    // Random chaos — occasional wild surges make AI unpredictable
+    if(Math.random()<0.15) score+=Math.random()*30;
+
+    return {...m,score};
+  });
+
+  scored.sort((a,b)=>b.score-a.score);
+
+  // Bosses always play optimally; others have weighted randomness
+  let chosen;
+  if(enc.boss){
+    chosen=scored[0];
+  } else {
+    const topN=Math.min(4,scored.length);
+    const w=[0.55,0.27,0.12,0.06];
+    let r=Math.random();
+    chosen=scored[topN-1];
+    for(let i=0;i<topN;i++){if(r<w[i]){chosen=scored[i]; break;} r-=w[i];}
+  }
+  execAI(chosen);
+}
+
+function execAI({from:[fr,fc],to:[tr,tc]}){
+  lastMove={fr,fc,tr,tc};
+  board=applyMove(board,fr,fc,tr,tc);
+
+  if(board[tr][tc]?.type==='pawn'&&board[tr][tc]?.color==='black'&&tr===0) board[tr][tc].type='queen';
+
+  aiThinking=false;
+
+  if(checkMineAndKinghill(tr,tc,'black')) return;
+
+  if(!findKing(board,'white')){endBattle(false); return;}
+  if(getAllLegal(board,'white').length===0){
+    endBattle(inCheck(board,'white')?false:null); return;
+  }
+  turnColor='white';
+}
+
+// ─── battle end ───────────────────────────────────────────────────────────
+function endBattle(playerWon){
+  if(playerWon===null){setupBattle(); return;}
+  if(!playerWon){
+    phase='gameover';
+    hiEncounter=Math.max(hiEncounter,encounter);
+    localStorage.setItem('gambit_hi',hiEncounter);
+    return;
+  }
+  const enc=ENCOUNTERS[encounter];
+  gold+=enc.goldReward+Math.floor(wager*wagerMult);
+  hiEncounter=Math.max(hiEncounter,encounter+1);
+  localStorage.setItem('gambit_hi',hiEncounter);
+  if(encounter===6){phase='victory'; return;}
+  gambitPicksLeft=enc.boss?2:1;
+  startGambitPick();
+}
+
+// ─── gambit pick ─────────────────────────────────────────────────────────
+function startGambitPick(){
+  if(gambitPicksLeft<=0){
+    if(encounter===2||encounter===5){phase='shop'; return;}
+    encounter++;
+    phase='wager';
+    return;
+  }
+  const pool=ALL_GAMBITS.filter(g=>!ownedGambits.includes(g.id));
+  if(!pool.length){gambitPicksLeft=0; startGambitPick(); return;}
+  gambitOptions=[...pool].sort(()=>Math.random()-0.5).slice(0,Math.min(3,pool.length));
+  gambitHover=-1;
+  phase='gambit_pick';
+}
+function pickGambit(idx){
+  if(idx>=0&&idx<gambitOptions.length) ownedGambits.push(gambitOptions[idx].id);
+  gambitPicksLeft--;
+  startGambitPick();
+}
+
+// ─── shop ────────────────────────────────────────────────────────────────
+function buyItem(id,cost){if(gold<cost) return; gold-=cost; if(id==='pawn') roster.pawns++; else roster[id]++;}
+function leaveShop(){encounter++; phase='wager';}
+
+// ─── run start ────────────────────────────────────────────────────────────
+function startRun(){
+  encounter=0; gold=50; ownedGambits=[];
+  roster={queen:0,rook:1,bishop:0,knight:0,pawns:3};
+  wager=0; wagerMult=1;
+  phase='wager';
+}
+
+// ─── layout ───────────────────────────────────────────────────────────────
+function boardOrigin(){
+  const bw=SQ*6,hudW=200,totalW=bw+hudW+24;
+  const startX=W>totalW?Math.round((W-totalW)/2):16;
+  return {x:startX,y:Math.round((H-SQ*6)/2),hudX:startX+bw+24};
+}
+function screenToCell(mx,my){
+  const {x:bx,y:by}=boardOrigin();
+  const col=Math.floor((mx-bx)/SQ),row=5-Math.floor((my-by)/SQ);
+  if(col<0||col>=6||row<0||row>=6) return null;
+  return [row,col];
+}
+
+// ─── fog helper ───────────────────────────────────────────────────────────
+function isVisibleUnderFog(r,c){
+  for(let wr=0;wr<6;wr++) for(let wc=0;wc<6;wc++)
+    if(board[wr][wc]?.color==='white'&&Math.abs(wr-r)<=2&&Math.abs(wc-c)<=2) return true;
+  return false;
+}
+
+// ─── draw board ───────────────────────────────────────────────────────────
+function drawBoard(){
+  const {x:bx,y:by,hudX}=boardOrigin();
+
+  for(let r=0;r<6;r++){
+    for(let c=0;c<6;c++){
+      const px=bx+c*SQ,py=by+(5-r)*SQ;
+      const isLight=(r+c)%2===0;
+      ctx.fillStyle=isLight?C.sqLight:C.sqDark;
+      ctx.fillRect(px,py,SQ,SQ);
+
+      // Last move
+      if(lastMove&&((r===lastMove.fr&&c===lastMove.fc)||(r===lastMove.tr&&c===lastMove.tc))){
+        ctx.fillStyle='rgba(255,210,60,0.20)'; ctx.fillRect(px,py,SQ,SQ);
+      }
+      // Selected
+      if(selected&&selected[0]===r&&selected[1]===c){
+        ctx.fillStyle='rgba(80,180,80,0.38)'; ctx.fillRect(px,py,SQ,SQ);
+      }
+      // Hex mode hover
+      if(hexMode&&board[r][c]?.color==='black'&&board[r][c]?.type!=='king'){
+        ctx.fillStyle='rgba(180,60,60,0.28)'; ctx.fillRect(px,py,SQ,SQ);
+      }
+      // Check highlight
+      if(board&&inCheck(board,'white')){
+        const k=findKing(board,'white');
+        if(k&&k[0]===r&&k[1]===c){ctx.fillStyle='rgba(220,50,50,0.38)'; ctx.fillRect(px,py,SQ,SQ);}
+      }
+      // Valid move dots
+      if(validMoves.some(([vr,vc])=>vr===r&&vc===c)){
+        if(board[r][c]){
+          ctx.strokeStyle='rgba(80,180,80,0.6)'; ctx.lineWidth=3;
+          ctx.strokeRect(px+3,py+3,SQ-6,SQ-6);
+        } else {
+          ctx.fillStyle='rgba(80,180,80,0.45)';
+          ctx.beginPath(); ctx.arc(px+SQ/2,py+SQ/2,SQ*0.13,0,Math.PI*2); ctx.fill();
+        }
+      }
+      // Mines
+      if(mineSquares.some(([mr,mc])=>mr===r&&mc===c)){
+        ctx.fillStyle='rgba(200,80,80,0.7)';
+        ctx.font=`${Math.round(SQ*0.28)}px DM Mono,monospace`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('✕',px+SQ/2,py+SQ/2);
+      }
+      // Gold tiles
+      if(goldTiles.some(([gr,gc])=>gr===r&&gc===c)){
+        ctx.fillStyle='#c8a020';
+        ctx.font=`${Math.round(SQ*0.3)}px DM Mono,monospace`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('◆',px+SQ/2,py+SQ/2+1);
+      }
+      // King of hill center highlight
+      if(battleModifier==='kinghill'&&r>=2&&r<=3&&c>=2&&c<=3){
+        ctx.fillStyle='rgba(200,180,60,0.12)'; ctx.fillRect(px,py,SQ,SQ);
+      }
+
+      // Pieces
+      const p=board[r][c];
+      if(p){
+        // Fog: hide enemy pieces not near your pieces
+        if(battleModifier==='fog'&&p.color==='black'&&!isVisibleUnderFog(r,c)) continue;
+        ctx.font=`${Math.round(SQ*0.64)}px serif`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillStyle=p.color==='white'?C.text:C.enemy;
+        ctx.fillText(GLYPHS[p.color][p.type],px+SQ/2,py+SQ/2+2);
+      }
+    }
+  }
+
+  // Coordinates
+  ctx.font=`10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  'abcdef'.split('').forEach((l,i)=>ctx.fillText(l,bx+i*SQ+SQ/2,by+SQ*6+4));
+  ctx.textAlign='right'; ctx.textBaseline='middle';
+  for(let r=0;r<6;r++) ctx.fillText(r+1,bx-4,by+(5-r)*SQ+SQ/2);
+
+  drawHUD(hudX,by);
+
+  // Modifier intro flash
+  if(battleModifier&&modFlash>0){
+    const alpha=Math.min(1,modFlash)*Math.min(1,modFlash*0.8);
+    ctx.globalAlpha=alpha;
+    ctx.fillStyle=C.bg;
+    ctx.fillRect(bx,by+SQ*2,SQ*6,SQ*2);
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font=`500 16px 'DM Mono',monospace`;
+    ctx.fillStyle=C.text;
+    const modLabel={fog:'Fog of War',mines:'Minefield',kinghill:'King of the Hill'}[battleModifier]||battleModifier;
+    const modDesc={
+      fog:'Enemy pieces hidden when not nearby.',
+      mines:'Two squares are mined — step with care.',
+      kinghill:'Place your King on the center to win.'
+    }[battleModifier]||'';
+    ctx.fillText(modLabel,bx+SQ*3,by+SQ*2.9);
+    ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    ctx.fillText(modDesc,bx+SQ*3,by+SQ*3.35);
+    ctx.globalAlpha=1;
+  }
+
+  // Event flash
+  if(eventFlash>0){
+    const alpha=Math.min(1,eventFlash*1.5)*Math.min(1,(2.8-eventFlash)*3);
+    ctx.globalAlpha=Math.max(0,alpha);
+    ctx.fillStyle=C.bg;
+    ctx.fillRect(bx+SQ*0.5,by+SQ*1.8,SQ*5,SQ*2.2);
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font=`500 15px 'DM Mono',monospace`; ctx.fillStyle=C.text;
+    ctx.fillText(eventTitle,bx+SQ*3,by+SQ*2.6);
+    ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    ctx.fillText(eventSub,bx+SQ*3,by+SQ*3.05);
+    ctx.globalAlpha=1;
+  }
+}
+
+// ─── HUD ─────────────────────────────────────────────────────────────────
+function drawHUD(hx,by){
+  const enc=ENCOUNTERS[encounter];
+  let y=by;
+  const lh=19;
+
+  ctx.textAlign='left'; ctx.textBaseline='top';
+  ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+  ctx.fillText(`${encounter+1} / 7`,hx,y); y+=lh;
+
+  ctx.font=`400 14px 'DM Mono',monospace`; ctx.fillStyle=enc.boss?'#c89020':C.text;
+  ctx.fillText(enc.name+(enc.boss?'  ★':''),hx,y); y+=lh*1.4;
+
+  if(battleModifier){
+    const ml={fog:'fog',mines:'mines',kinghill:'hill'}[battleModifier]||battleModifier;
+    ctx.font=`300 9px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    ctx.fillText(`[ ${ml} ]`,hx,y); y+=lh;
+  }
+  y+=4;
+
+  ctx.font=`400 12px 'DM Mono',monospace`;
+  ctx.fillStyle=turnColor==='white'&&!aiThinking?C.text:C.muted;
+  ctx.fillText(aiThinking?'thinking...':bloodlustBonus?'◆ bonus move':'your turn',hx,y); y+=lh*1.4;
+
+  ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
+  ctx.fillText(`◆ ${gold}`,hx,y); y+=lh*1.6;
+
+  if(wager>0){
+    ctx.font=`300 9px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    ctx.fillText(`bet  ${wager}g  ×${wagerMult}`,hx,y); y+=lh;
+  }
+  y+=4;
+
+  if(ownedGambits.length){
+    ctx.font=`300 9px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    ctx.fillText('gambits',hx,y); y+=lh*0.9;
+    ownedGambits.forEach(id=>{
+      const g=ALL_GAMBITS.find(g=>g.id===id);
+      if(!g) return;
+      ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.text;
+      ctx.fillText(g.name,hx,y); y+=lh*1.1;
+    });
+    y+=4;
+  }
+
+  // Hex button
+  if(ownedGambits.includes('hex')&&!hexUsed){
+    ctx.font=`400 10px 'DM Mono',monospace`;
+    ctx.fillStyle=hexMode?C.text:C.muted;
+    ctx.fillText(hexMode?'[ H ]  hex — click enemy':'[ H ]  hex — ready',hx,y);
+  }
+}
+
+// ─── gambit pick screen ────────────────────────────────────────────────────
+function drawGambitPick(){
+  hitAreas=[];
+  ctx.fillStyle=C.bg; ctx.fillRect(0,0,W,H);
+
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+  ctx.fillText(gambitPicksLeft>1?`pick  ${gambitPicksLeft}  gambits`:'pick a gambit',W/2,H*0.2);
+  ctx.font=`300 10px 'DM Mono',monospace`;
+  ctx.fillText(`◆ ${gold}`,W/2,H*0.2+20);
+
+  const cardW=Math.min(200,W/gambitOptions.length-24);
+  const cardH=120;
+  const gap=16;
+  const totalW=gambitOptions.length*(cardW+gap)-gap;
+  let ox=W/2-totalW/2;
+
+  for(let i=0;i<gambitOptions.length;i++){
+    const g=gambitOptions[i];
+    const cx=ox+cardW/2,cy=H*0.52;
+    const hovered=mouseX>=ox&&mouseX<ox+cardW&&mouseY>=cy-cardH/2&&mouseY<cy+cardH/2;
+
+    ctx.fillStyle=hovered?C.line:'transparent';
+    if(hovered){ctx.fillRect(ox,cy-cardH/2,cardW,cardH);}
+    ctx.strokeStyle=C.line; ctx.lineWidth=1;
+    ctx.strokeRect(ox,cy-cardH/2,cardW,cardH);
+
+    ctx.font=`400 13px 'DM Mono',monospace`; ctx.fillStyle=C.text;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(g.name,cx,cy-28);
+
+    ctx.font=`300 9px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    // Wrap description
+    const words=g.desc.split(' '); let line='';
+    let ty=cy-8;
+    words.forEach((w,wi)=>{
+      const test=line+(line?' ':'')+w;
+      if(ctx.measureText(test).width>cardW-20&&line){ctx.fillText(line,cx,ty); ty+=14; line=w;}
+      else line=test;
+      if(wi===words.length-1) ctx.fillText(line,cx,ty);
+    });
+
+    ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    ctx.fillText(`[ ${i+1} ]`,cx,cy+46);
+
+    hitAreas.push({x:ox,y:cy-cardH/2,w:cardW,h:cardH,action:()=>pickGambit(i)});
+    ox+=cardW+gap;
+  }
+
+  ctx.font=`300 9px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+  ctx.textAlign='center';
+  ctx.fillText('1 · 2 · 3  or click',W/2,H*0.8);
+}
+
+// ─── shop ─────────────────────────────────────────────────────────────────
+function drawShop(){
+  hitAreas=[];
+  ctx.fillStyle=C.bg; ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font=`400 22px 'DM Mono',monospace`; ctx.fillStyle=C.text;
+  ctx.fillText('shop',W/2,H*0.18);
+  ctx.font=`300 12px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
+  ctx.fillText(`◆ ${gold}`,W/2,H*0.18+28);
+
+  const itemW=Math.min(320,W*0.85),itemH=52,gap=10;
+  const totalH=SHOP_CATALOG.length*(itemH+gap)+itemH+gap*2;
+  let oy=H/2-totalH/2+20;
+  const ox=W/2-itemW/2;
+
+  SHOP_CATALOG.forEach((item,i)=>{
+    const canAfford=gold>=item.cost;
+    const hovered=mouseX>=ox&&mouseX<ox+itemW&&mouseY>=oy&&mouseY<oy+itemH;
+    ctx.fillStyle=hovered&&canAfford?C.line:'transparent';
+    if(hovered&&canAfford) ctx.fillRect(ox,oy,itemW,itemH);
+    ctx.strokeStyle=canAfford?C.line:C.sqDark; ctx.lineWidth=1;
+    ctx.strokeRect(ox,oy,itemW,itemH);
+
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.font=`400 12px 'DM Mono',monospace`; ctx.fillStyle=canAfford?C.text:C.muted;
+    ctx.fillText(item.name,ox+14,oy+17);
+    ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    ctx.fillText(item.desc,ox+14,oy+36);
+    ctx.textAlign='right';
+    ctx.font=`400 11px 'DM Mono',monospace`; ctx.fillStyle=canAfford?'#c8a020':C.muted;
+    ctx.fillText(`◆ ${item.cost}`,ox+itemW-14,oy+itemH/2);
+
+    if(canAfford) hitAreas.push({x:ox,y:oy,w:itemW,h:itemH,action:()=>buyItem(item.id,item.cost)});
+    oy+=itemH+gap;
+  });
+
+  oy+=gap;
+  const hovered=mouseX>=ox&&mouseX<ox+itemW&&mouseY>=oy&&mouseY<oy+itemH;
+  ctx.fillStyle=hovered?C.line:'transparent';
+  if(hovered) ctx.fillRect(ox,oy,itemW,itemH);
+  ctx.strokeStyle=C.line; ctx.lineWidth=1; ctx.strokeRect(ox,oy,itemW,itemH);
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font=`400 12px 'DM Mono',monospace`; ctx.fillStyle=C.text;
+  ctx.fillText('→  leave',W/2,oy+itemH/2);
+  hitAreas.push({x:ox,y:oy,w:itemW,h:itemH,action:leaveShop});
+}
+
+// ─── wager screen ─────────────────────────────────────────────────────────
+function drawWager(){
+  hitAreas=[];
+  ctx.fillStyle=C.bg; ctx.fillRect(0,0,W,H);
+  const enc=ENCOUNTERS[encounter];
+
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+  ctx.fillText(`encounter ${encounter+1} / 7`,W/2,H*0.26);
+  ctx.font=`400 26px 'DM Mono',monospace`; ctx.fillStyle=enc.boss?'#c89020':C.text;
+  ctx.fillText(enc.name+(enc.boss?'  ★':''),W/2,H*0.34);
+  ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+  ctx.fillText(`◆ ${gold}  gold`,W/2,H*0.34+30);
+  ctx.fillText('wager?',W/2,H*0.5);
+
+  const markMult=ownedGambits.includes('gamblers_mark')?2:1;
+  const opts=[
+    {label:'pass',  bet:0,           winMult:0},
+    {label:'risky', bet:Math.floor(gold*0.25), winMult:2},
+    {label:'bold',  bet:Math.floor(gold*0.5),  winMult:3},
+    {label:'all in',bet:gold,        winMult:5},
+  ];
+
+  const cardW=Math.min(120,W/5-8),cardH=96,gap=10;
+  const totalW=opts.length*(cardW+gap)-gap;
+  let ox=W/2-totalW/2;
+
+  opts.forEach((opt,i)=>{
+    const cy=H*0.66;
+    const profit=Math.floor(opt.bet*(opt.winMult-1)*markMult);
+    const hovered=mouseX>=ox&&mouseX<ox+cardW&&mouseY>=cy-cardH/2&&mouseY<cy+cardH/2;
+
+    ctx.fillStyle=hovered?C.line:C.sqLight;
+    ctx.fillRect(ox,cy-cardH/2,cardW,cardH);
+    if(hovered){ctx.strokeStyle=C.text; ctx.lineWidth=1; ctx.strokeRect(ox,cy-cardH/2,cardW,cardH);}
+
+    const cx=ox+cardW/2;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font=`400 12px 'DM Mono',monospace`; ctx.fillStyle=C.text;
+    ctx.fillText(opt.label,cx,cy-32);
+
+    ctx.font=`300 9px 'DM Mono',monospace`;
+    if(opt.bet>0){
+      ctx.fillStyle=C.muted; ctx.fillText(`bet  ${opt.bet}g`,cx,cy-14);
+      ctx.fillStyle='#5a9e40'; ctx.fillText(`win  +${profit}g`,cx,cy+2);
+      ctx.fillStyle='#b04040'; ctx.fillText(`lose  −${opt.bet}g`,cx,cy+18);
+      if(markMult>1){ctx.fillStyle='#c89020'; ctx.fillText('★ doubled',cx,cy+34);}
+    } else {
+      ctx.fillStyle=C.muted; ctx.fillText('no risk',cx,cy);
+    }
+
+    hitAreas.push({x:ox,y:cy-cardH/2,w:cardW,h:cardH,action:()=>{
+      wager=opt.bet;
+      wagerMult=opt.winMult*markMult;
+      gold=Math.max(0,gold-opt.bet);
+      phase='battle';
+      setupBattle();
+    }});
+    ox+=cardW+gap;
+  });
+
+  ctx.font=`300 9px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+  ctx.textAlign='center';
+  ctx.fillText('click to choose',W/2,H*0.82);
+  if(ownedGambits.includes('gamblers_mark')){
+    ctx.fillStyle='#c89020';
+    ctx.fillText("gambler's mark  ★  win rewards doubled",W/2,H*0.82+18);
+  }
+}
+
+// ─── overlay screens ──────────────────────────────────────────────────────
+function drawOverlay(){
+  hitAreas=[];
+  ctx.fillStyle=C.bg; ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+
+  if(phase==='title'){
+    ctx.font=`400 58px 'DM Mono',monospace`; ctx.fillStyle=C.text;
+    ctx.fillText('gambit',W/2,H*0.38);
+    ctx.font=`300 12px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    ctx.fillText('chess  ·  roguelite  ·  wager',W/2,H*0.38+50);
+    if(hiEncounter>0){
+      ctx.font=`300 10px 'DM Mono',monospace`;
+      ctx.fillText(`best  ${hiEncounter} / 7`,W/2,H*0.38+74);
+    }
+    ctx.font=`300 11px 'DM Mono',monospace`;
+    ctx.fillText('click or any key to begin',W/2,H*0.72);
+
+  } else if(phase==='gameover'){
+    ctx.font=`400 58px 'DM Mono',monospace`; ctx.fillStyle=C.text;
+    ctx.fillText('—',W/2,H*0.36);
+    ctx.font=`400 14px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    ctx.fillText(`encounter ${encounter+1}  —  ${ENCOUNTERS[encounter].name}`,W/2,H*0.36+52);
+    if(wager>0){
+      ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle='#b04040';
+      ctx.fillText(`lost wager of  ${wager}g`,W/2,H*0.36+72);
+    }
+    ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    ctx.fillText(`best  ${hiEncounter} / 7`,W/2,H*0.36+90);
+    ctx.fillText('click or any key to retry',W/2,H*0.72);
+
+  } else if(phase==='victory'){
+    ctx.font=`400 52px 'DM Mono',monospace`; ctx.fillStyle=C.text;
+    ctx.fillText('victory',W/2,H*0.34);
+    ctx.font=`300 13px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    ctx.fillText('all seven defeated',W/2,H*0.34+50);
+    ctx.font=`400 13px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
+    ctx.fillText(`◆ ${gold}  gold`,W/2,H*0.34+76);
+    if(ownedGambits.length){
+      ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+      ctx.fillText(ownedGambits.map(id=>ALL_GAMBITS.find(g=>g.id===id)?.name||id).join('  ·  '),W/2,H*0.34+100);
+    }
+    ctx.fillText('click or any key to play again',W/2,H*0.72);
+  }
+}
+
+// ─── main draw ────────────────────────────────────────────────────────────
+let mouseX=0,mouseY=0;
+canvas.addEventListener('mousemove',e=>{mouseX=e.clientX; mouseY=e.clientY;});
+
+function draw(){
+  ctx.fillStyle=C.bg; ctx.fillRect(0,0,W,H);
+  if(phase==='battle') drawBoard();
+  else if(phase==='gambit_pick') drawGambitPick();
+  else if(phase==='shop') drawShop();
+  else if(phase==='wager') drawWager();
+  else drawOverlay();
+}
+
+// ─── loop ────────────────────────────────────────────────────────────────
+function loop(t){
+  const dt=Math.min((t-lastT)/1000,0.05); lastT=t;
+  if(phase==='battle'){
+    if(aiThinking){aiTimer-=dt; if(aiTimer<=0) doAIMove();}
+    if(eventFlash>0) eventFlash-=dt;
+    if(modFlash>0) modFlash-=dt;
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// ─── input ────────────────────────────────────────────────────────────────
+canvas.addEventListener('click',e=>{
+  const mx=e.clientX,my=e.clientY;
+
+  if(phase==='title'||phase==='gameover'||phase==='victory'){startRun(); return;}
+
+  if(phase==='wager'||phase==='gambit_pick'||phase==='shop'){
+    for(const ha of hitAreas) if(mx>=ha.x&&mx<ha.x+ha.w&&my>=ha.y&&my<ha.y+ha.h){ha.action(); return;}
+    return;
+  }
+
+  if(phase==='battle'){
+    if(turnColor!=='white'||aiThinking) return;
+    const cell=screenToCell(mx,my);
+
+    // Hex mode: click enemy to remove
+    if(hexMode){
+      if(cell){
+        const [r,c]=cell;
+        const p=board[r][c];
+        if(p&&p.color==='black'&&p.type!=='king'){
+          board[r][c]=null; hexUsed=true; hexMode=false;
+          showEvent('Hex!','An enemy piece is cursed away.');
+        }
+      } else {hexMode=false;}
+      return;
+    }
+
+    if(bloodlustBonus){
+      if(!cell){
+        bloodlustBonus=false; selected=null; validMoves=[];
+        turnColor='black'; aiThinking=true; aiTimer=0.55; return;
+      }
+      const [r,c]=cell;
+      if(selected){
+        const [sr,sc]=selected;
+        if(validMoves.some(([vr,vc])=>vr===r&&vc===c)){
+          doPlayerMove(sr,sc,r,c,true); return;
+        }
+      }
+      if(board[r][c]?.color==='white'){
+        selected=[r,c]; validMoves=legalMoves(board,r,c);
+      } else {
+        bloodlustBonus=false; selected=null; validMoves=[];
+        turnColor='black'; aiThinking=true; aiTimer=0.55;
+      }
+      return;
+    }
+
+    if(!cell){selected=null; validMoves=[]; return;}
+    const [r,c]=cell;
+    if(selected){
+      const [sr,sc]=selected;
+      if(r===sr&&c===sc){selected=null; validMoves=[]; return;}
+      if(validMoves.some(([vr,vc])=>vr===r&&vc===c)){doPlayerMove(sr,sc,r,c); return;}
+    }
+    if(board[r][c]?.color==='white'){selected=[r,c]; validMoves=legalMoves(board,r,c);}
+    else{selected=null; validMoves=[];}
+  }
+});
+
+document.addEventListener('keydown',e=>{
+  if(phase==='title'||phase==='gameover'||phase==='victory'){startRun(); return;}
+
+  if(phase==='gambit_pick'){
+    const n=parseInt(e.key);
+    if(n>=1&&n<=gambitOptions.length) pickGambit(n-1);
+    return;
+  }
+
+  if(phase==='battle'){
+    if(e.key==='Escape'){
+      if(hexMode){hexMode=false; return;}
+      if(bloodlustBonus){
+        bloodlustBonus=false; selected=null; validMoves=[];
+        turnColor='black'; aiThinking=true; aiTimer=0.55; return;
+      }
+      selected=null; validMoves=[];
+    }
+    if((e.key==='h'||e.key==='H')&&ownedGambits.includes('hex')&&!hexUsed&&!aiThinking&&turnColor==='white'){
+      hexMode=!hexMode;
+      if(hexMode) selected=null,validMoves=[];
+    }
+  }
+});
+
+// ─── start ────────────────────────────────────────────────────────────────
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
