@@ -23,7 +23,6 @@
 <body>
   <canvas id="c"></canvas>
   <script>
-  // Apply stored theme, no toggle UI
   if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
 
   function cssVar(v) { return getComputedStyle(document.body).getPropertyValue(v).trim(); }
@@ -32,11 +31,37 @@
   const ctx    = canvas.getContext('2d');
   let W, H, GY;
 
-  // Colors cached on resize (never changes mid-session without UI)
   let C = {};
   function cacheColors() {
     C.bg = cssVar('--bg'); C.text = cssVar('--text');
     C.muted = cssVar('--muted'); C.line = cssVar('--line');
+  }
+
+  // ── Persistent data ────────────────────────────────────────────────────
+  let coins      = +localStorage.getItem('run_coins') || 0;
+  let difficulty = localStorage.getItem('run_diff') || 'normal';
+  let upgrades   = JSON.parse(localStorage.getItem('run_upgrades') || '{}');
+
+  const DIFF_NAMES = ['easy', 'normal', 'hard'];
+  const DIFF = {
+    easy:   { vramp: 11,  clusterBonus: -1, gapMin: 180, gapA: 500, gapB: 300, v0: 380, coinMult: 0.75 },
+    normal: { vramp: 22,  clusterBonus:  0, gapMin: 140, gapA: 380, gapB: 220, v0: 460, coinMult: 1.0  },
+    hard:   { vramp: 33,  clusterBonus:  2, gapMin: 100, gapA: 260, gapB: 140, v0: 540, coinMult: 1.5  },
+  };
+
+  const UPGRADE_DEFS = [
+    { id: 'triple_jump', name: 'triple jump',  desc: '3rd jump per run',      cost: 500, max: 1 },
+    { id: 'boost_dur',   name: 'boost  +2s',   desc: 'longer boost window',   cost: 250, max: 5 },
+    { id: 'boost_cd',    name: 'cd  −2s',      desc: 'faster boost cooldown', cost: 300, max: 4 },
+    { id: 'shield',      name: 'shield',        desc: '1 free hit per run',    cost: 800, max: 3 },
+    { id: 'score_mult',  name: 'score  ×1.25', desc: 'score multiplier',      cost: 600, max: 4 },
+  ];
+
+  function upLvl(id) { return upgrades[id] || 0; }
+  function saveAll() {
+    localStorage.setItem('run_coins', coins);
+    localStorage.setItem('run_diff', difficulty);
+    localStorage.setItem('run_upgrades', JSON.stringify(upgrades));
   }
 
   // ── Background layer data ──────────────────────────────────────────────
@@ -72,25 +97,26 @@
   window.addEventListener('resize', resize);
 
   // ── Constants ─────────────────────────────────────────────────────────
-  const PS    = 24;
-  const GRAV  = 2500;
-  const J1    = -780;
-  const J2    = -610;
-  const V0    = 460;
-  const VMAX  = 1400;
-  const VRAMP = 22;
+  const PS           = 24;
+  const GRAV         = 2500;
+  const J1           = -780;
+  const J2           = -610;
+  const VMAX         = 1400;
+  const TICK_GAP     = 80;
+  const TRAIL_MAX    = 7;
+  const STREAK_SPAWN = 0.45;
+  const ROT_SPEED    = 7.5;
+  const BOOST_DUR_BASE = 5;
+  const BOOST_CD_BASE  = 10;
 
-  // [w, h] obstacle profiles
   const OBS = [
     [18,32],[20,48],[22,62],[18,28],[20,54],[22,72],[24,42],[18,80],[20,96]
   ];
 
-  const TICK_GAP      = 80;
-  const TRAIL_MAX     = 7;
-  const STREAK_SPAWN  = 0.45;
-  const ROT_SPEED     = 7.5;
-  const BOOST_DUR     = 5;   // seconds active
-  const BOOST_CD      = 10;  // seconds cooldown after boost ends
+  function effBOOST_DUR()  { return BOOST_DUR_BASE + upLvl('boost_dur') * 2; }
+  function effBOOST_CD()   { return Math.max(2, BOOST_CD_BASE - upLvl('boost_cd') * 2); }
+  function effMaxJumps()   { return upLvl('triple_jump') ? 3 : 2; }
+  function effScoreMult()  { return Math.pow(1.25, upLvl('score_mult')); }
 
   // ── State ─────────────────────────────────────────────────────────────
   let state, score, spd, tickOff;
@@ -98,26 +124,36 @@
   let player, obstacles, particles, streaks, trail;
   let shakeX, shakeY, lastT;
   let boostActive, boostTimer, boostCooldown;
-  let hiScore = +localStorage.getItem('run_hi') || 0;
+  let shieldsLeft;
+  let hiScore    = +localStorage.getItem('run_hi') || 0;
+  let coinsEarned = 0;
+  let shopSel    = 0;
+  let mouseX = 0, mouseY = 0;
+  let hitAreas   = [];
 
   function init() {
-    state = 'idle'; score = 0; spd = V0; tickOff = 0;
+    state = 'idle'; score = 0; coinsEarned = 0;
+    const diff = DIFF[difficulty];
+    spd = diff.v0; tickOff = 0;
     spawnTimer = 1.0; spawnMode = 'gap'; clusterLeft = 0;
-    player       = { x: W * 0.14, y: GY - PS, vy: 0, jumps: 2, angle: 0 };
+    player = { x: W * 0.14, y: GY - PS, vy: 0, jumps: effMaxJumps(), angle: 0 };
     obstacles = []; particles = []; streaks = []; trail = [];
     shakeX = shakeY = 0;
     boostActive = false; boostTimer = 0; boostCooldown = 0;
+    shieldsLeft = upLvl('shield');
   }
 
   // ── Input ─────────────────────────────────────────────────────────────
   function onAction() {
     if (state === 'idle') { state = 'run'; doJump(); return; }
     if (state === 'dead') { init(); return; }
+    if (state === 'shop') return;
     doJump();
   }
+
   function doJump() {
     if (player.jumps <= 0) return;
-    player.vy = player.jumps === 2 ? J1 : J2;
+    player.vy = player.jumps === effMaxJumps() ? J1 : J2;
     player.jumps--;
     spawnDust(player.x + PS / 2, player.y + PS, 6);
   }
@@ -126,14 +162,66 @@
     if (state !== 'run') return;
     if (boostActive || boostCooldown > 0) return;
     boostActive = true;
-    boostTimer = BOOST_DUR;
+    boostTimer = effBOOST_DUR();
   }
 
+  function openShop() {
+    state = 'shop';
+    shopSel = 0;
+  }
+
+  function closeShop() {
+    init();
+  }
+
+  function buyUpgrade(idx) {
+    const def = UPGRADE_DEFS[idx];
+    const lvl = upLvl(def.id);
+    if (lvl >= def.max) return;
+    if (coins < def.cost) return;
+    coins -= def.cost;
+    upgrades[def.id] = lvl + 1;
+    saveAll();
+  }
+
+  canvas.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
+
   window.addEventListener('keydown', e => {
+    if (state === 'shop') {
+      if (e.code === 'ArrowUp')                              { e.preventDefault(); shopSel = (shopSel - 1 + UPGRADE_DEFS.length) % UPGRADE_DEFS.length; }
+      if (e.code === 'ArrowDown')                            { e.preventDefault(); shopSel = (shopSel + 1) % UPGRADE_DEFS.length; }
+      if (e.code === 'Enter')                                { e.preventDefault(); buyUpgrade(shopSel); }
+      if (e.code === 'Escape' || e.code === 'Backspace')    { e.preventDefault(); closeShop(); }
+      return;
+    }
+    if (e.code === 'ArrowLeft' && state === 'idle') {
+      e.preventDefault();
+      const i = DIFF_NAMES.indexOf(difficulty);
+      difficulty = DIFF_NAMES[(i - 1 + DIFF_NAMES.length) % DIFF_NAMES.length];
+      saveAll(); return;
+    }
+    if (e.code === 'ArrowRight' && state === 'idle') {
+      e.preventDefault();
+      const i = DIFF_NAMES.indexOf(difficulty);
+      difficulty = DIFF_NAMES[(i + 1) % DIFF_NAMES.length];
+      saveAll(); return;
+    }
     if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); onAction(); }
     if (e.code === 'KeyG') doBoost();
+    if (e.code === 'KeyU') openShop();
   });
-  canvas.addEventListener('pointerdown', e => { e.preventDefault(); onAction(); });
+
+  canvas.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    const cx = e.clientX, cy = e.clientY;
+    for (const a of hitAreas) {
+      if (cx >= a.x && cx <= a.x + a.w && cy >= a.y && cy <= a.y + a.h) {
+        a.action();
+        return;
+      }
+    }
+    onAction();
+  });
 
   // ── Particles ─────────────────────────────────────────────────────────
   function spawnDust(x, y, n) {
@@ -149,7 +237,6 @@
 
   // ── Update ────────────────────────────────────────────────────────────
   function update(dt) {
-    // Background always drifts — slower when not running
     const fsRunning = state === 'run';
     const bgSpd = boostActive ? spd * 2 : spd;
     farOff = (farOff + (fsRunning ? bgSpd*0.08 : 22) * dt) % FAR_W;
@@ -160,14 +247,15 @@
     // Boost timers
     if (boostActive) {
       boostTimer -= dt;
-      if (boostTimer <= 0) { boostActive = false; boostCooldown = BOOST_CD; }
+      if (boostTimer <= 0) { boostActive = false; boostCooldown = effBOOST_CD(); }
     } else if (boostCooldown > 0) {
       boostCooldown = Math.max(0, boostCooldown - dt);
     }
 
-    const eff = boostActive ? spd * 2 : spd;
-    score += dt * eff * 0.05 * (boostActive ? 5 : 1); // 10x total during boost
-    spd = Math.min(V0 + (score/1000) * VRAMP, VMAX);
+    const eff  = boostActive ? spd * 2 : spd;
+    const diff = DIFF[difficulty];
+    score += dt * eff * 0.05 * (boostActive ? 5 : 1) * effScoreMult();
+    spd = Math.min(diff.v0 + (score / 1000) * diff.vramp, VMAX);
     tickOff = (tickOff + eff * dt) % TICK_GAP;
 
     // Player physics
@@ -178,8 +266,7 @@
       const hard = player.vy > 300;
       player.y = GY - PS;
       if (hard) spawnDust(player.x + PS/2, GY, 11);
-      player.vy = 0; player.jumps = 2;
-      // snap to nearest 90° on landing
+      player.vy = 0; player.jumps = effMaxJumps();
       player.angle = Math.round(player.angle / (Math.PI / 2)) * (Math.PI / 2);
     } else {
       player.angle += ROT_SPEED * dt;
@@ -200,28 +287,22 @@
       if (streaks[i].life <= 0 || streaks[i].x + streaks[i].len < 0) streaks.splice(i, 1);
     }
 
-    // Obstacles — cluster spawn system (Crossy Road train feel)
-    // Obstacles arrive in tight bursts separated by breathing gaps.
-    // Gap between obstacles within a cluster shrinks as score grows.
+    // Cluster spawn system
     spawnTimer -= dt;
     if (spawnTimer <= 0) {
       if (spawnMode === 'gap') {
-        // Start a new cluster — size grows with score (2 early, up to 6 later)
-        const maxSize = 2 + Math.min(4, Math.floor(score / 600));
-        clusterLeft = 2 + Math.floor(Math.random() * (maxSize - 1));
+        const maxSize = Math.max(1, 2 + Math.min(4, Math.floor(score / 600)) + diff.clusterBonus);
+        clusterLeft = Math.max(1, 2 + Math.floor(Math.random() * (maxSize - 1)));
         spawnMode = 'cluster';
       }
-      // Spawn one obstacle from the current cluster
       const [w, h] = OBS[Math.floor(Math.random() * OBS.length)];
       obstacles.push({ x: W + 10, y: GY - h, w, h });
       clusterLeft--;
       if (clusterLeft <= 0) {
-        // Cluster done — long breathing gap before next one
         spawnMode = 'gap';
-        spawnTimer = (380 + Math.random() * 220) / spd;
+        spawnTimer = (diff.gapA + Math.random() * diff.gapB) / spd;
       } else {
-        // Within cluster — tight gap (shrinks as score grows, min 140px)
-        const gap = Math.max(140, 230 - score / 120);
+        const gap = Math.max(diff.gapMin, 230 - score / 120);
         spawnTimer = gap / spd;
       }
     }
@@ -241,19 +322,29 @@
 
     // Collision (inset hitbox)
     const hx = player.x+4, hy = player.y+4, hw = PS-8, hh = PS-5;
-    for (const o of obstacles) {
+    for (let i = 0; i < obstacles.length; i++) {
+      const o = obstacles[i];
       if (hx < o.x+o.w && hx+hw > o.x && hy < o.y+o.h && hy+hh > o.y) {
-        state = 'dead';
-        hiScore = Math.max(hiScore, Math.floor(score));
-        localStorage.setItem('run_hi', hiScore);
-        spawnBurst(player.x + PS/2, player.y + PS/2);
-        shakeX = 10; shakeY = 8;
+        if (shieldsLeft > 0) {
+          shieldsLeft--;
+          obstacles.splice(i, 1);
+          spawnDust(player.x + PS/2, player.y + PS/2, 16);
+          shakeX = 6; shakeY = 5;
+        } else {
+          state = 'dead';
+          hiScore = Math.max(hiScore, Math.floor(score));
+          localStorage.setItem('run_hi', hiScore);
+          coinsEarned = Math.floor(Math.floor(score) / 80 * DIFF[difficulty].coinMult);
+          coins += coinsEarned;
+          saveAll();
+          spawnBurst(player.x + PS/2, player.y + PS/2);
+          shakeX = 10; shakeY = 8;
+        }
         break;
       }
     }
   }
 
-  // Tiling draw helper — draws a shape at its tiled position
   function tileRect(x0, lw, y, w, h) {
     const nx = ((x0 % lw) + lw) % lw;
     if (nx < W + w) ctx.fillRect(nx, y, w, h);
@@ -261,8 +352,111 @@
     if (nx2 + w > 0) ctx.fillRect(nx2, y, w, h);
   }
 
+  // ── Shop draw ─────────────────────────────────────────────────────────
+  function drawShop() {
+    hitAreas = [];
+    const { bg, text, muted, line } = C;
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    const cx  = W / 2;
+    const ty  = H * 0.16;
+    const rowH = 54;
+    const listY = ty + 68;
+    const colW  = Math.min(340, W * 0.8);
+
+    // Title
+    ctx.textAlign = 'center';
+    ctx.font = '400 26px "DM Mono", monospace';
+    ctx.fillStyle = text;
+    ctx.fillText('upgrades', cx, ty);
+
+    // Coin count
+    ctx.font = '300 11px "DM Mono", monospace';
+    ctx.fillStyle = muted;
+    ctx.fillText(coins + '  coins', cx, ty + 22);
+
+    // Separator
+    ctx.strokeStyle = line;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - colW/2, ty + 38);
+    ctx.lineTo(cx + colW/2, ty + 38);
+    ctx.stroke();
+
+    for (let i = 0; i < UPGRADE_DEFS.length; i++) {
+      const def    = UPGRADE_DEFS[i];
+      const lvl    = upLvl(def.id);
+      const maxed  = lvl >= def.max;
+      const canBuy = !maxed && coins >= def.cost;
+      const sel    = shopSel === i;
+      const rowY   = listY + i * rowH;
+
+      const hovered = mouseX >= cx - colW/2 && mouseX <= cx + colW/2
+                   && mouseY >= rowY - 14   && mouseY <= rowY + rowH - 16;
+
+      hitAreas.push({
+        x: cx - colW/2, y: rowY - 14, w: colW, h: rowH - 4,
+        action: () => { shopSel = i; buyUpgrade(i); }
+      });
+
+      // Row highlight
+      if (sel || hovered) {
+        ctx.fillStyle = line;
+        ctx.globalAlpha = 0.4;
+        ctx.fillRect(cx - colW/2, rowY - 14, colW, rowH - 6);
+        ctx.globalAlpha = 1;
+      }
+
+      // Arrow
+      ctx.textAlign = 'left';
+      ctx.font = '400 12px "DM Mono", monospace';
+      ctx.fillStyle = (sel || hovered) ? text : 'transparent';
+      ctx.fillText('→', cx - colW/2 + 4, rowY + 2);
+
+      // Name
+      ctx.fillStyle = maxed ? muted : (canBuy ? text : muted);
+      ctx.font = '400 13px "DM Mono", monospace';
+      ctx.fillText(def.name, cx - colW/2 + 22, rowY + 2);
+
+      // Level dots
+      ctx.textAlign = 'center';
+      ctx.font = '300 11px "DM Mono", monospace';
+      ctx.fillStyle = muted;
+      let dots = '';
+      for (let d = 0; d < def.max; d++) dots += d < lvl ? '●' : '○';
+      ctx.fillText(dots, cx, rowY + 2);
+
+      // Cost / status
+      ctx.textAlign = 'right';
+      ctx.font = '400 13px "DM Mono", monospace';
+      if (maxed) {
+        ctx.fillStyle = muted;
+        ctx.fillText('maxed', cx + colW/2 - 4, rowY + 2);
+      } else {
+        ctx.fillStyle = canBuy ? text : muted;
+        ctx.fillText(def.cost + ' c', cx + colW/2 - 4, rowY + 2);
+      }
+
+      // Description
+      ctx.textAlign = 'left';
+      ctx.font = '300 10px "DM Mono", monospace';
+      ctx.fillStyle = muted;
+      ctx.fillText(def.desc, cx - colW/2 + 22, rowY + 17);
+    }
+
+    // Footer
+    ctx.textAlign = 'center';
+    ctx.font = '300 10px "DM Mono", monospace';
+    ctx.fillStyle = muted;
+    ctx.fillText('↑↓ navigate  ·  enter buy  ·  esc back', cx, H - 26);
+  }
+
   // ── Draw ──────────────────────────────────────────────────────────────
   function draw() {
+    if (state === 'shop') { drawShop(); return; }
+
+    hitAreas = [];
     const { bg, text, muted, line } = C;
     const ox = shakeX * (Math.random()*2-1);
     const oy = shakeY * (Math.random()*2-1);
@@ -270,7 +464,7 @@
     ctx.save();
     ctx.translate(ox, oy);
 
-    // Background fill
+    // Background
     ctx.fillStyle = bg;
     ctx.fillRect(-20, -20, W+40, H+40);
     if (boostActive) {
@@ -280,12 +474,12 @@
       ctx.globalAlpha = 1;
     }
 
-    // Far layer — ghostly architectural columns
+    // Far layer
     ctx.fillStyle = line;
     ctx.globalAlpha = 0.38;
     for (const s of farShapes) tileRect(s.x - farOff, FAR_W, s.y, s.w, s.h);
 
-    // Mid layer — thin vertical dashes
+    // Mid layer
     ctx.fillStyle = muted;
     ctx.globalAlpha = 0.11;
     for (const s of midShapes) tileRect(s.x - midOff, MID_W, s.y, 1.5, s.h);
@@ -304,7 +498,7 @@
     }
     ctx.globalAlpha = 1;
 
-    // Player trail (ghost images, only at speed)
+    // Player trail
     const speedF = Math.max(0, (spd - 520) / (VMAX - 520));
     if (speedF > 0 && trail.length > 1) {
       ctx.fillStyle = text;
@@ -319,19 +513,26 @@
       ctx.globalAlpha = 1;
     }
 
-    // Obstacles — drawn BEFORE ground line
+    // Obstacles
     ctx.fillStyle = text;
     for (const o of obstacles) ctx.fillRect(o.x, o.y, o.w, o.h);
 
     // Player — GD-style rotating cube
     if (state !== 'dead') {
-      const cx = player.x + PS / 2;
-      const cy = player.y + PS / 2;
+      const pcx = player.x + PS / 2;
+      const pcy = player.y + PS / 2;
       ctx.save();
-      ctx.translate(cx, cy);
+      ctx.translate(pcx, pcy);
       ctx.rotate(player.angle);
       ctx.fillStyle = text;
       ctx.fillRect(-PS/2, -PS/2, PS, PS);
+      // Shield tint
+      if (shieldsLeft > 0) {
+        ctx.fillStyle = muted;
+        ctx.globalAlpha = 0.35;
+        ctx.fillRect(-PS/2, -PS/2, PS, PS);
+        ctx.globalAlpha = 1;
+      }
       const inset = PS * 0.26;
       ctx.fillStyle = bg;
       ctx.fillRect(-PS/2 + inset, -PS/2 + inset, PS - inset*2, PS - inset*2);
@@ -350,63 +551,105 @@
     }
     ctx.globalAlpha = 1;
 
-    // Ground ticks — scroll with game speed
+    // Ground ticks
     ctx.fillStyle = line;
     for (let x = (TICK_GAP - tickOff % TICK_GAP) % TICK_GAP; x < W + TICK_GAP; x += TICK_GAP) {
       ctx.fillRect(Math.round(x) - 2, GY + 5, 4, 4);
     }
 
-    // Ground line — drawn on top so obstacles don't appear to float
+    // Ground line
     ctx.strokeStyle = line;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(0, GY);
-    ctx.lineTo(W, GY);
+    ctx.moveTo(0, GY); ctx.lineTo(W, GY);
     ctx.stroke();
 
-    // HUD
+    // ── HUD ───────────────────────────────────────────────────────────
     ctx.textAlign = 'right';
     ctx.font = '400 13px "DM Mono", monospace';
-    ctx.fillStyle = boostActive ? text : text;
+    ctx.fillStyle = text;
     ctx.fillText((boostActive ? '×10  ' : '') + String(Math.floor(score)).padStart(6, '0'), W - 22, 38);
     ctx.font = '300 10px "DM Mono", monospace';
     ctx.fillStyle = muted;
     ctx.fillText('hi  ' + String(hiScore).padStart(6, '0'), W - 22, 56);
+
+    // Coins (top right, below hi score)
+    ctx.fillText('◆  ' + coins, W - 22, 72);
 
     // Boost indicator — bottom-left
     ctx.textAlign = 'left';
     ctx.font = '400 11px "DM Mono", monospace';
     if (boostActive) {
       ctx.fillStyle = text;
-      ctx.fillText('[ G ]  ×10  ' + boostTimer.toFixed(1) + 's', 22, H - 22);
+      ctx.fillText('[ G ]  ×10  ' + boostTimer.toFixed(1) + 's', 22, H - 38);
     } else if (boostCooldown > 0) {
       ctx.fillStyle = muted;
-      ctx.fillText('[ G ]  ' + boostCooldown.toFixed(1) + 's', 22, H - 22);
+      ctx.fillText('[ G ]  ' + boostCooldown.toFixed(1) + 's', 22, H - 38);
     } else {
       ctx.fillStyle = text;
-      ctx.fillText('[ G ]  ready', 22, H - 22);
+      ctx.fillText('[ G ]  ready', 22, H - 38);
     }
 
-    // State overlays — vertically centered in the play area above ground
+    // Shield indicator
+    const maxShields = upLvl('shield');
+    if (maxShields > 0) {
+      ctx.font = '300 11px "DM Mono", monospace';
+      ctx.fillStyle = muted;
+      let sdots = '';
+      for (let i = 0; i < maxShields; i++) sdots += i < shieldsLeft ? '●' : '○';
+      ctx.fillText('shield  ' + sdots, 22, H - 22);
+    }
+
+    // ── Overlays ──────────────────────────────────────────────────────
     const midY = GY / 2;
     ctx.textAlign = 'center';
+
     if (state === 'idle') {
       ctx.font = '400 32px "DM Mono", monospace';
       ctx.fillStyle = text;
-      ctx.fillText('run', W/2, midY - 16);
+      ctx.fillText('run', W/2, midY - 18);
+
       ctx.font = '300 11px "DM Mono", monospace';
       ctx.fillStyle = muted;
-      ctx.fillText('space  ·  click  ·  tap', W/2, midY + 12);
-      ctx.fillText('double jump available', W/2, midY + 30);
+      ctx.fillText('space  ·  click  ·  tap', W/2, midY + 10);
+      ctx.fillText('double jump available', W/2, midY + 28);
+
+      // Difficulty selector
+      const diffY = midY + 54;
+      ctx.font = '300 11px "DM Mono", monospace';
+      ctx.fillStyle = muted;
+      ctx.fillText('←  ' + difficulty + '  →', W/2, diffY);
+
+      // Upgrades link
+      const uY = midY + 74;
+      ctx.font = '300 10px "DM Mono", monospace';
+      ctx.fillStyle = muted;
+      ctx.fillText('[ U ]  upgrades', W/2, uY);
+      hitAreas.push({ x: W/2 - 60, y: uY - 12, w: 120, h: 18, action: openShop });
+
     } else if (state === 'dead') {
       ctx.font = '400 32px "DM Mono", monospace';
       ctx.fillStyle = text;
-      ctx.fillText('—', W/2, midY - 16);
+      ctx.fillText('—', W/2, midY - 18);
+
       ctx.font = '300 11px "DM Mono", monospace';
       ctx.fillStyle = muted;
       const isNew = Math.floor(score) === hiScore && hiScore > 0;
-      ctx.fillText(String(Math.floor(score)) + (isNew ? '  ← best' : ''), W/2, midY + 12);
-      ctx.fillText('space  ·  click  ·  tap  to retry', W/2, midY + 30);
+      ctx.fillText(String(Math.floor(score)) + (isNew ? '  ← best' : ''), W/2, midY + 10);
+      ctx.fillText('space  ·  click  ·  tap  to retry', W/2, midY + 28);
+
+      // Coins earned
+      if (coinsEarned > 0) {
+        ctx.fillStyle = text;
+        ctx.fillText('+' + coinsEarned + '  coins  (total  ' + coins + ')', W/2, midY + 46);
+      }
+
+      // Upgrades link
+      const uY = midY + 64;
+      ctx.font = '300 10px "DM Mono", monospace';
+      ctx.fillStyle = muted;
+      ctx.fillText('[ U ]  upgrades', W/2, uY + (coinsEarned > 0 ? 18 : 0));
+      hitAreas.push({ x: W/2 - 60, y: uY - 12 + (coinsEarned > 0 ? 18 : 0), w: 120, h: 18, action: openShop });
     }
 
     ctx.restore();
