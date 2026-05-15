@@ -16,14 +16,42 @@
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     :root { --bg: #f5f4f0; --text: #1a1a1a; --muted: #888; --line: #d8d6d0; }
     body.dark { --bg: #111110; --text: #e8e6e2; --muted: #666; --line: #2a2926; }
-    body { background: var(--bg); overflow: hidden; height: 100vh; }
-    canvas { display: block; cursor: none; }
+    body { background: var(--bg); overflow: hidden; height: 100vh; overscroll-behavior: none; }
+    canvas { display: block; cursor: none; touch-action: none; }
+    body.show-cursor canvas { cursor: default; }
+    #back {
+      position: fixed; top: 1.5rem; left: 1.5rem;
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      color: var(--line); text-decoration: none;
+      letter-spacing: 0.06em; z-index: 100;
+    }
+    #back:hover { color: var(--muted); }
+    #theme {
+      position: fixed; top: 1.5rem; right: 1.5rem;
+      background: none; border: none;
+      font-family: 'DM Mono', monospace; font-size: 1.1rem;
+      color: var(--muted); cursor: pointer; padding: 4px; z-index: 100;
+    }
   </style>
 </head>
 <body>
+  <a href="../break.html" id="back">← break</a>
+  <button id="theme" onclick="toggleTheme()">+</button>
   <canvas id="c"></canvas>
   <script>
-  if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
+  function getTheme() { return localStorage.getItem('theme') || 'light'; }
+  function applyTheme(t) {
+    document.body.classList.toggle('dark', t === 'dark');
+    const btn = document.getElementById('theme');
+    if (btn) btn.textContent = t === 'dark' ? '−' : '+';
+  }
+  function toggleTheme() {
+    const t = getTheme() === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('theme', t);
+    applyTheme(t);
+    cacheColors();
+  }
+  applyTheme(getTheme());
 
   function cssVar(v) { return getComputedStyle(document.body).getPropertyValue(v).trim(); }
 
@@ -44,9 +72,9 @@
 
   const DIFF_NAMES = ['easy', 'normal', 'hard'];
   const DIFF = {
-    easy:   { vramp: 11,  clusterBonus: -1, gapMin: 180, gapA: 500, gapB: 300, v0: 380, coinMult: 0.75 },
-    normal: { vramp: 22,  clusterBonus:  0, gapMin: 140, gapA: 380, gapB: 220, v0: 460, coinMult: 1.0  },
-    hard:   { vramp: 33,  clusterBonus:  2, gapMin: 100, gapA: 260, gapB: 140, v0: 540, coinMult: 1.5  },
+    easy:   { vramp: 11,  clusterBonus: -1, gapMin: 200, gapA: 520, gapB: 320, v0: 380, coinMult: 1.0  },
+    normal: { vramp: 20,  clusterBonus:  0, gapMin: 150, gapA: 400, gapB: 240, v0: 450, coinMult: 1.4  },
+    hard:   { vramp: 26,  clusterBonus:  1, gapMin: 130, gapA: 320, gapB: 180, v0: 510, coinMult: 1.9  },
   };
 
   const UPGRADE_DEFS = [
@@ -109,8 +137,14 @@
   const BOOST_DUR_BASE = 5;
   const BOOST_CD_BASE  = 10;
 
+  // [w, h, type]  type: 'block' | 'spike' | 'spike2' | 'spike3'
   const OBS = [
-    [18,32],[20,48],[22,62],[18,28],[20,54],[22,72],[24,42],[18,80],[20,96]
+    [18, 32, 'block'], [20, 48, 'block'], [22, 62, 'block'],
+    [18, 28, 'block'], [20, 54, 'block'], [22, 72, 'block'],
+    [24, 42, 'block'], [18, 80, 'block'], [20, 96, 'block'],
+    [22, 22, 'spike'], [22, 22, 'spike'], [26, 26, 'spike'],
+    [44, 22, 'spike2'], [44, 22, 'spike2'],
+    [66, 22, 'spike3'],
   ];
 
   function effBOOST_DUR()  { return BOOST_DUR_BASE + upLvl('boost_dur') * 2; }
@@ -121,23 +155,27 @@
   // ── State ─────────────────────────────────────────────────────────────
   let state, score, spd, tickOff;
   let spawnTimer, spawnMode, clusterLeft;
-  let player, obstacles, particles, streaks, trail;
+  let pickupTimer;
+  let player, obstacles, particles, streaks, trail, pickups;
   let shakeX, shakeY, lastT;
   let boostActive, boostTimer, boostCooldown;
   let shieldsLeft;
   let hiScore    = +localStorage.getItem('run_hi') || 0;
   let coinsEarned = 0;
+  let coinsCollected = 0;
+  let pickupPulse = 0;
   let shopSel    = 0;
   let mouseX = 0, mouseY = 0;
   let hitAreas   = [];
 
   function init() {
-    state = 'idle'; score = 0; coinsEarned = 0;
+    state = 'idle'; score = 0; coinsEarned = 0; coinsCollected = 0;
     const diff = DIFF[difficulty];
     spd = diff.v0; tickOff = 0;
     spawnTimer = 1.0; spawnMode = 'gap'; clusterLeft = 0;
+    pickupTimer = 1.4;
     player = { x: W * 0.14, y: GY - PS, vy: 0, jumps: effMaxJumps(), angle: 0 };
-    obstacles = []; particles = []; streaks = []; trail = [];
+    obstacles = []; particles = []; streaks = []; trail = []; pickups = [];
     shakeX = shakeY = 0;
     boostActive = false; boostTimer = 0; boostCooldown = 0;
     shieldsLeft = upLvl('shield');
@@ -148,7 +186,13 @@
     if (state === 'idle') { state = 'run'; doJump(); return; }
     if (state === 'dead') { init(); return; }
     if (state === 'shop') return;
+    if (state === 'paused') { state = 'run'; return; }
     doJump();
+  }
+
+  function togglePause() {
+    if (state === 'run') state = 'paused';
+    else if (state === 'paused') state = 'run';
   }
 
   function doJump() {
@@ -208,7 +252,8 @@
     }
     if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); onAction(); }
     if (e.code === 'KeyG') doBoost();
-    if (e.code === 'KeyU') openShop();
+    if (e.code === 'KeyU' && state !== 'run' && state !== 'paused') openShop();
+    if (e.code === 'KeyP') { e.preventDefault(); togglePause(); }
   });
 
   canvas.addEventListener('pointerdown', e => {
@@ -237,6 +282,7 @@
 
   // ── Update ────────────────────────────────────────────────────────────
   function update(dt) {
+    if (state === 'paused') return;
     const fsRunning = state === 'run';
     const bgSpd = boostActive ? spd * 2 : spd;
     farOff = (farOff + (fsRunning ? bgSpd*0.08 : 22) * dt) % FAR_W;
@@ -295,8 +341,8 @@
         clusterLeft = Math.max(1, 2 + Math.floor(Math.random() * (maxSize - 1)));
         spawnMode = 'cluster';
       }
-      const [w, h] = OBS[Math.floor(Math.random() * OBS.length)];
-      obstacles.push({ x: W + 10, y: GY - h, w, h });
+      const [w, h, type] = OBS[Math.floor(Math.random() * OBS.length)];
+      obstacles.push({ x: W + 10, y: GY - h, w, h, type: type || 'block' });
       clusterLeft--;
       if (clusterLeft <= 0) {
         spawnMode = 'gap';
@@ -309,6 +355,30 @@
     for (let i = obstacles.length-1; i >= 0; i--) {
       obstacles[i].x -= eff * dt;
       if (obstacles[i].x + obstacles[i].w < -10) obstacles.splice(i, 1);
+    }
+
+    // Coin pickup spawning — floating diamonds at jump-reachable heights
+    pickupTimer -= dt;
+    if (pickupTimer <= 0) {
+      const py = GY - (40 + Math.random() * 110);
+      pickups.push({ x: W + 14, y: py, r: 8, vy: 0, phase: Math.random() * Math.PI * 2 });
+      pickupTimer = 1.6 + Math.random() * 1.4;
+    }
+    pickupPulse += dt * 4;
+    for (let i = pickups.length - 1; i >= 0; i--) {
+      const pk = pickups[i];
+      pk.x -= eff * dt;
+      if (pk.x + pk.r < -10) { pickups.splice(i, 1); continue; }
+      // Collect: simple circle-vs-AABB
+      const closestX = Math.max(player.x, Math.min(pk.x, player.x + PS));
+      const closestY = Math.max(player.y, Math.min(pk.y, player.y + PS));
+      const dx = pk.x - closestX, dy = pk.y - closestY;
+      if (dx*dx + dy*dy <= pk.r*pk.r + 4) {
+        const earned = boostActive ? 2 : 1;
+        coinsCollected += earned;
+        spawnDust(pk.x, pk.y, 8);
+        pickups.splice(i, 1);
+      }
     }
 
     // Particles
@@ -334,7 +404,8 @@
           state = 'dead';
           hiScore = Math.max(hiScore, Math.floor(score));
           localStorage.setItem('run_hi', hiScore);
-          coinsEarned = Math.floor(Math.floor(score) / 80 * DIFF[difficulty].coinMult);
+          const scoreCoins = Math.floor(Math.floor(score) / 40 * DIFF[difficulty].coinMult);
+          coinsEarned = scoreCoins + coinsCollected;
           coins += coinsEarned;
           saveAll();
           spawnBurst(player.x + PS/2, player.y + PS/2);
@@ -445,15 +516,24 @@
       ctx.fillText(def.desc, cx - colW/2 + 22, rowY + 17);
     }
 
-    // Footer
+    // Footer (tappable to close)
     ctx.textAlign = 'center';
     ctx.font = '300 10px "DM Mono", monospace';
     ctx.fillStyle = muted;
-    ctx.fillText('↑↓ navigate  ·  enter buy  ·  esc back', cx, H - 26);
+    ctx.fillText('↑↓ navigate  ·  enter buy  ·  esc / tap to close', cx, H - 26);
+    hitAreas.push({ x: cx - 180, y: H - 44, w: 360, h: 32, action: closeShop });
+
+    // Close button — top-right
+    ctx.textAlign = 'right';
+    ctx.font = '400 16px "DM Mono", monospace';
+    ctx.fillStyle = text;
+    ctx.fillText('✕', cx + colW/2, ty);
+    hitAreas.push({ x: cx + colW/2 - 24, y: ty - 22, w: 32, h: 32, action: closeShop });
   }
 
   // ── Draw ──────────────────────────────────────────────────────────────
   function draw() {
+    document.body.classList.toggle('show-cursor', state !== 'run');
     if (state === 'shop') { drawShop(); return; }
 
     hitAreas = [];
@@ -513,9 +593,54 @@
       ctx.globalAlpha = 1;
     }
 
-    // Obstacles
+    // Obstacles — blocks render as filled rects, spikes as triangles
     ctx.fillStyle = text;
-    for (const o of obstacles) ctx.fillRect(o.x, o.y, o.w, o.h);
+    for (const o of obstacles) {
+      if (o.type === 'spike') {
+        ctx.beginPath();
+        ctx.moveTo(o.x, o.y + o.h);
+        ctx.lineTo(o.x + o.w/2, o.y);
+        ctx.lineTo(o.x + o.w, o.y + o.h);
+        ctx.closePath();
+        ctx.fill();
+      } else if (o.type === 'spike2') {
+        const sw = o.w / 2;
+        for (let k = 0; k < 2; k++) {
+          ctx.beginPath();
+          ctx.moveTo(o.x + k*sw, o.y + o.h);
+          ctx.lineTo(o.x + k*sw + sw/2, o.y);
+          ctx.lineTo(o.x + k*sw + sw, o.y + o.h);
+          ctx.closePath();
+          ctx.fill();
+        }
+      } else if (o.type === 'spike3') {
+        const sw = o.w / 3;
+        for (let k = 0; k < 3; k++) {
+          ctx.beginPath();
+          ctx.moveTo(o.x + k*sw, o.y + o.h);
+          ctx.lineTo(o.x + k*sw + sw/2, o.y);
+          ctx.lineTo(o.x + k*sw + sw, o.y + o.h);
+          ctx.closePath();
+          ctx.fill();
+        }
+      } else {
+        ctx.fillRect(o.x, o.y, o.w, o.h);
+      }
+    }
+
+    // Coin pickups — pulsing golden diamonds
+    for (const pk of pickups) {
+      const pulse = 1 + Math.sin(pickupPulse + pk.phase) * 0.12;
+      const r = pk.r * pulse;
+      ctx.save();
+      ctx.translate(pk.x, pk.y);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = '#c8a020';
+      ctx.fillRect(-r, -r, r*2, r*2);
+      ctx.fillStyle = bg;
+      ctx.fillRect(-r*0.45, -r*0.45, r*0.9, r*0.9);
+      ctx.restore();
+    }
 
     // Player — GD-style rotating cube
     if (state !== 'dead') {
@@ -574,9 +699,9 @@
     ctx.fillText('hi  ' + String(hiScore).padStart(6, '0'), W - 22, 56);
 
     // Coins (top right, below hi score)
-    ctx.fillText('◆  ' + coins, W - 22, 72);
+    ctx.fillText('◆  ' + coins + (coinsCollected > 0 && state === 'run' ? '  +' + coinsCollected : ''), W - 22, 72);
 
-    // Boost indicator — bottom-left
+    // Boost indicator — bottom-left (tappable while running)
     ctx.textAlign = 'left';
     ctx.font = '400 11px "DM Mono", monospace';
     if (boostActive) {
@@ -588,6 +713,31 @@
     } else {
       ctx.fillStyle = text;
       ctx.fillText('[ G ]  ready', 22, H - 38);
+    }
+    if (state === 'run') {
+      hitAreas.push({ x: 12, y: H - 60, w: 180, h: 48, action: doBoost });
+    }
+
+    // Pause button — top-right, below coins
+    if (state === 'run' || state === 'paused') {
+      const pSize = 36;
+      const pX = W - 22 - pSize;
+      const pY = 92;
+      ctx.strokeStyle = line; ctx.lineWidth = 1;
+      ctx.strokeRect(pX + 0.5, pY + 0.5, pSize, pSize);
+      ctx.fillStyle = text;
+      if (state === 'paused') {
+        ctx.beginPath();
+        ctx.moveTo(pX + 13, pY + 10);
+        ctx.lineTo(pX + 13, pY + 26);
+        ctx.lineTo(pX + 27, pY + 18);
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        ctx.fillRect(pX + 11, pY + 10, 4, 16);
+        ctx.fillRect(pX + 21, pY + 10, 4, 16);
+      }
+      hitAreas.push({ x: pX - 6, y: pY - 6, w: pSize + 12, h: pSize + 12, action: togglePause });
     }
 
     // Shield indicator
@@ -614,11 +764,19 @@
       ctx.fillText('space  ·  click  ·  tap', W/2, midY + 10);
       ctx.fillText('double jump available', W/2, midY + 28);
 
-      // Difficulty selector
+      // Difficulty selector (tap cycles)
       const diffY = midY + 54;
       ctx.font = '300 11px "DM Mono", monospace';
       ctx.fillStyle = muted;
       ctx.fillText('←  ' + difficulty + '  →', W/2, diffY);
+      hitAreas.push({
+        x: W/2 - 80, y: diffY - 14, w: 160, h: 24,
+        action: () => {
+          const i = DIFF_NAMES.indexOf(difficulty);
+          difficulty = DIFF_NAMES[(i + 1) % DIFF_NAMES.length];
+          saveAll();
+        }
+      });
 
       // Upgrades link
       const uY = midY + 74;
@@ -626,6 +784,19 @@
       ctx.fillStyle = muted;
       ctx.fillText('[ U ]  upgrades', W/2, uY);
       hitAreas.push({ x: W/2 - 60, y: uY - 12, w: 120, h: 18, action: openShop });
+
+    } else if (state === 'paused') {
+      ctx.fillStyle = bg;
+      ctx.globalAlpha = 0.72;
+      ctx.fillRect(-20, -20, W + 40, H + 40);
+      ctx.globalAlpha = 1;
+      ctx.font = '400 32px "DM Mono", monospace';
+      ctx.fillStyle = text;
+      ctx.fillText('paused', W/2, midY - 8);
+      ctx.font = '300 11px "DM Mono", monospace';
+      ctx.fillStyle = muted;
+      ctx.fillText('P  ·  click  ·  tap  to resume', W/2, midY + 20);
+      hitAreas.push({ x: 0, y: 0, w: W, h: H, action: togglePause });
 
     } else if (state === 'dead') {
       ctx.font = '400 32px "DM Mono", monospace';
@@ -641,15 +812,20 @@
       // Coins earned
       if (coinsEarned > 0) {
         ctx.fillStyle = text;
-        ctx.fillText('+' + coinsEarned + '  coins  (total  ' + coins + ')', W/2, midY + 46);
+        const breakdown = coinsCollected > 0
+          ? '+' + coinsEarned + '  coins  (' + (coinsEarned - coinsCollected) + ' score · ' + coinsCollected + ' picked up)'
+          : '+' + coinsEarned + '  coins';
+        ctx.fillText(breakdown, W/2, midY + 46);
+        ctx.fillStyle = muted;
+        ctx.fillText('total  ' + coins, W/2, midY + 62);
       }
 
       // Upgrades link
-      const uY = midY + 64;
+      const uY = midY + 64 + (coinsEarned > 0 ? 30 : 0);
       ctx.font = '300 10px "DM Mono", monospace';
       ctx.fillStyle = muted;
-      ctx.fillText('[ U ]  upgrades', W/2, uY + (coinsEarned > 0 ? 18 : 0));
-      hitAreas.push({ x: W/2 - 60, y: uY - 12 + (coinsEarned > 0 ? 18 : 0), w: 120, h: 18, action: openShop });
+      ctx.fillText('[ U ]  upgrades', W/2, uY);
+      hitAreas.push({ x: W/2 - 60, y: uY - 12, w: 120, h: 18, action: openShop });
     }
 
     ctx.restore();
