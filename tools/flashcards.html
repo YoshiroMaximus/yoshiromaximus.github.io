@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flashcards — Yoshiro</title>
+  <link rel="icon" type="image/x-icon" href="/favistuff/favicon.ico">
+  <meta name="description" content="Tinder-style flashcards for studying. Load JSON or formatted text and swipe through.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #f5f4f0;
+      --bg2: #eeecea;
+      --text: #1a1a1a;
+      --muted: #888;
+      --line: #d8d6d0;
+      --accent: #9b8ea0;
+      --accent2: #7a9490;
+      --accent3: #a08b7a;
+      --tag-bg: #e8e6e2;
+      --know: #7a9490;
+      --skip: #b07a7a;
+    }
+
+    body.dark {
+      --bg: #111110;
+      --bg2: #1a1917;
+      --text: #e8e6e2;
+      --muted: #666;
+      --line: #2a2926;
+      --tag-bg: #1e1d1b;
+      --know: #8aa8a4;
+      --skip: #c08a8a;
+    }
+
+    html, body { height: 100%; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      transition: background 0.2s ease, color 0.2s ease;
+      overscroll-behavior: none;
+      touch-action: none;
+    }
+
+    /* ── Theme toggle / back link ── */
+    .theme-toggle {
+      position: fixed; top: 1.5rem; right: 1.5rem;
+      display: flex; gap: 0.1rem; z-index: 300;
+    }
+    .theme-btn {
+      font-family: 'DM Mono', monospace; font-size: 1rem;
+      color: var(--line); background: none; border: none; cursor: pointer;
+      padding: 0.15rem 0.3rem; line-height: 1;
+      transition: color 0.2s ease; user-select: none;
+    }
+    .theme-btn:hover { color: var(--muted); }
+    .theme-btn.active { color: var(--text); }
+
+    .back-link {
+      position: fixed; top: 1.5rem; left: 1.5rem;
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      color: var(--line); text-decoration: none; letter-spacing: 0.06em;
+      transition: color 0.2s ease; z-index: 300;
+    }
+    .back-link:hover { color: var(--muted); }
+
+    /* ── Layout ── */
+    .page {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 5rem 2rem 3rem;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      opacity: 0;
+      animation: fadeUp 0.6s ease 0.1s forwards;
+      transition: max-width 0.3s ease, padding 0.3s ease;
+    }
+    body.in-deck .page {
+      max-width: 880px;
+      padding: 3.5rem 2rem 2rem;
+    }
+    body.in-deck .header-label,
+    body.in-deck h1,
+    body.in-deck .tagline { display: none; }
+
+    .header-label {
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      color: var(--muted); letter-spacing: 0.12em;
+      text-transform: uppercase; margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: clamp(2.2rem, 6vw, 3rem);
+      font-weight: 500; letter-spacing: -0.03em; line-height: 1;
+      background: linear-gradient(100deg, #9b8ea0, #7a9490, #a08b7a);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 0.5rem;
+    }
+    .tagline {
+      font-size: 0.95rem; font-weight: 300; color: var(--muted);
+      max-width: 380px; margin-bottom: 2.5rem;
+    }
+
+    /* ── Loader panel ── */
+    .loader { display: flex; flex-direction: column; gap: 1rem; }
+    .loader.hidden { display: none; }
+
+    .loader-row {
+      display: flex; gap: 0.5rem; flex-wrap: wrap;
+    }
+
+    .btn {
+      font-family: 'DM Mono', monospace; font-size: 0.75rem;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      background: var(--bg2); color: var(--text);
+      border: 1px solid var(--line); padding: 0.6rem 1rem;
+      cursor: pointer; transition: background 0.15s ease, border 0.15s ease;
+      border-radius: 2px;
+    }
+    .btn:hover { background: var(--tag-bg); border-color: var(--muted); }
+    .btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .btn.primary:hover { opacity: 0.85; }
+
+    textarea {
+      width: 100%; min-height: 180px;
+      font-family: 'DM Mono', monospace; font-size: 0.8rem;
+      background: var(--bg2); color: var(--text);
+      border: 1px solid var(--line); border-radius: 2px;
+      padding: 0.8rem; resize: vertical;
+      transition: border 0.15s ease;
+    }
+    textarea:focus { outline: none; border-color: var(--muted); }
+
+    .hint {
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      color: var(--muted); line-height: 1.6;
+    }
+    .hint code {
+      background: var(--tag-bg); padding: 0.1rem 0.3rem;
+      border-radius: 2px; font-size: 0.95em;
+    }
+
+    .err {
+      font-family: 'DM Mono', monospace; font-size: 0.75rem;
+      color: var(--skip); padding: 0.5rem 0;
+    }
+
+    /* ── Deck ── */
+    .deck-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+    .deck-wrap.hidden { display: none; }
+
+    .deck-bar {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 1.5rem;
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .deck-bar .mode { color: var(--accent2); }
+    .deck-bar button {
+      font-family: inherit; font-size: inherit; letter-spacing: inherit;
+      text-transform: inherit; color: var(--muted);
+      background: none; border: none; cursor: pointer; padding: 0;
+    }
+    .deck-bar button:hover { color: var(--text); }
+
+    .stage {
+      position: relative;
+      flex: 1;
+      min-height: 460px;
+      display: flex; align-items: center; justify-content: center;
+      perspective: 1200px;
+    }
+
+    .card {
+      position: absolute;
+      width: min(100%, 520px);
+      height: min(72vh, 620px);
+      cursor: grab;
+      user-select: none;
+      transform-origin: center 110%;
+      will-change: transform;
+      perspective: 1200px;
+    }
+    .card.dragging { cursor: grabbing; transition: none !important; }
+    .card.snap { transition: transform 0.3s cubic-bezier(.2,.7,.2,1); }
+    .card.fling { transition: transform 0.45s cubic-bezier(.4,.1,.6,1), opacity 0.45s ease; }
+
+    .card-inner {
+      position: absolute; inset: 0;
+      transform-style: preserve-3d;
+      transition: transform 0.55s cubic-bezier(.2,.7,.2,1);
+    }
+    .card.flip .card-inner { transform: rotateY(180deg); }
+
+    .face {
+      position: absolute; inset: 0;
+      padding: 1.75rem 1.5rem;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      text-align: center;
+      background: var(--bg2);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 1px 0 var(--line), 0 12px 32px -16px rgba(0,0,0,0.18);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .face-front { transform: rotateY(0deg); }
+    .face-back  { transform: rotateY(180deg); background: var(--bg); }
+
+    .face-label {
+      position: absolute; top: 1rem; left: 1.25rem;
+      font-family: 'DM Mono', monospace; font-size: 0.6rem;
+      color: var(--muted); letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .face-num {
+      position: absolute; top: 1rem; right: 1.25rem;
+      font-family: 'DM Mono', monospace; font-size: 0.6rem;
+      color: var(--muted); letter-spacing: 0.08em;
+    }
+    .face-hint {
+      position: absolute; bottom: 1rem; left: 0; right: 0;
+      font-family: 'DM Mono', monospace; font-size: 0.6rem;
+      color: var(--line); letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .card-text {
+      font-size: clamp(1.25rem, 2.4vw, 1.75rem);
+      font-weight: 400; line-height: 1.4;
+      max-width: 100%;
+    }
+    .card-text .blank {
+      display: inline-block; min-width: 3em;
+      border-bottom: 2px solid var(--muted);
+      padding: 0 0.2em; color: transparent;
+    }
+    .card-text .answer {
+      color: var(--accent2); font-weight: 500;
+    }
+    .card-text .mono {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.9em;
+    }
+    .card-text .italic {
+      font-style: italic; font-weight: 300;
+      color: var(--accent3);
+    }
+
+    /* ── Typing mode ── */
+    .type-zone {
+      margin-top: 1.5rem;
+      width: 85%;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 0.6rem;
+    }
+    .type-input {
+      width: 100%;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--line); border-radius: 4px;
+      padding: 0.6rem 0.8rem;
+      font-family: 'DM Mono', monospace; font-size: 0.95rem;
+      text-align: center;
+      transition: border 0.15s ease;
+    }
+    .type-input:focus { outline: none; border-color: var(--accent2); }
+    .type-input:disabled { opacity: 0.65; }
+    .type-result {
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      min-height: 1em;
+    }
+    .type-result.ok { color: var(--know); }
+    .type-result.no { color: var(--skip); }
+
+    /* Loader study-mode toggle */
+    .study-row {
+      display: flex; gap: 1rem; flex-wrap: wrap;
+      font-family: 'DM Mono', monospace; font-size: 0.75rem;
+      color: var(--muted); letter-spacing: 0.04em;
+    }
+    .study-row label {
+      display: flex; align-items: center; gap: 0.4rem;
+      cursor: pointer; user-select: none;
+    }
+    .study-row input { accent-color: var(--accent2); }
+    .study-row label:hover { color: var(--text); }
+
+    .swipe-tag {
+      position: absolute;
+      top: 1.25rem;
+      font-family: 'DM Mono', monospace; font-size: 0.85rem;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      padding: 0.3rem 0.6rem; border: 2px solid;
+      border-radius: 4px; opacity: 0; transition: opacity 0.1s ease;
+      pointer-events: none;
+    }
+    .swipe-tag.know { right: 1.25rem; color: var(--know); border-color: var(--know); transform: rotate(12deg); }
+    .swipe-tag.skip { left: 1.25rem; color: var(--skip); border-color: var(--skip); transform: rotate(-12deg); }
+
+    /* ── Controls ── */
+    .controls {
+      display: flex; justify-content: center; gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+    .ctrl-btn {
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      background: var(--bg2); color: var(--muted);
+      border: 1px solid var(--line); padding: 0.6rem 0.9rem;
+      cursor: pointer; border-radius: 2px;
+      transition: background 0.15s ease, color 0.15s ease, border 0.15s ease;
+    }
+    .ctrl-btn:hover { color: var(--text); border-color: var(--muted); }
+    .ctrl-btn.skip:hover { color: var(--skip); border-color: var(--skip); }
+    .ctrl-btn.know:hover { color: var(--know); border-color: var(--know); }
+    .ctrl-btn.flip:hover { color: var(--accent2); border-color: var(--accent2); }
+
+    /* ── Done ── */
+    .done { display: none; text-align: center; padding: 3rem 0; }
+    .done.show { display: block; }
+    .done h2 {
+      font-size: 1.5rem; font-weight: 500; margin-bottom: 0.5rem;
+    }
+    .done p {
+      color: var(--muted); margin-bottom: 1.5rem;
+      font-family: 'DM Mono', monospace; font-size: 0.8rem;
+    }
+    .done .stats {
+      display: flex; gap: 2rem; justify-content: center;
+      margin-bottom: 1.75rem;
+    }
+    .stat-val { font-size: 1.75rem; font-weight: 500; }
+    .stat-lbl {
+      font-family: 'DM Mono', monospace; font-size: 0.6rem;
+      color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase;
+    }
+    .stat-val.know { color: var(--know); }
+    .stat-val.skip { color: var(--skip); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="theme-toggle">
+    <button class="theme-btn" id="btn-light" onclick="setTheme('light')" title="Light">+</button>
+    <button class="theme-btn" id="btn-dark" onclick="setTheme('dark')" title="Dark">−</button>
+  </div>
+
+  <a class="back-link" href="/tools.html">← tools</a>
+
+  <div class="page">
+    <p class="header-label">Yoshiro</p>
+    <h1>Flashcards</h1>
+    <p class="tagline">Swipe through a deck. Right if you know it, left to review. Tap to flip.</p>
+
+    <!-- Loader -->
+    <div class="loader" id="loader">
+      <div class="loader-row">
+        <button class="btn" onclick="document.getElementById('file-in').click()">Load file</button>
+        <button class="btn" onclick="loadSample()">Try sample deck</button>
+        <a class="btn" href="/tools/flashcards-gen.html">Generate from PDF/DOCX →</a>
+      </div>
+      <input type="file" id="file-in" accept=".json,.txt" style="display:none">
+
+      <textarea id="paste-in" placeholder="Or paste JSON / text here…
+
+# title: Cell Biology
+# mode: fill-blank
+The powerhouse of the cell is the ___ || mitochondrion
+DNA is replicated during the ___ phase || S
+"></textarea>
+      <div class="study-row">
+        <label><input type="radio" name="study" value="swipe" checked> Swipe mode</label>
+        <label><input type="radio" name="study" value="type"> Practice by typing (active recall)</label>
+      </div>
+      <div class="loader-row">
+        <button class="btn primary" onclick="loadFromPaste()">Start deck</button>
+      </div>
+      <p class="hint">
+        <strong>JSON:</strong> <code>{ "title": "...", "mode": "standard|fill-blank|vocab", "cards": [{"front":"...","back":"..."}] }</code><br>
+        <strong>Text:</strong> one card per line, <code>front || back</code>. Optional <code># title:</code> and <code># mode:</code> headers.<br>
+        <strong>Modes:</strong> <code>standard</code> Q/A · <code>fill-blank</code> hides answer with a blank · <code>vocab</code> word→definition
+      </p>
+      <p class="err" id="err"></p>
+    </div>
+
+    <!-- Deck -->
+    <div class="deck-wrap hidden" id="deck">
+      <div class="deck-bar">
+        <span><span id="deck-title">Deck</span> · <span class="mode" id="deck-mode">standard</span></span>
+        <span>
+          <span id="deck-pos">0 / 0</span> ·
+          <button onclick="reset()">restart</button> ·
+          <button onclick="newDeck()" title="Exit deck (Esc)">exit ×</button>
+        </span>
+      </div>
+      <div class="stage" id="stage"></div>
+      <div class="controls">
+        <button class="ctrl-btn skip" onclick="action('skip')">← Review</button>
+        <button class="ctrl-btn flip" onclick="action('flip')">Flip</button>
+        <button class="ctrl-btn know" onclick="action('know')">Know →</button>
+      </div>
+    </div>
+
+    <!-- Done -->
+    <div class="done" id="done">
+      <h2>Deck complete</h2>
+      <p>Nice work.</p>
+      <div class="stats">
+        <div><div class="stat-val know" id="stat-know">0</div><div class="stat-lbl">Knew</div></div>
+        <div><div class="stat-val skip" id="stat-skip">0</div><div class="stat-lbl">Review</div></div>
+      </div>
+      <div class="loader-row" style="justify-content:center">
+        <button class="btn" onclick="restartSkipped()" id="btn-skipped">Restart review only</button>
+        <button class="btn" onclick="reset()">Restart all</button>
+        <button class="btn" onclick="newDeck()">New deck</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Theme ──
+    function setTheme(theme) {
+      document.body.classList.toggle('dark', theme === 'dark');
+      document.getElementById('btn-light').classList.toggle('active', theme === 'light');
+      document.getElementById('btn-dark').classList.toggle('active', theme === 'dark');
+      localStorage.setItem('theme', theme);
+    }
+    setTheme(localStorage.getItem('theme') || 'light');
+
+    // ── Hash handoff (from generator) ──
+    (function tryHashDeck() {
+      const m = location.hash.match(/deck=([^&]+)/);
+      if (!m) return;
+      try {
+        const json = decodeURIComponent(escape(atob(decodeURIComponent(m[1]))));
+        history.replaceState(null, '', location.pathname);
+        setTimeout(() => {
+          try { startDeck(parseInput(json)); }
+          catch (e) { document.getElementById('paste-in').value = json; }
+        }, 0);
+      } catch (e) { /* ignore */ }
+    })();
+
+    // ── State ──
+    let deck = null;     // { title, mode, cards: [{front, back}] }
+    let order = [];      // remaining card indexes
+    let stats = { know: 0, skip: 0, skippedIdx: [] };
+    let currentCardEl = null;
+    let studyMode = 'swipe'; // 'swipe' | 'type'
+
+    // ── Parsing ──
+    function parseInput(raw) {
+      raw = raw.trim();
+      if (!raw) throw new Error('Empty input.');
+      // JSON?
+      if (raw[0] === '{' || raw[0] === '[') {
+        const j = JSON.parse(raw);
+        const cards = Array.isArray(j) ? j : j.cards;
+        if (!Array.isArray(cards) || !cards.length) throw new Error('No cards found in JSON.');
+        return {
+          title: (j.title || 'Deck').toString(),
+          mode: normMode(j.mode),
+          cards: cards.map((c, i) => {
+            const front = c.front ?? c.q ?? c.question ?? c.term;
+            const back  = c.back  ?? c.a ?? c.answer   ?? c.definition;
+            if (front == null || back == null) throw new Error(`Card ${i+1} missing front/back.`);
+            return { front: String(front), back: String(back) };
+          }),
+        };
+      }
+      // Plain text
+      let title = 'Deck', mode = 'standard';
+      const cards = [];
+      for (const line of raw.split(/\r?\n/)) {
+        const t = line.trim();
+        if (!t) continue;
+        if (t.startsWith('#')) {
+          const m = t.slice(1).trim().match(/^(title|mode)\s*:\s*(.+)$/i);
+          if (m) {
+            if (m[1].toLowerCase() === 'title') title = m[2].trim();
+            else mode = normMode(m[2].trim());
+          }
+          continue;
+        }
+        const sep = t.includes('||') ? '||' : (t.includes('\t') ? '\t' : (t.includes(' | ') ? ' | ' : null));
+        if (!sep) throw new Error(`Line "${t.slice(0,40)}…" missing "||" separator.`);
+        const [f, b] = t.split(sep);
+        if (!f || !b) throw new Error(`Line "${t.slice(0,40)}…" missing front or back.`);
+        cards.push({ front: f.trim(), back: b.trim() });
+      }
+      if (!cards.length) throw new Error('No cards parsed from text.');
+      return { title, mode, cards };
+    }
+
+    const MODES = ['standard', 'fill-blank', 'vocab', 'define', 'language', 'formula', 'dates', 'quote'];
+    function normMode(m) {
+      m = (m || 'standard').toString().toLowerCase().trim();
+      return MODES.includes(m) ? m : 'standard';
+    }
+
+    // ── Loading ──
+    function showErr(msg) {
+      document.getElementById('err').textContent = msg || '';
+    }
+    function loadFromPaste() {
+      try {
+        const text = document.getElementById('paste-in').value;
+        startDeck(parseInput(text));
+      } catch (e) { showErr(e.message); }
+    }
+    function loadSample() {
+      const sample = {
+        title: 'Bio sampler', mode: 'fill-blank',
+        cards: [
+          { front: 'The powerhouse of the cell is the ___', back: 'mitochondrion' },
+          { front: 'DNA replication occurs during the ___ phase of interphase', back: 'S' },
+          { front: 'The basic unit of heredity is the ___', back: 'gene' },
+          { front: 'Photosynthesis happens in the ___ of plant cells', back: 'chloroplast' },
+          { front: 'Ribosomes are the site of ___ synthesis', back: 'protein' },
+        ],
+      };
+      startDeck(sample);
+    }
+    document.getElementById('file-in').addEventListener('change', (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = () => {
+        try { startDeck(parseInput(r.result)); }
+        catch (err) { showErr(err.message); }
+      };
+      r.readAsText(f);
+    });
+
+    function startDeck(d) {
+      showErr('');
+      deck = d;
+      const studyRadio = document.querySelector('input[name="study"]:checked');
+      studyMode = studyRadio ? studyRadio.value : 'swipe';
+      stats = { know: 0, skip: 0, skippedIdx: [] };
+      order = deck.cards.map((_, i) => i);
+      document.body.classList.add('in-deck');
+      document.getElementById('loader').classList.add('hidden');
+      document.getElementById('done').classList.remove('show');
+      document.getElementById('deck').classList.remove('hidden');
+      document.getElementById('deck-title').textContent = deck.title;
+      document.getElementById('deck-mode').textContent = deck.mode + (studyMode === 'type' ? ' · type' : '');
+      renderTop();
+    }
+
+    function newDeck() {
+      document.body.classList.remove('in-deck');
+      document.getElementById('loader').classList.remove('hidden');
+      document.getElementById('done').classList.remove('show');
+      document.getElementById('deck').classList.add('hidden');
+      document.getElementById('stage').innerHTML = '';
+    }
+
+    function reset() {
+      if (!deck) return;
+      stats = { know: 0, skip: 0, skippedIdx: [] };
+      order = deck.cards.map((_, i) => i);
+      document.getElementById('done').classList.remove('show');
+      document.getElementById('deck').classList.remove('hidden');
+      renderTop();
+    }
+
+    function restartSkipped() {
+      if (!deck || !stats.skippedIdx.length) return;
+      const idxs = stats.skippedIdx.slice();
+      stats = { know: 0, skip: 0, skippedIdx: [] };
+      order = idxs;
+      document.getElementById('done').classList.remove('show');
+      document.getElementById('deck').classList.remove('hidden');
+      renderTop();
+    }
+
+    // ── Rendering ──
+    function renderCardFace(card, mode, side) {
+      const front = side === 'front';
+      if (mode === 'fill-blank') {
+        if (front) return formatBlank(card.front, false);
+        if (card.front.includes('___')) return formatBlank(card.front, true, card.back);
+        return `<span class="answer">${escapeHtml(card.back)}</span>`;
+      }
+      if (mode === 'formula' && !front) {
+        return `<span class="mono">${escapeHtml(card.back)}</span>`;
+      }
+      if (mode === 'language') {
+        return `<span class="mono">${escapeHtml(front ? card.front : card.back)}</span>`;
+      }
+      if (mode === 'quote' && front) {
+        return `<span class="italic">"${escapeHtml(card.front)}"</span>`;
+      }
+      return escapeHtml(front ? card.front : card.back);
+    }
+
+    function formatBlank(text, reveal, answer) {
+      const safe = escapeHtml(text);
+      const replaced = safe.replace(/_{3,}/g, () => {
+        return reveal
+          ? `<span class="answer">${escapeHtml(answer)}</span>`
+          : `<span class="blank">____</span>`;
+      });
+      return replaced;
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, (c) => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      })[c]);
+    }
+
+    function modeLabel(mode, side) {
+      const front = side === 'front';
+      switch (mode) {
+        case 'fill-blank': return front ? 'Fill in' : 'Answer';
+        case 'vocab':      return front ? 'Term' : 'Definition';
+        case 'define':     return front ? 'Definition' : 'Term';
+        case 'language':   return front ? 'Foreign' : 'English';
+        case 'formula':    return front ? 'Concept' : 'Formula';
+        case 'dates':      return front ? 'Event' : 'Date';
+        case 'quote':      return front ? 'Passage' : 'Source / meaning';
+        default:           return front ? 'Question' : 'Answer';
+      }
+    }
+
+    function renderTop() {
+      const stage = document.getElementById('stage');
+      stage.innerHTML = '';
+      const total = deck.cards.length;
+      const done = total - order.length;
+      document.getElementById('deck-pos').textContent = `${done} / ${total}`;
+
+      if (!order.length) { finish(); return; }
+
+      // Render next card behind (peek), then top card
+      if (order.length > 1) {
+        const peek = buildCard(deck.cards[order[1]], 1);
+        stage.appendChild(peek);
+      }
+      const top = buildCard(deck.cards[order[0]], 0);
+      stage.appendChild(top);
+      currentCardEl = top;
+      if (studyMode === 'type') {
+        bindTyping(top, deck.cards[order[0]]);
+      } else {
+        bindDrag(top);
+      }
+    }
+
+    function buildCard(card, depth) {
+      const el = document.createElement('div');
+      el.className = 'card';
+      el.style.zIndex = String(100 - depth);
+      el.style.transform = depth === 0
+        ? 'translate(0,0) rotate(0deg) scale(1)'
+        : `translate(0, ${depth * 8}px) scale(${1 - depth * 0.04})`;
+      el.style.opacity = depth === 0 ? '1' : '0.7';
+
+      const idxInDeck = deck.cards.indexOf(card) + 1;
+      const isTop = depth === 0;
+      const typingHTML = (studyMode === 'type' && isTop) ? `
+        <div class="type-zone">
+          <input class="type-input" placeholder="type the answer…" autocomplete="off" autocapitalize="off" spellcheck="false">
+          <div class="type-result"></div>
+        </div>` : '';
+      const frontHint = studyMode === 'type'
+        ? (isTop ? 'Enter to check' : '')
+        : 'Tap to flip · Swipe →';
+      el.innerHTML = `
+        <div class="card-inner">
+          <div class="face face-front">
+            <div class="face-label">${modeLabel(deck.mode, 'front')}</div>
+            <div class="face-num">#${idxInDeck}</div>
+            <div class="card-text">${renderCardFace(card, deck.mode, 'front')}</div>
+            ${typingHTML}
+            <div class="face-hint">${frontHint}</div>
+          </div>
+          <div class="face face-back">
+            <div class="face-label">${modeLabel(deck.mode, 'back')}</div>
+            <div class="face-num">#${idxInDeck}</div>
+            <div class="card-text">${renderCardFace(card, deck.mode, 'back')}</div>
+            <div class="face-hint">Tap to flip back</div>
+          </div>
+        </div>
+        <div class="swipe-tag know">Know</div>
+        <div class="swipe-tag skip">Review</div>
+      `;
+      return el;
+    }
+
+    // ── Typing mode ──
+    function normalize(s) {
+      return String(s).toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/[.,!?;:'"()\[\]{}]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function bindTyping(el, card) {
+      const input = el.querySelector('.type-input');
+      const result = el.querySelector('.type-result');
+      if (!input) return;
+      setTimeout(() => input.focus(), 60);
+
+      // Stop globals from hijacking typing.
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { newDeck(); return; }
+        e.stopPropagation();
+        if (e.key === 'Enter') { e.preventDefault(); grade(); }
+      });
+
+      function grade() {
+        if (input.disabled) return;
+        const guess = normalize(input.value);
+        if (!guess) return;
+        const answer = normalize(card.back);
+        // Accept guess if it matches the answer, OR if answer matches guess
+        // (for cases where back is "the mitochondrion" and guess is "mitochondrion").
+        const ok = guess === answer
+          || answer.split(/[,/]/).map(s => s.trim()).includes(guess)
+          || (answer.length > 3 && (answer.includes(guess) || guess.includes(answer)) &&
+              Math.abs(answer.length - guess.length) <= 3);
+        input.disabled = true;
+        input.blur(); // release focus so bottom controls / keys work
+        if (ok) {
+          result.textContent = 'Correct ✓';
+          result.className = 'type-result ok';
+          setTimeout(() => {
+            el.classList.add('flip');
+            setTimeout(() => fling(el, 'know'), 900);
+          }, 250);
+        } else {
+          result.textContent = `Was: ${card.back}`;
+          result.className = 'type-result no';
+          setTimeout(() => el.classList.add('flip'), 200);
+        }
+      }
+    }
+
+    // ── Drag / swipe ──
+    const SWIPE_THRESHOLD = 110;
+    function bindDrag(el) {
+      let startX = 0, startY = 0, dx = 0, dy = 0, dragging = false, downTime = 0;
+      const know = el.querySelector('.swipe-tag.know');
+      const skip = el.querySelector('.swipe-tag.skip');
+
+      const onDown = (e) => {
+        // Don't drag when interacting with controls; this is the card itself.
+        dragging = true;
+        downTime = Date.now();
+        startX = e.clientX; startY = e.clientY;
+        dx = 0; dy = 0;
+        el.classList.add('dragging');
+        el.setPointerCapture?.(e.pointerId);
+      };
+      const onMove = (e) => {
+        if (!dragging) return;
+        dx = e.clientX - startX;
+        dy = e.clientY - startY;
+        const rot = Math.max(-18, Math.min(18, dx * 0.06));
+        el.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
+        know.style.opacity = String(Math.max(0, Math.min(1, dx / SWIPE_THRESHOLD)));
+        skip.style.opacity = String(Math.max(0, Math.min(1, -dx / SWIPE_THRESHOLD)));
+      };
+      const onUp = (e) => {
+        if (!dragging) return;
+        dragging = false;
+        el.classList.remove('dragging');
+        const elapsed = Date.now() - downTime;
+        const isTap = Math.abs(dx) < 6 && Math.abs(dy) < 6 && elapsed < 300;
+        if (isTap) {
+          el.classList.toggle('flip');
+          know.style.opacity = '0'; skip.style.opacity = '0';
+          el.style.transform = 'translate(0,0) rotate(0deg)';
+          return;
+        }
+        if (Math.abs(dx) > SWIPE_THRESHOLD) {
+          fling(el, dx > 0 ? 'know' : 'skip');
+        } else {
+          el.classList.add('snap');
+          el.style.transform = 'translate(0,0) rotate(0deg)';
+          know.style.opacity = '0'; skip.style.opacity = '0';
+          setTimeout(() => el.classList.remove('snap'), 320);
+        }
+      };
+
+      el.addEventListener('pointerdown', onDown);
+      el.addEventListener('pointermove', onMove);
+      el.addEventListener('pointerup', onUp);
+      el.addEventListener('pointercancel', onUp);
+    }
+
+    function fling(el, dir) {
+      el.classList.remove('snap');
+      el.classList.add('fling');
+      const x = dir === 'know' ? window.innerWidth : -window.innerWidth;
+      const rot = dir === 'know' ? 24 : -24;
+      el.style.transform = `translate(${x}px, 60px) rotate(${rot}deg)`;
+      el.style.opacity = '0';
+      const idx = order.shift();
+      if (dir === 'know') stats.know++;
+      else { stats.skip++; stats.skippedIdx.push(idx); }
+      setTimeout(() => renderTop(), 260);
+    }
+
+    function action(kind) {
+      if (!currentCardEl) return;
+      if (kind === 'flip') { currentCardEl.classList.toggle('flip'); return; }
+      fling(currentCardEl, kind);
+    }
+
+    // Keyboard
+    document.addEventListener('keydown', (e) => {
+      if (document.getElementById('deck').classList.contains('hidden')) return;
+      if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+      if (e.key === 'ArrowRight') action('know');
+      else if (e.key === 'ArrowLeft') action('skip');
+      else if (e.key === ' ' || e.key.toLowerCase() === 'f') { e.preventDefault(); action('flip'); }
+      else if (e.key === 'Escape') newDeck();
+    });
+
+    function finish() {
+      document.getElementById('deck').classList.add('hidden');
+      document.getElementById('done').classList.add('show');
+      document.getElementById('stat-know').textContent = stats.know;
+      document.getElementById('stat-skip').textContent = stats.skip;
+      document.getElementById('btn-skipped').style.display = stats.skippedIdx.length ? '' : 'none';
+    }
+  </script>
+</body>
+</html>
