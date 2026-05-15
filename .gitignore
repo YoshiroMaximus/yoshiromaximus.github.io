@@ -4,3 +4,8 @@
 !.dev.vars.example
 .env*
 !.env.example
+
+# Large game assets hosted on R2 (bucket: sn4k)
+break-times/1.12-wasm.html
+break-times/amog.html
+break-times/balatro (gba)/balatro-gba.gba

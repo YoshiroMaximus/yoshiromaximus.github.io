@@ -64,20 +64,6 @@
     .theme-btn:hover { color: var(--muted); }
     .theme-btn.active { color: var(--text); }
 
-    .secret-link {
-      position: fixed;
-      bottom: 1.25rem;
-      right: 1.5rem;
-      font-size: 0.6rem;
-      color: var(--bg);
-      text-decoration: none;
-      transition: color 0.3s ease;
-      z-index: 100;
-      user-select: none;
-    }
-
-    .secret-link:hover { color: var(--line); }
-
     body {
       font-family: 'DM Sans', sans-serif;
       background: var(--bg);
@@ -232,8 +218,6 @@
     <button class="theme-btn" id="btn-dark" onclick="setTheme('dark')" title="Dark">−</button>
   </div>
 
-  <a class="secret-link" href="/break.html">.</a>
-
   <div class="container">
     <div class="greeting">
       <span class="hello">hello</span>
@@ -247,7 +231,7 @@
     </div>
     <p class="now-label">and now...</p>
     <div class="greeting linked">
-      <a href="https://sn4k.org/portfolio" target="_blank" rel="noopener">
+      <a href="https://sn4k.org/portfolio">
         <span class="hello">hello</span>
         <span class="name yoshiro">yoshiro</span>
         <span class="arrow">→</span>
@@ -255,6 +239,7 @@
     </div>
     <div class="sub-links">
       <a class="sub-link" href="/tools.html">tools →</a>
+      <a class="sub-link" href="/break.html">break →</a>
     </div>
   </div>
 

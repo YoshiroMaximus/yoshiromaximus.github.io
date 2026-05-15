@@ -36,7 +36,7 @@ Every page is a self-contained HTML file with inline `<style>` and `<script>` ta
 |---|---|
 | `index.html` | Landing page — links to Cloudflare, GitHub, and the yoshiro portfolio |
 | `tools.html` | Tool directory — grid of `.tool-card` links |
-| `break.html` | Hidden game launcher (linked via invisible `.secret-link` on index) |
+| `break.html` | Game launcher, linked from the index sub-links row |
 | `portfolio.html` | Portfolio page |
 | `tools/bell-schedule.html` | GWHS school bell countdown (live clock, SFUSD schedule) |
 | `tools/email-signature.html` | Gmail HTML signature generator |
