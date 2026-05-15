@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>gambit rogue</title>
+  <link rel="icon" type="image/x-icon" href="/favistuff/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favistuff/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favistuff/favicon-32x32.png">
+  <link rel="apple-touch-icon" href="/favistuff/apple-touch-icon.png">
+  <link rel="manifest" href="/favistuff/site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f4f0;
+      --ink: #171716;
+      --soft: #5f625c;
+      --line: #d2cec4;
+      --panel: #ebe8df;
+      --panel-2: #ded9cf;
+      --tile-a: #d9d2c3;
+      --tile-b: #b9c4b7;
+      --gold: #b9842f;
+      --red: #a94d45;
+      --blue: #3f7083;
+      --green: #4f7b57;
+      --shadow: rgba(24, 23, 21, 0.15);
+    }
+
+    body.dark {
+      --bg: #111110;
+      --ink: #ece9e1;
+      --soft: #aaa395;
+      --line: #2c2a26;
+      --panel: #1b1a18;
+      --panel-2: #24221e;
+      --tile-a: #2a2823;
+      --tile-b: #24312a;
+      --gold: #d1a34f;
+      --red: #d16a62;
+      --blue: #6fa0b4;
+      --green: #72a37a;
+      --shadow: rgba(0, 0, 0, 0.35);
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--blue) 9%, transparent), transparent 42%),
+        linear-gradient(315deg, color-mix(in srgb, var(--gold) 12%, transparent), transparent 48%),
+        var(--bg);
+      color: var(--ink);
+      font-family: 'DM Sans', sans-serif;
+      overflow-x: hidden;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+      background: none;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .back-link {
+      position: fixed;
+      top: 1.1rem;
+      left: 1.1rem;
+      z-index: 20;
+      color: var(--soft);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-decoration: none;
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 20;
+      display: flex;
+      gap: 0.1rem;
+    }
+
+    .theme-btn {
+      width: 30px;
+      height: 30px;
+      color: var(--soft);
+      font-family: 'DM Mono', monospace;
+      font-size: 1rem;
+    }
+
+    .theme-btn.active { color: var(--ink); }
+
+    .app {
+      width: min(1180px, calc(100vw - 28px));
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 4.4rem 0 1.6rem;
+      display: grid;
+      grid-template-columns: minmax(290px, 1fr) minmax(310px, 520px) minmax(280px, 0.9fr);
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--panel) 88%, transparent);
+      box-shadow: 0 18px 60px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hud, .side {
+      min-height: 640px;
+      padding: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      line-height: 0.92;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: lowercase;
+    }
+
+    .run-label {
+      color: var(--soft);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      line-height: 1.5;
+      letter-spacing: 0.09em;
+      text-align: right;
+      text-transform: uppercase;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.55rem;
+      padding: 1rem 0;
+    }
+
+    .stat {
+      min-height: 72px;
+      padding: 0.75rem;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--bg) 40%, transparent);
+    }
+
+    .stat b {
+      display: block;
+      margin-bottom: 0.2rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.66rem;
+      color: var(--soft);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .stat span {
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
+
+    .section-title {
+      margin: 0.35rem 0 0.55rem;
+      color: var(--soft);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .gambits, .log {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .gambit, .log-line {
+      padding: 0.65rem 0.7rem;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--bg) 34%, transparent);
+      line-height: 1.35;
+    }
+
+    .gambit strong {
+      display: block;
+      margin-bottom: 0.2rem;
+      font-size: 0.88rem;
+    }
+
+    .gambit small, .log-line {
+      color: var(--soft);
+      font-size: 0.78rem;
+    }
+
+    .board-wrap {
+      padding: clamp(0.7rem, 2vw, 1rem);
+    }
+
+    .board-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      align-items: center;
+      padding: 0.2rem 0 0.8rem;
+    }
+
+    .turn {
+      min-width: 0;
+    }
+
+    .turn b {
+      display: block;
+      font-size: 1.05rem;
+      line-height: 1.2;
+    }
+
+    .turn span {
+      display: block;
+      color: var(--soft);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .controls {
+      display: flex;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .cmd {
+      min-height: 36px;
+      padding: 0 0.75rem;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .cmd:hover, .choice:hover { border-color: var(--soft); }
+
+    .board {
+      width: 100%;
+      aspect-ratio: 1;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      border: 1px solid var(--line);
+      background: var(--line);
+      gap: 1px;
+      user-select: none;
+    }
+
+    .cell {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-width: 0;
+      background: var(--tile-a);
+      isolation: isolate;
+    }
+
+    .cell.alt { background: var(--tile-b); }
+    .cell.move { outline: 3px solid color-mix(in srgb, var(--blue) 75%, transparent); outline-offset: -6px; }
+    .cell.capture { outline: 3px solid color-mix(in srgb, var(--red) 78%, transparent); outline-offset: -6px; }
+    .cell.selected { box-shadow: inset 0 0 0 5px color-mix(in srgb, var(--gold) 85%, transparent); }
+
+    .tile-mark {
+      position: absolute;
+      inset: 8%;
+      z-index: -1;
+      display: grid;
+      place-items: center;
+      color: color-mix(in srgb, var(--ink) 32%, transparent);
+      font-family: 'DM Mono', monospace;
+      font-size: clamp(0.9rem, 3.4vw, 1.8rem);
+    }
+
+    .tile-mark.gold { color: color-mix(in srgb, var(--gold) 68%, transparent); }
+    .tile-mark.thorn { color: color-mix(in srgb, var(--red) 60%, transparent); }
+    .tile-mark.gate { color: color-mix(in srgb, var(--blue) 66%, transparent); }
+    .tile-mark.bless { color: color-mix(in srgb, var(--green) 65%, transparent); }
+
+    .piece {
+      width: 76%;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--bg) 70%, #fff 8%);
+      box-shadow: 0 8px 18px color-mix(in srgb, var(--shadow) 70%, transparent);
+      font-size: clamp(1.35rem, 7vw, 3.6rem);
+      line-height: 1;
+    }
+
+    .piece.enemy {
+      color: var(--red);
+      background: color-mix(in srgb, var(--panel-2) 82%, var(--red) 18%);
+    }
+
+    .piece.player {
+      color: var(--ink);
+      background: color-mix(in srgb, var(--panel-2) 86%, var(--gold) 14%);
+    }
+
+    .hp {
+      position: absolute;
+      right: 8px;
+      bottom: 7px;
+      display: flex;
+      gap: 3px;
+    }
+
+    .pip {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--red);
+    }
+
+    .bench {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.45rem;
+      padding-top: 0.75rem;
+    }
+
+    .bench button {
+      min-height: 56px;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--bg) 38%, transparent);
+      font-size: 1.45rem;
+    }
+
+    .bench button.active {
+      border-color: var(--gold);
+      background: color-mix(in srgb, var(--gold) 16%, var(--panel));
+    }
+
+    .side {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .event-title {
+      font-size: clamp(1.55rem, 4vw, 2.1rem);
+      line-height: 1;
+      font-weight: 700;
+    }
+
+    .event-copy {
+      color: var(--soft);
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+
+    .choices {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    .choice {
+      width: 100%;
+      min-height: 82px;
+      padding: 0.75rem;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--bg) 36%, transparent);
+      text-align: left;
+    }
+
+    .choice strong {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      align-items: center;
+      margin-bottom: 0.25rem;
+      font-size: 0.95rem;
+    }
+
+    .choice small {
+      display: block;
+      color: var(--soft);
+      font-size: 0.8rem;
+      line-height: 1.35;
+    }
+
+    .choice .cost {
+      flex: 0 0 auto;
+      color: var(--gold);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+    }
+
+    .choice:disabled {
+      cursor: default;
+      opacity: 0.45;
+    }
+
+    .footer-note {
+      margin-top: auto;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--line);
+      color: var(--soft);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.66rem;
+      line-height: 1.55;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 1rem;
+      z-index: 30;
+      transform: translateX(-50%) translateY(130%);
+      max-width: min(520px, calc(100vw - 24px));
+      padding: 0.75rem 0.9rem;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 18px 60px var(--shadow);
+      color: var(--ink);
+      font-size: 0.9rem;
+      opacity: 0;
+      transition: transform 0.18s ease, opacity 0.18s ease;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    @media (max-width: 980px) {
+      .app {
+        grid-template-columns: 1fr;
+        width: min(680px, calc(100vw - 22px));
+      }
+
+      .hud, .side {
+        min-height: auto;
+      }
+
+      .hud { order: 2; }
+      .board-wrap { order: 1; }
+      .side { order: 3; }
+    }
+
+    @media (max-width: 520px) {
+      .app {
+        width: 100%;
+        padding: 3.6rem 0 0.8rem;
+        gap: 0.55rem;
+      }
+
+      .panel {
+        border-left: 0;
+        border-right: 0;
+      }
+
+      .board-wrap {
+        padding: 0.55rem;
+      }
+
+      .board-top {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .controls {
+        justify-content: flex-start;
+      }
+
+      .piece {
+        border-radius: 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-link" href="/break.html">← break</a>
+  <div class="theme-toggle">
+    <button class="theme-btn" id="btn-light" onclick="setTheme('light')" title="Light">+</button>
+    <button class="theme-btn" id="btn-dark" onclick="setTheme('dark')" title="Dark">−</button>
+  </div>
+
+  <main class="app">
+    <section class="hud panel">
+      <div class="brand">
+        <h1>gambit<br>rogue</h1>
+        <p class="run-label">tiny board<br>high stakes</p>
+      </div>
+      <div class="stats">
+        <div class="stat"><b>Floor</b><span id="floor">1</span></div>
+        <div class="stat"><b>Gold</b><span id="gold">0</span></div>
+        <div class="stat"><b>Hearts</b><span id="hearts">3</span></div>
+        <div class="stat"><b>Bank</b><span id="bank">0</span></div>
+      </div>
+      <p class="section-title">gambits</p>
+      <div class="gambits" id="gambits"></div>
+      <p class="section-title">battle log</p>
+      <div class="log" id="log"></div>
+    </section>
+
+    <section class="board-wrap panel">
+      <div class="board-top">
+        <div class="turn">
+          <b id="turnTitle">Your move</b>
+          <span id="turnSub">capture every hostile piece</span>
+        </div>
+        <div class="controls">
+          <button class="cmd" id="endTurn">End</button>
+          <button class="cmd" id="newRun">New run</button>
+        </div>
+      </div>
+      <div class="board" id="board" aria-label="Gambit Rogue board"></div>
+      <div class="bench" id="bench"></div>
+    </section>
+
+    <aside class="side panel">
+      <div>
+        <p class="section-title" id="eventKicker">encounter</p>
+        <h2 class="event-title" id="eventTitle">Opening file</h2>
+      </div>
+      <p class="event-copy" id="eventCopy"></p>
+      <div class="choices" id="choices"></div>
+      <p class="footer-note">
+        Click one of your pieces, then a highlighted square. Pawns move upward. Bosses arrive every third floor.
+      </p>
+    </aside>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const SIZE = 5;
+    const PIECE = {
+      K: '&#9812;',
+      Q: '&#9813;',
+      R: '&#9814;',
+      B: '&#9815;',
+      N: '&#9816;',
+      P: '&#9817;'
+    };
+    const NAMES = { K: 'King', Q: 'Queen', R: 'Rook', B: 'Bishop', N: 'Knight', P: 'Pawn' };
+    const VALUES = { K: 5, Q: 5, R: 4, B: 3, N: 3, P: 1 };
+    const TILE_ICON = { gold: '$', thorn: '!', gate: '↔', bless: '+' };
+    const TILE_NAME = { gold: 'treasury', thorn: 'spikes', gate: 'mirror gate', bless: 'chapel' };
+
+    const GAMBITS = [
+      { id: 'rebate', name: 'Royal Rebate', desc: '+2 gold after every capture.', cost: 7 },
+      { id: 'splash', name: 'Forked Blade', desc: 'Captures wound adjacent enemies once.', cost: 10 },
+      { id: 'dash', name: 'Knight License', desc: 'Your king may also move like a knight.', cost: 9 },
+      { id: 'bishopPawns', name: 'Crooked Pawns', desc: 'Pawns may move one diagonal into empty tiles.', cost: 8 },
+      { id: 'vault', name: 'Vault Interest', desc: 'Gain +1 gold per 6 banked gold after each fight.', cost: 11 },
+      { id: 'medic', name: 'Field Medic', desc: 'Heal 1 heart after boss fights.', cost: 12 },
+      { id: 'banner', name: 'Banner Pair', desc: 'Start battles with an extra pawn.', cost: 6 }
+    ];
+
+    const SHOP = [
+      { id: 'heart', name: 'Buy heart', desc: 'Recover 1 heart.', cost: 6, buy: s => { s.hp = Math.min(s.maxHp, s.hp + 1); } },
+      { id: 'maxHeart', name: 'Iron crown', desc: '+1 maximum heart and heal 1.', cost: 13, buy: s => { s.maxHp += 1; s.hp += 1; } },
+      { id: 'rook', name: 'Hire rook', desc: 'Add a rook to your bench.', cost: 9, buy: s => { s.bench.push('R'); } },
+      { id: 'bishop', name: 'Hire bishop', desc: 'Add a bishop to your bench.', cost: 7, buy: s => { s.bench.push('B'); } },
+      { id: 'queen', name: 'Hire queen', desc: 'Add a queen to your bench.', cost: 16, buy: s => { s.bench.push('Q'); } },
+      { id: 'bank', name: 'Invest winnings', desc: 'Move 8 gold into the bank. Bank survives new runs.', cost: 8, buy: s => { s.gold -= 8; s.bank += 8; saveBank(s.bank); }, customCost: true }
+    ];
+
+    const boardEl = document.getElementById('board');
+    const benchEl = document.getElementById('bench');
+    const choicesEl = document.getElementById('choices');
+    const gambitsEl = document.getElementById('gambits');
+    const logEl = document.getElementById('log');
+    const toastEl = document.getElementById('toast');
+
+    let state = {};
+    let selected = null;
+    let legal = [];
+    let toastTimer = 0;
+
+    function setTheme(theme) {
+      document.body.classList.toggle('dark', theme === 'dark');
+      document.getElementById('btn-light').classList.toggle('active', theme === 'light');
+      document.getElementById('btn-dark').classList.toggle('active', theme === 'dark');
+      localStorage.setItem('theme', theme);
+    }
+
+    setTheme(localStorage.getItem('theme') || 'light');
+
+    function loadBank() {
+      return Number(localStorage.getItem('gambit_rogue_bank') || 0);
+    }
+
+    function saveBank(bank) {
+      localStorage.setItem('gambit_rogue_bank', String(bank));
+    }
+
+    function startRun() {
+      state = {
+        floor: 1,
+        gold: Math.floor(loadBank() / 10),
+        bank: loadBank(),
+        hp: 3,
+        maxHp: 3,
+        phase: 'battle',
+        turn: 'player',
+        tiles: [],
+        pieces: [],
+        bench: ['K', 'N', 'P'],
+        gambits: [],
+        log: []
+      };
+      selected = null;
+      legal = [];
+      addLog('Run begins. Your bank stakes you ' + state.gold + ' gold.');
+      startBattle();
+    }
+
+    function startBattle() {
+      state.phase = 'battle';
+      state.turn = 'player';
+      selected = null;
+      legal = [];
+      state.tiles = makeTiles(state.floor);
+      state.pieces = makePlayerPieces().concat(makeEnemies(state.floor));
+      addLog(isBossFloor() ? 'Boss room. The board tightens.' : 'New board. Find the tactic.');
+      render();
+    }
+
+    function makePlayerPieces() {
+      const lineup = state.bench.slice(0, hasGambit('banner') ? 5 : 4);
+      if (hasGambit('banner') && !lineup.includes('P')) lineup.push('P');
+      const files = lineup.length === 5 ? [0, 1, 2, 3, 4] : [0, 1, 3, 4];
+      return lineup.map((type, i) => ({
+        id: 'p' + i + '-' + Date.now(),
+        side: 'player',
+        type,
+        x: files[i] ?? i,
+        y: 4,
+        hp: type === 'K' ? 2 : 1
+      }));
+    }
+
+    function makeEnemies(floor) {
+      const boss = isBossFloor();
+      const count = Math.min(3 + Math.floor(floor / 2), boss ? 6 : 5);
+      const bag = boss ? ['K', 'Q', 'R', 'B', 'N', 'P'] : ['R', 'B', 'N', 'P', 'P', 'P'];
+      const spots = shuffle([
+        [0, 0], [1, 0], [2, 0], [3, 0], [4, 0],
+        [0, 1], [1, 1], [2, 1], [3, 1], [4, 1]
+      ]);
+      const enemies = [];
+      for (let i = 0; i < count; i++) {
+        const type = boss && i === 0 ? 'K' : bag[(floor + i) % bag.length];
+        const hp = boss && i === 0 ? 3 + Math.floor(floor / 6) : type === 'Q' ? 2 : 1;
+        const spot = spots[i];
+        enemies.push({ id: 'e' + i + '-' + Date.now(), side: 'enemy', type, x: spot[0], y: spot[1], hp });
+      }
+      return enemies;
+    }
+
+    function makeTiles(floor) {
+      const tiles = [];
+      const kinds = ['gold', 'thorn', 'gate', 'bless'];
+      const count = Math.min(2 + Math.floor(floor / 2), 5);
+      const spots = shuffle([
+        [0, 2], [1, 2], [2, 2], [3, 2], [4, 2],
+        [0, 3], [2, 3], [4, 3], [1, 1], [3, 1]
+      ]);
+      for (let i = 0; i < count; i++) {
+        const kind = kinds[(floor + i) % kinds.length];
+        tiles.push({ kind, x: spots[i][0], y: spots[i][1] });
+      }
+      return tiles;
+    }
+
+    function isBossFloor() {
+      return state.floor % 3 === 0;
+    }
+
+    function pieceAt(x, y) {
+      return state.pieces.find(p => p.x === x && p.y === y);
+    }
+
+    function tileAt(x, y) {
+      return state.tiles.find(t => t.x === x && t.y === y);
+    }
+
+    function inBounds(x, y) {
+      return x >= 0 && y >= 0 && x < SIZE && y < SIZE;
+    }
+
+    function hasGambit(id) {
+      return state.gambits.some(g => g.id === id);
+    }
+
+    function legalMoves(piece) {
+      const moves = [];
+      const add = (x, y) => {
+        if (!inBounds(x, y)) return;
+        const target = pieceAt(x, y);
+        if (!target || target.side !== piece.side) moves.push({ x, y, capture: !!target });
+      };
+      const ray = dirs => {
+        dirs.forEach(([dx, dy]) => {
+          for (let n = 1; n < SIZE; n++) {
+            const x = piece.x + dx * n;
+            const y = piece.y + dy * n;
+            if (!inBounds(x, y)) break;
+            const target = pieceAt(x, y);
+            if (target) {
+              if (target.side !== piece.side) moves.push({ x, y, capture: true });
+              break;
+            }
+            moves.push({ x, y, capture: false });
+          }
+        });
+      };
+      if (piece.type === 'K') {
+        for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) if (dx || dy) add(piece.x + dx, piece.y + dy);
+        if (piece.side === 'player' && hasGambit('dash')) knightMoves(piece).forEach(m => add(m.x, m.y));
+      }
+      if (piece.type === 'Q') ray([[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]);
+      if (piece.type === 'R') ray([[1,0],[-1,0],[0,1],[0,-1]]);
+      if (piece.type === 'B') ray([[1,1],[1,-1],[-1,1],[-1,-1]]);
+      if (piece.type === 'N') knightMoves(piece).forEach(m => add(m.x, m.y));
+      if (piece.type === 'P') {
+        const dir = piece.side === 'player' ? -1 : 1;
+        if (!pieceAt(piece.x, piece.y + dir)) add(piece.x, piece.y + dir);
+        [-1, 1].forEach(dx => {
+          const target = pieceAt(piece.x + dx, piece.y + dir);
+          if (target && target.side !== piece.side) add(piece.x + dx, piece.y + dir);
+          if (piece.side === 'player' && hasGambit('bishopPawns') && !target) add(piece.x + dx, piece.y + dir);
+        });
+      }
+      return moves;
+    }
+
+    function knightMoves(piece) {
+      return [[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]]
+        .map(([dx, dy]) => ({ x: piece.x + dx, y: piece.y + dy }))
+        .filter(m => inBounds(m.x, m.y));
+    }
+
+    function selectPiece(piece) {
+      if (state.phase !== 'battle' || state.turn !== 'player' || piece.side !== 'player') return;
+      selected = piece;
+      legal = legalMoves(piece);
+      render();
+    }
+
+    function moveSelected(x, y) {
+      if (!selected) return;
+      const move = legal.find(m => m.x === x && m.y === y);
+      if (!move) return;
+      movePiece(selected, x, y, true);
+      selected = null;
+      legal = [];
+      if (state.hp <= 0 || !state.pieces.some(p => p.side === 'player')) {
+        gameOver();
+        return;
+      }
+      if (checkWin()) return;
+      state.turn = 'enemy';
+      render();
+      setTimeout(enemyTurn, 420);
+    }
+
+    function movePiece(piece, x, y, playerMove) {
+      const target = pieceAt(x, y);
+      if (target && target.side !== piece.side) {
+        damagePiece(target, 1, piece);
+        if (!state.pieces.includes(target)) {
+          const gain = VALUES[target.type] + (tileAt(x, y)?.kind === 'gold' ? 3 : 0) + (hasGambit('rebate') && playerMove ? 2 : 0);
+          if (playerMove) state.gold += gain;
+          addLog((playerMove ? 'You' : 'Enemy') + ' captured ' + NAMES[target.type] + (playerMove ? ' for ' + gain + ' gold.' : '.'));
+          if (playerMove && hasGambit('splash')) splash(x, y);
+        }
+      }
+      if (!target || !state.pieces.includes(target)) {
+        piece.x = x;
+        piece.y = y;
+      }
+      triggerTile(piece, playerMove);
+    }
+
+    function damagePiece(piece, amount, source) {
+      piece.hp -= amount;
+      if (piece.hp <= 0) {
+        state.pieces = state.pieces.filter(p => p !== piece);
+        if (piece.side === 'player') {
+          state.hp -= piece.type === 'K' ? 2 : 1;
+          addLog(NAMES[piece.type] + ' falls. Hearts drop.');
+        }
+      } else if (source) {
+        addLog(NAMES[source.type] + ' wounds ' + NAMES[piece.type] + '.');
+      }
+    }
+
+    function splash(x, y) {
+      state.pieces
+        .filter(p => p.side === 'enemy' && Math.abs(p.x - x) <= 1 && Math.abs(p.y - y) <= 1)
+        .forEach(p => damagePiece(p, 1, { type: 'Q' }));
+    }
+
+    function triggerTile(piece, playerMove) {
+      const tile = tileAt(piece.x, piece.y);
+      if (!tile) return;
+      if (tile.kind === 'gold' && playerMove) {
+        state.gold += 2;
+        addLog('Treasury tile pays 2 gold.');
+      }
+      if (tile.kind === 'thorn') {
+        damagePiece(piece, 1);
+        addLog(NAMES[piece.type] + ' steps on spikes.');
+      }
+      if (tile.kind === 'gate') {
+        piece.x = SIZE - 1 - piece.x;
+        addLog(NAMES[piece.type] + ' crosses a mirror gate.');
+      }
+      if (tile.kind === 'bless' && piece.side === 'player') {
+        piece.hp = Math.min(piece.type === 'K' ? 2 : 1, piece.hp + 1);
+        addLog('Chapel steadies your ' + NAMES[piece.type] + '.');
+      }
+      state.tiles = state.tiles.filter(t => t !== tile || tile.kind === 'thorn');
+    }
+
+    function enemyTurn() {
+      if (state.phase !== 'battle') return;
+      const enemies = state.pieces.filter(p => p.side === 'enemy');
+      const players = state.pieces.filter(p => p.side === 'player');
+      if (!enemies.length || !players.length) {
+        checkWin();
+        return;
+      }
+      const attacks = [];
+      enemies.forEach(enemy => legalMoves(enemy).forEach(m => {
+        const target = pieceAt(m.x, m.y);
+        if (target && target.side === 'player') attacks.push({ enemy, move: m, value: VALUES[target.type] });
+      }));
+      if (attacks.length) {
+        attacks.sort((a, b) => b.value - a.value);
+        movePiece(attacks[0].enemy, attacks[0].move.x, attacks[0].move.y, false);
+      } else {
+        const enemy = enemies[Math.floor(Math.random() * enemies.length)];
+        const moves = legalMoves(enemy).filter(m => !m.capture);
+        if (moves.length) {
+          moves.sort((a, b) => distanceToPlayer(a) - distanceToPlayer(b));
+          movePiece(enemy, moves[0].x, moves[0].y, false);
+        } else {
+          addLog('Enemy has no clean move.');
+        }
+      }
+      if (state.hp <= 0 || !state.pieces.some(p => p.side === 'player')) {
+        gameOver();
+        return;
+      }
+      state.turn = 'player';
+      render();
+    }
+
+    function distanceToPlayer(move) {
+      return Math.min(...state.pieces.filter(p => p.side === 'player').map(p => Math.abs(p.x - move.x) + Math.abs(p.y - move.y)));
+    }
+
+    function checkWin() {
+      if (state.pieces.some(p => p.side === 'enemy')) {
+        render();
+        return false;
+      }
+      const interest = hasGambit('vault') ? Math.floor(state.bank / 6) : 0;
+      state.gold += 4 + state.floor + interest;
+      if (isBossFloor() && hasGambit('medic')) state.hp = Math.min(state.maxHp, state.hp + 1);
+      addLog('Room cleared. +' + (4 + state.floor + interest) + ' gold.');
+      state.floor += 1;
+      state.phase = state.floor % 2 === 0 ? 'shop' : 'reward';
+      selected = null;
+      legal = [];
+      render();
+      return true;
+    }
+
+    function gameOver() {
+      state.phase = 'dead';
+      saveBank(state.bank);
+      selected = null;
+      legal = [];
+      addLog('Checkmate. Bank kept: ' + state.bank + '.');
+      render();
+    }
+
+    function addLog(text) {
+      state.log.unshift(text);
+      state.log = state.log.slice(0, 6);
+    }
+
+    function render() {
+      document.getElementById('floor').textContent = state.floor;
+      document.getElementById('gold').textContent = state.gold;
+      document.getElementById('hearts').textContent = state.hp + '/' + state.maxHp;
+      document.getElementById('bank').textContent = state.bank;
+      renderBoard();
+      renderBench();
+      renderGambits();
+      renderLog();
+      renderEvent();
+    }
+
+    function renderBoard() {
+      boardEl.innerHTML = '';
+      for (let y = 0; y < SIZE; y++) {
+        for (let x = 0; x < SIZE; x++) {
+          const cell = document.createElement('button');
+          cell.className = 'cell' + ((x + y) % 2 ? ' alt' : '');
+          const move = legal.find(m => m.x === x && m.y === y);
+          if (move) cell.classList.add(move.capture ? 'capture' : 'move');
+          if (selected && selected.x === x && selected.y === y) cell.classList.add('selected');
+          const tile = tileAt(x, y);
+          if (tile) {
+            const mark = document.createElement('span');
+            mark.className = 'tile-mark ' + tile.kind;
+            mark.title = TILE_NAME[tile.kind];
+            mark.textContent = TILE_ICON[tile.kind];
+            cell.appendChild(mark);
+          }
+          const piece = pieceAt(x, y);
+          if (piece) {
+            const el = document.createElement('div');
+            el.className = 'piece ' + piece.side;
+            el.innerHTML = PIECE[piece.type];
+            cell.appendChild(el);
+            if (piece.hp > 1) {
+              const hp = document.createElement('div');
+              hp.className = 'hp';
+              for (let i = 0; i < piece.hp; i++) {
+                const pip = document.createElement('span');
+                pip.className = 'pip';
+                hp.appendChild(pip);
+              }
+              cell.appendChild(hp);
+            }
+          }
+          cell.addEventListener('click', () => {
+            if (piece && piece.side === 'player') selectPiece(piece);
+            else moveSelected(x, y);
+          });
+          boardEl.appendChild(cell);
+        }
+      }
+      document.getElementById('turnTitle').textContent = state.phase === 'battle' ? (state.turn === 'player' ? 'Your move' : 'Enemy move') : phaseTitle();
+      document.getElementById('turnSub').textContent = state.phase === 'battle'
+        ? (isBossFloor() ? 'boss floor: remove every hostile piece' : 'capture every hostile piece')
+        : phaseSub();
+    }
+
+    function renderBench() {
+      benchEl.innerHTML = '';
+      state.bench.forEach((type, i) => {
+        const button = document.createElement('button');
+        button.innerHTML = PIECE[type];
+        button.title = NAMES[type];
+        if (state.pieces.some(p => p.side === 'player' && p.type === type && p.id.includes('p' + i))) button.classList.add('active');
+        benchEl.appendChild(button);
+      });
+    }
+
+    function renderGambits() {
+      gambitsEl.innerHTML = '';
+      if (!state.gambits.length) {
+        const empty = document.createElement('div');
+        empty.className = 'gambit';
+        empty.innerHTML = '<strong>No gambits yet</strong><small>Clear rooms to bend the rules.</small>';
+        gambitsEl.appendChild(empty);
+        return;
+      }
+      state.gambits.forEach(g => {
+        const item = document.createElement('div');
+        item.className = 'gambit';
+        item.innerHTML = '<strong>' + g.name + '</strong><small>' + g.desc + '</small>';
+        gambitsEl.appendChild(item);
+      });
+    }
+
+    function renderLog() {
+      logEl.innerHTML = '';
+      state.log.forEach(line => {
+        const item = document.createElement('div');
+        item.className = 'log-line';
+        item.textContent = line;
+        logEl.appendChild(item);
+      });
+    }
+
+    function renderEvent() {
+      choicesEl.innerHTML = '';
+      document.getElementById('eventKicker').textContent = state.phase;
+      document.getElementById('eventTitle').textContent = phaseTitle();
+      document.getElementById('eventCopy').textContent = eventCopy();
+      if (state.phase === 'reward') renderRewards();
+      if (state.phase === 'shop') renderShop();
+      if (state.phase === 'dead') {
+        addChoice({ name: 'Start new run', desc: 'Keep banked gold and return to floor 1.', cost: 0 }, startRun);
+      }
+      if (state.phase === 'battle') {
+        const skip = isBossFloor() ? 'Bosses have extra health and often a queen nearby.' : 'Use tiles carefully: gold pays, spikes wound, gates mirror, chapels heal.';
+        addChoice({ name: 'Board rule', desc: skip, cost: 0, disabled: true }, () => {});
+      }
+    }
+
+    function phaseTitle() {
+      if (state.phase === 'battle') return isBossFloor() ? 'Boss: Crownbreaker' : 'Opening file';
+      if (state.phase === 'reward') return 'Choose a gambit';
+      if (state.phase === 'shop') return 'Between boards';
+      if (state.phase === 'dead') return 'Run ended';
+      return 'Gambit Rogue';
+    }
+
+    function phaseSub() {
+      if (state.phase === 'reward') return 'pick one rule twist';
+      if (state.phase === 'shop') return 'spend or invest';
+      if (state.phase === 'dead') return 'your bank persists';
+      return '';
+    }
+
+    function eventCopy() {
+      if (state.phase === 'battle') return 'A compressed chess fight on a five by five board. Every capture matters because gold becomes power between fights.';
+      if (state.phase === 'reward') return 'Take one new rule-bending gambit. These stack for the rest of the run.';
+      if (state.phase === 'shop') return 'Buy pieces, patch up, or invest. Invested gold stays in your bank after a loss.';
+      if (state.phase === 'dead') return 'The board claimed the run. Banked gold remains and stakes your next attempt.';
+      return '';
+    }
+
+    function renderRewards() {
+      const available = shuffle(GAMBITS.filter(g => !hasGambit(g.id))).slice(0, 3);
+      if (!available.length) {
+        addChoice({ name: 'Take 12 gold', desc: 'You already hold every gambit.', cost: 0 }, () => {
+          state.gold += 12;
+          startBattle();
+        });
+        return;
+      }
+      available.forEach(g => addChoice(g, () => {
+        state.gambits.push(g);
+        addLog('Gambit gained: ' + g.name + '.');
+        startBattle();
+      }));
+    }
+
+    function renderShop() {
+      SHOP.forEach(item => {
+        const cost = item.customCost ? 8 : item.cost;
+        const disabled = state.gold < cost || (item.id === 'heart' && state.hp >= state.maxHp);
+        addChoice({ name: item.name, desc: item.desc, cost, disabled }, () => {
+          if (disabled) return;
+          if (!item.customCost) state.gold -= item.cost;
+          item.buy(state);
+          addLog(item.name + ' purchased.');
+          render();
+        });
+      });
+      addChoice({ name: 'Enter next room', desc: 'Leave the shop and start the next fight.', cost: 0 }, startBattle);
+    }
+
+    function addChoice(item, onClick) {
+      const button = document.createElement('button');
+      button.className = 'choice';
+      button.disabled = !!item.disabled;
+      button.innerHTML = '<strong><span>' + item.name + '</span><span class="cost">' + (item.cost ? item.cost + 'g' : '') + '</span></strong><small>' + item.desc + '</small>';
+      button.addEventListener('click', onClick);
+      choicesEl.appendChild(button);
+    }
+
+    function shuffle(items) {
+      const copy = items.slice();
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function showToast(text) {
+      clearTimeout(toastTimer);
+      toastEl.textContent = text;
+      toastEl.classList.add('show');
+      toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1800);
+    }
+
+    document.getElementById('endTurn').addEventListener('click', () => {
+      if (state.phase !== 'battle' || state.turn !== 'player') return;
+      selected = null;
+      legal = [];
+      state.turn = 'enemy';
+      render();
+      setTimeout(enemyTurn, 300);
+    });
+
+    document.getElementById('newRun').addEventListener('click', () => {
+      saveBank(state.bank);
+      startRun();
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.key.toLowerCase() === 'n') startRun();
+      if (event.key === 'Escape') {
+        selected = null;
+        legal = [];
+        render();
+      }
+      if (event.key === ' ' || event.key === 'Enter') {
+        if (state.phase === 'battle' && state.turn === 'player') {
+          selected = null;
+          legal = [];
+          state.turn = 'enemy';
+          render();
+          setTimeout(enemyTurn, 300);
+        }
+      }
+    });
+
+    startRun();
+  </script>
+</body>
+</html>
