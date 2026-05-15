@@ -170,10 +170,47 @@
     .about-text + .about-text { margin-top: 1rem; }
 
     /* ── Skills ── */
+    .skills-group + .skills-group { margin-top: 1.5rem; }
+    .skills-group-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.65rem;
+    }
     .skills-grid {
       display: flex;
       flex-wrap: wrap;
       gap: 0.5rem;
+    }
+
+    /* ── Self-hosted ── */
+    .services-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+    .service-row {
+      background: var(--bg);
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      align-items: baseline;
+      gap: 1.25rem;
+      transition: background 0.2s ease;
+    }
+    .service-row:hover { background: var(--bg2); }
+    .service-name {
+      font-size: 0.95rem;
+      font-weight: 500;
+      min-width: 130px;
+    }
+    .service-purpose {
+      font-size: 0.85rem;
+      font-weight: 300;
+      color: var(--muted);
     }
 
     .tag {
@@ -507,16 +544,71 @@
     <!-- Skills -->
     <section id="skills">
       <p class="section-label">Things I know</p>
-      <div class="skills-grid">
-        <span class="tag">docker</span>
-        <span class="tag">docker compose</span>
-        <span class="tag">html / css</span>
-        <span class="tag">javascript</span>
-        <span class="tag">linux</span>
-        <span class="tag">nginx</span>
-        <span class="tag">self-hosting</span>
-        <span class="tag">networking</span>
-        <span class="tag">git</span>
+
+      <div class="skills-group">
+        <p class="skills-group-label">Languages &amp; frameworks</p>
+        <div class="skills-grid">
+          <span class="tag">html / css</span>
+          <span class="tag">javascript</span>
+          <span class="tag">python</span>
+          <span class="tag">swift (a little)</span>
+        </div>
+      </div>
+
+      <div class="skills-group">
+        <p class="skills-group-label">Infrastructure &amp; devops</p>
+        <div class="skills-grid">
+          <span class="tag">docker</span>
+          <span class="tag">linux</span>
+          <span class="tag">unraid</span>
+          <span class="tag">nginx</span>
+          <span class="tag">cloudflare</span>
+          <span class="tag">git</span>
+          <span class="tag">claude code</span>
+          <span class="tag">self-hosting</span>
+          <span class="tag">networking</span>
+        </div>
+      </div>
+
+      <div class="skills-group">
+        <p class="skills-group-label">Design tools</p>
+        <div class="skills-grid">
+          <span class="tag">photoshop</span>
+          <span class="tag">davinci resolve</span>
+          <span class="tag">figma</span>
+          <span class="tag">obsidian</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Self-hosted -->
+    <section id="self-hosted">
+      <p class="section-label">Self-hosted</p>
+      <div class="services-list">
+        <div class="service-row">
+          <span class="service-name">immich</span>
+          <span class="service-purpose">photo backup + management</span>
+        </div>
+        <div class="service-row">
+          <span class="service-name">voidauth</span>
+          <span class="service-purpose">sso for all my services</span>
+        </div>
+        <div class="service-row">
+          <span class="service-name">jellyfin</span>
+          <span class="service-purpose">media streaming</span>
+        </div>
+        <div class="service-row">
+          <span class="service-name">vaultwarden</span>
+          <span class="service-purpose">password manager</span>
+        </div>
+        <div class="service-row">
+          <span class="service-name">copyparty</span>
+          <span class="service-purpose">file sync + storage</span>
+        </div>
+        <div class="service-row">
+          <span class="service-name">navidrome</span>
+          <span class="service-purpose">music streaming</span>
+        </div>
       </div>
     </section>
 
@@ -530,11 +622,11 @@
             <span class="project-name">Modded Minecraft Server</span>
             <span class="project-type">game server</span>
           </div>
-          <p class="project-desc">PaperMC 1.21.1 (soon to be 26.1.2) modded server running through Crafty Controller, hosted for me and my friends. Crafty handles mod management, backups, and restarts through a web UI. It's easy to work with and still is advanced at the same time.</p>
+          <p class="project-desc">PaperMC 26.1.2 modded server running through Crafty Controller, hosted for me and my friends. Crafty handles mod management, backups, and restarts through a web UI. It's easy to work with and still is advanced at the same time.</p>
           <div class="project-specs">
             <span class="spec">PaperMC</span>
             <span class="spec">Crafty Controller</span>
-            <span class="spec">1.21.1</span>
+            <span class="spec">26.1.2</span>
             <span class="spec">modded</span>
           </div>
           <div class="project-img" onclick="openLightbox('images/mc-screenshot.png', 'Modded Minecraft Server')">
