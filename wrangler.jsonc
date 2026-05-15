@@ -6,8 +6,7 @@
     "enabled": true
   },
   "assets": {
-    "directory": ".",
-    "exclude": ["break-times-large/**"]
+    "directory": "."
   },
   "compatibility_flags": [
     "nodejs_compat"
