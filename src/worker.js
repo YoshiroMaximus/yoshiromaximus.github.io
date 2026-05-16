@@ -18,9 +18,93 @@ export default {
     if (url.pathname.startsWith('/api/notes')) {
       return handleNotes(request, env, url);
     }
+    if (url.pathname.startsWith('/api/gambit')) {
+      return handleGambit(request, env, url);
+    }
     return env.ASSETS.fetch(request);
   },
 };
+
+// ─────────────── Gambit Leaderboard API ───────────────
+
+const GAMBIT_MAX_NAME = 30;
+const GAMBIT_VALID_DIFFS = ['easy', 'medium', 'hard', 'grandmaster'];
+const GAMBIT_VALID_MODES = ['campaign', 'infinite'];
+
+async function handleGambit(request, env, url) {
+  const parts = url.pathname.split('/').filter(Boolean);
+  const sub = parts[2];
+  try {
+    if (request.method === 'GET'  && sub === 'leaderboard') return gambitLeaderboard(request, env, url);
+    if (request.method === 'POST' && sub === 'score')       return gambitSubmit(request, env);
+    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST', 'access-control-allow-headers': 'content-type' } });
+    return json({ error: 'Not found' }, 404);
+  } catch (e) {
+    return json({ error: e.message || 'Server error' }, 500);
+  }
+}
+
+async function gambitLeaderboard(request, env, url) {
+  if (!env.DB) return json({ error: 'Leaderboard not configured' }, 503);
+  const mode = url.searchParams.get('mode') || 'all';
+  const diff = url.searchParams.get('diff') || 'all';
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 100);
+
+  const conditions = [];
+  const bindings = [];
+  if (mode !== 'all') { conditions.push('mode = ?'); bindings.push(mode); }
+  if (diff !== 'all') { conditions.push('difficulty = ?'); bindings.push(diff); }
+  let q = 'SELECT id, name, score, difficulty, mode, depth, gold, gambits, won, created_at FROM gambit_scores';
+  if (conditions.length) q += ' WHERE ' + conditions.join(' AND ');
+  q += ' ORDER BY score DESC LIMIT ?';
+  bindings.push(limit);
+
+  const { results } = await env.DB.prepare(q).bind(...bindings).all();
+  return json({ scores: results || [] });
+}
+
+async function gambitSubmit(request, env) {
+  if (!env.DB) return json({ error: 'Leaderboard not configured' }, 503);
+  const ip = request.headers.get('cf-connecting-ip') || 'anon';
+  if (env.RATE_LIMITER) {
+    const { success } = await env.RATE_LIMITER.limit({ key: 'gambit:' + ip });
+    if (!success) return json({ error: 'Too many submissions — wait a minute.' }, 429);
+  }
+
+  let body;
+  try { body = await request.json(); } catch { return json({ error: 'Invalid JSON.' }, 400); }
+
+  const name = String(body.name || '').trim().slice(0, GAMBIT_MAX_NAME);
+  if (!name) return json({ error: 'Name is required.' }, 400);
+  if (!/^[A-Za-z0-9 _\-\.!?']+$/.test(name)) return json({ error: 'Name contains invalid characters.' }, 400);
+
+  const score = parseInt(body.score, 10);
+  if (!Number.isFinite(score) || score < 0 || score > 999999999) return json({ error: 'Invalid score.' }, 400);
+
+  const difficulty = body.difficulty;
+  if (!GAMBIT_VALID_DIFFS.includes(difficulty)) return json({ error: 'Invalid difficulty.' }, 400);
+
+  const mode = body.mode;
+  if (!GAMBIT_VALID_MODES.includes(mode)) return json({ error: 'Invalid mode.' }, 400);
+
+  const depth = parseInt(body.depth, 10);
+  if (!Number.isFinite(depth) || depth < 1 || depth > 999) return json({ error: 'Invalid depth.' }, 400);
+
+  const gold = parseInt(body.gold, 10);
+  if (!Number.isFinite(gold) || gold < 0 || gold > 99999999) return json({ error: 'Invalid gold.' }, 400);
+
+  const won = body.won ? 1 : 0;
+  let gambits = '[]';
+  if (Array.isArray(body.gambits)) {
+    gambits = JSON.stringify(body.gambits.map(g => String(g).slice(0, 30)).slice(0, 20));
+  }
+
+  const result = await env.DB.prepare(
+    'INSERT INTO gambit_scores (name, score, difficulty, mode, depth, gold, gambits, won) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).bind(name, score, difficulty, mode, depth, gold, gambits, won).run();
+
+  return json({ ok: true, id: result.meta?.last_row_id }, 201);
+}
 
 // ─────────────── Notes API ───────────────
 // R2 layout: notes/<slug>.md — one markdown file per note.

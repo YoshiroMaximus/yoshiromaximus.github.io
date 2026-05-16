@@ -6,7 +6,13 @@
       "Bash(awk '/<script>/,/<\\\\/script>/' tools/notes.html)",
       "Bash(sed 's/<script>//; s/<\\\\/script>//')",
       "Bash(node --check /tmp/notes-check.js)",
-      "Bash(rm /tmp/notes-check.js)"
+      "Bash(rm /tmp/notes-check.js)",
+      "Bash(gh release *)",
+      "Skill(frontend-design)",
+      "Bash(npm show *)",
+      "Skill(animejs)",
+      "Bash(node --input-type=module)",
+      "Bash(npx wrangler *)"
     ]
   }
 }

@@ -2,7 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="gambit">
+<meta name="theme-color" content="#f5f4f0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)">
 <title>gambit</title>
 <link rel="icon" type="image/x-icon" href="/favistuff/favicon.ico">
 <link rel="icon" type="image/png" sizes="16x16" href="/favistuff/favicon-16x16.png">
@@ -18,12 +24,13 @@
 body.dark{--bg:#111110;--text:#e8e6e2;--muted:#666;--line:#2a2926;--sq-light:#2a2926;--sq-dark:#1a1816;--enemy:#b06040;}
 html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);overscroll-behavior:none;}
 canvas{display:block;cursor:default;touch-action:none;}
-#theme{position:fixed;top:1.5rem;right:1.5rem;background:none;border:none;font-family:'DM Mono',monospace;font-size:1.1rem;line-height:1;color:var(--muted);cursor:pointer;padding:4px;z-index:100;}
-#back{position:fixed;top:1.5rem;left:1.5rem;font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--line);text-decoration:none;letter-spacing:0.06em;z-index:100;}
+#theme{position:fixed;top:max(1.5rem,env(safe-area-inset-top));right:max(1.5rem,env(safe-area-inset-right));background:none;border:none;font-family:'DM Mono',monospace;font-size:1.1rem;line-height:1;color:var(--muted);cursor:pointer;padding:8px;z-index:100;}
+#back{position:fixed;top:max(1.5rem,env(safe-area-inset-top));left:max(1.5rem,env(safe-area-inset-left));font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--line);text-decoration:none;letter-spacing:0.06em;z-index:100;padding:8px;margin:-8px;}
 #back:hover{color:var(--muted);}
-#help{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--muted);background:none;border:none;cursor:pointer;letter-spacing:0.06em;z-index:100;padding:6px 10px;}
+#help{position:fixed;bottom:max(1rem,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--muted);background:none;border:none;cursor:pointer;letter-spacing:0.06em;z-index:100;padding:10px 14px;}
 #help:hover{color:var(--text);}
-#audio-ctrl{position:fixed;top:1.5rem;right:3.5rem;z-index:100;}
+#audio-ctrl{position:fixed;top:max(1.5rem,env(safe-area-inset-top));right:calc(max(1.5rem,env(safe-area-inset-right)) + 2rem);z-index:100;}
+@media (hover:none){#music-hint{display:none;}}
 #mute{background:none;border:none;font-family:'DM Mono',monospace;font-size:1.1rem;line-height:1;color:var(--muted);cursor:pointer;padding:4px;}
 #mute:hover{color:var(--text);}
 #vol-panel{position:absolute;top:100%;right:0;padding:10px 10px 8px;background:var(--bg);border:1px solid var(--line);border-radius:4px;display:flex;flex-direction:column;gap:6px;opacity:0;pointer-events:none;transition:opacity 0.12s;min-width:170px;}
@@ -57,6 +64,21 @@ canvas{display:block;cursor:default;touch-action:none;}
 <button id="help" onclick="toggleHelp()">? how to play</button>
 <audio id="bgm" src="/audio/pikmintodaysresults.mp3" loop preload="auto"></audio>
 <canvas id="c"></canvas>
+<div id="submit-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;align-items:center;justify-content:center;">
+  <div id="submit-box" style="background:var(--bg);border:1px solid var(--text);padding:28px 32px;width:min(320px,90vw);font-family:'DM Mono',monospace;text-align:center;">
+    <div style="font-size:13px;color:var(--text);margin-bottom:6px;">submit score</div>
+    <div id="sub-score" style="font-size:18px;color:#c8a020;margin-bottom:4px;font-weight:500;"></div>
+    <div id="sub-meta" style="font-size:10px;color:var(--muted);margin-bottom:20px;"></div>
+    <input id="name-input" type="text" maxlength="30" placeholder="your name"
+      style="width:100%;box-sizing:border-box;background:transparent;border:none;border-bottom:1px solid var(--text);color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:6px 2px;text-align:center;outline:none;margin-bottom:16px;">
+    <div id="sub-error" style="font-size:9px;color:#b04040;min-height:14px;margin-bottom:10px;"></div>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button id="sub-submit" style="flex:1;padding:9px;background:transparent;border:1px solid var(--text);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;">submit</button>
+      <button id="sub-cancel" style="flex:1;padding:9px;background:transparent;border:1px solid var(--line);color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;">skip</button>
+    </div>
+    <div id="sub-status" style="font-size:10px;color:var(--muted);min-height:18px;margin-top:10px;"></div>
+  </div>
+</div>
 <script>
 // ─── audio ───────────────────────────────────────────────────────────────
 // Tracks are listed here so a music selector can be dropped in later — just
@@ -142,6 +164,9 @@ function cacheColors(){
      enemy:s.getPropertyValue('--enemy').trim()};
 }
 let isMobile=false;
+const TIP_MSG='⚠  pieces that die in battle stay dead';
+let tipW=null;
+
 function resize(){
   const dpr=window.devicePixelRatio||1;
   W=window.innerWidth; H=window.innerHeight;
@@ -154,6 +179,7 @@ function resize(){
   } else {
     SQ=Math.min(Math.floor(Math.min(W*0.56,H*0.8)/6),90);
   }
+  tipW=null;
   cacheColors();
 }
 window.addEventListener('resize',resize);
@@ -1240,7 +1266,7 @@ function drawRoundEnd(){
   }
 
   ctx.textAlign='center'; ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-  ctx.fillText(done?'click or any key to continue':'tallying…',W/2,H*0.82);
+  ctx.fillText(done?(isMobile?'tap to continue':'click or any key to continue'):'tallying…',W/2,H*0.82);
 
   // Click-anywhere advance (also can skip animation)
   hitAreas.push({x:0,y:0,w:W,h:H,action:()=>{
@@ -1293,7 +1319,7 @@ function drawGambitPick(){
 
   ctx.font=`300 9px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
   ctx.textAlign='center';
-  ctx.fillText('1 · 2 · 3  or click',W/2,H*0.8);
+  ctx.fillText(isMobile?'tap a card':'1 · 2 · 3  or click',W/2,H*0.8);
 }
 
 // ─── shop ─────────────────────────────────────────────────────────────────
@@ -1307,6 +1333,16 @@ function drawShop(){
   ctx.fillText(`◆ ${gold}`,W/2,H*0.18+28);
   ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
   ctx.fillText(`back rank  ${backRankUsed()} / ${MAX_BACK_RANK}    pawns  ${roster.pawns} / ${MAX_PAWNS}`,W/2,H*0.18+46);
+
+  if(diffProfile().rosterDeaths){
+    ctx.font=`500 13px 'DM Mono',monospace`;
+    if(tipW==null) tipW=ctx.measureText(TIP_MSG).width+28;
+    const w=Math.min(tipW,W*0.9),h=30,x=W/2-w/2,y=H*0.18+64;
+    ctx.fillStyle='rgba(160,40,40,0.12)'; ctx.fillRect(x,y,w,h);
+    ctx.strokeStyle='#b03030'; ctx.lineWidth=1; ctx.strokeRect(x,y,w,h);
+    ctx.fillStyle='#c83030'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(TIP_MSG,W/2,y+h/2);
+  }
 
   const itemW=Math.min(320,W*0.85),itemH=52,gap=10;
   const totalH=SHOP_CATALOG.length*(itemH+gap)+itemH+gap*2;
@@ -1410,7 +1446,7 @@ function drawWager(){
 
   ctx.font=`300 9px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
   ctx.textAlign='center';
-  ctx.fillText('click to choose',W/2,H*0.82);
+  ctx.fillText(isMobile?'tap to choose':'click to choose',W/2,H*0.82);
   if(ownedGambits.includes('gamblers_mark')){
     ctx.fillStyle='#c89020';
     ctx.fillText("gambler's mark  ★  win rewards doubled",W/2,H*0.82+18);
@@ -1418,6 +1454,16 @@ function drawWager(){
 }
 
 // ─── overlay screens ──────────────────────────────────────────────────────
+function drawActionButton(y,label,action){
+  const w=160,h=30,x=W/2-w/2;
+  const hov=mouseX>=x&&mouseX<x+w&&mouseY>=y&&mouseY<y+h;
+  ctx.fillStyle=hov?C.line:'transparent'; ctx.fillRect(x,y,w,h);
+  ctx.strokeStyle=C.line; ctx.lineWidth=1; ctx.strokeRect(x+0.5,y+0.5,w-1,h-1);
+  ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(label,x+w/2,y+h/2);
+  hitAreas.push({x,y,w,h,action});
+}
+
 function drawOverlay(){
   hitAreas=[];
   ctx.fillStyle=C.bg; ctx.fillRect(0,0,W,H);
@@ -1484,7 +1530,13 @@ function drawOverlay(){
 
     ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
     ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('press enter to begin',W/2,sby+sbH+22);
+    if(!isMobile) ctx.fillText('press enter to begin',W/2,sby+sbH+22);
+
+    const lbW=160,lbH=28,lbx=W/2-80,lby=sby+sbH+46;
+    const lbHov=mouseX>=lbx&&mouseX<lbx+lbW&&mouseY>=lby&&mouseY<lby+lbH;
+    ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=lbHov?C.text:C.muted;
+    ctx.fillText('leaderboard →',W/2,lby+lbH/2);
+    hitAreas.push({x:lbx,y:lby,w:lbW,h:lbH,action:()=>window.location.href='/break-times/gambit-leaderboard.html'});
 
   } else if(phase==='gameover'){
     ctx.font=`400 58px 'DM Mono',monospace`; ctx.fillStyle=C.text;
@@ -1499,8 +1551,10 @@ function drawOverlay(){
     ctx.fillText(gameMode==='infinite'?`best  depth ${hiEncounter}`:`best  ${hiEncounter} / 7`,W/2,H*0.36+90);
     ctx.font=`400 12px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
     ctx.fillText(`score  ${runScore}    high  ${hiScore}`,W/2,H*0.36+112);
+    drawActionButton(H*0.6,'submit score',()=>openSubmitOverlay(false));
+    drawActionButton(H*0.68,'retry',startRun);
     ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-    ctx.fillText('click or any key to retry',W/2,H*0.72);
+    if(!isMobile) ctx.fillText('press enter to retry',W/2,H*0.76);
 
   } else if(phase==='victory'){
     ctx.font=`400 52px 'DM Mono',monospace`; ctx.fillStyle=C.text;
@@ -1517,13 +1571,17 @@ function drawOverlay(){
       ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
       ctx.fillText(ownedGambits.map(id=>ALL_GAMBITS.find(g=>g.id===id)?.name||id).join('  ·  '),W/2,H*0.34+100);
     }
-    ctx.fillText('click or any key to play again',W/2,H*0.72);
+    drawActionButton(H*0.62,'submit score',()=>openSubmitOverlay(true));
+    drawActionButton(H*0.7,'play again',startRun);
+    ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    if(!isMobile) ctx.fillText('press enter to play again',W/2,H*0.78);
   }
 }
 
 // ─── help / tutorial ───────────────────────────────────────────────────────
 let showHelp=false;
-function toggleHelp(){showHelp=!showHelp;}
+let helpScroll=0,helpMaxScroll=0;
+function toggleHelp(){showHelp=!showHelp; if(showHelp) helpScroll=0;}
 
 const HELP_SECTIONS=[
   {h:'the goal',
@@ -1570,6 +1628,11 @@ const HELP_SECTIONS=[
      'they can swing a game — adapt to them.',
    ]},
   {h:'controls',
+   mobile:[
+     'tap your piece, then tap a highlighted square to move.',
+     'tap the hex button (if owned + unused) to activate it.',
+     'tap your piece again to deselect.',
+   ],
    lines:[
      'click your piece, then click a highlighted square to move.',
      'H — activate hex (if owned + unused).',
@@ -1588,67 +1651,111 @@ const HELP_SECTIONS=[
 // Memoized wrap of HELP_SECTIONS keyed by column width — the lines never change,
 // only the column width does (and only on resize).
 const helpWrapCache=new Map();
-function wrappedHelp(width){
-  const key=width|0;
+function wrappedHelp(width,mobile,bodyPx){
+  const key=`${width|0}-${mobile?'m':'d'}-${bodyPx}`;
   let cached=helpWrapCache.get(key);
   if(cached) return cached;
-  ctx.font=`300 11px 'DM Mono',monospace`;
-  cached=HELP_SECTIONS.map(sec=>({h:sec.h,wrapped:sec.lines.flatMap(ln=>wrapText(ln,width).lines)}));
+  ctx.font=`300 ${bodyPx}px 'DM Mono',monospace`;
+  cached=HELP_SECTIONS.map(sec=>{
+    const lines=mobile&&sec.mobile?sec.mobile:sec.lines;
+    return {h:sec.h,wrapped:lines.flatMap(ln=>wrapText(ln,width).lines)};
+  });
   helpWrapCache.set(key,cached);
   return cached;
 }
 
 function drawHelpOverlay(){
   const isDark=document.body.classList.contains('dark');
-  ctx.fillStyle=isDark?'rgba(10,10,8,0.92)':'rgba(248,247,243,0.94)';
+  ctx.fillStyle=isDark?'rgba(10,10,8,0.96)':'rgba(248,247,243,0.96)';
   ctx.fillRect(0,0,W,H);
 
+  const titlePx=isMobile?18:22, headerPx=isMobile?11:12, bodyPx=isMobile?10:11;
+  const titleGap=isMobile?26:32, headerGap=isMobile?16:18, lineGap=isMobile?13:15, sectGap=isMobile?8:10;
   const padX=Math.min(60,W*0.08);
   const colW=Math.min(W-padX*2,720);
   const colX=W/2-colW/2;
-  let y=Math.max(40,H*0.08);
+  const topY=Math.max(isMobile?24:40,H*(isMobile?0.04:0.08));
+
+  ctx.save();
+  ctx.translate(0,-helpScroll);
+  let y=topY;
 
   ctx.textAlign='left'; ctx.textBaseline='top';
-  ctx.font=`500 22px 'DM Mono',monospace`; ctx.fillStyle=C.text;
-  ctx.fillText('how to play',colX,y); y+=32;
-  ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-  ctx.fillText('chess · roguelite · wager — click anywhere or press ? / Esc to close',colX,y); y+=24;
+  ctx.font=`500 ${titlePx}px 'DM Mono',monospace`; ctx.fillStyle=C.text;
+  ctx.fillText('how to play',colX,y); y+=titleGap;
+  ctx.font=`300 ${bodyPx}px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+  ctx.fillText(isMobile?'chess · roguelite · wager — tap to close':'chess · roguelite · wager — click anywhere or press ? / Esc to close',colX,y); y+=isMobile?20:24;
 
   const renderCol=(sections,x,cy)=>{
     sections.forEach(sec=>{
-      ctx.font=`500 12px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
-      ctx.fillText(sec.h,x,cy); cy+=18;
-      ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle=C.text;
-      sec.wrapped.forEach(l=>{ctx.fillText(l,x,cy); cy+=15;});
-      cy+=10;
+      ctx.font=`500 ${headerPx}px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
+      ctx.fillText(sec.h,x,cy); cy+=headerGap;
+      ctx.font=`300 ${bodyPx}px 'DM Mono',monospace`; ctx.fillStyle=C.text;
+      sec.wrapped.forEach(l=>{ctx.fillText(l,x,cy); cy+=lineGap;});
+      cy+=sectGap;
     });
+    return cy;
   };
 
+  let bottomY;
   if(W<720){
-    renderCol(wrappedHelp(colW-8),colX,y);
+    bottomY=renderCol(wrappedHelp(colW-8,isMobile,bodyPx),colX,y);
   } else {
     const colInnerW=colW/2-12;
-    const wrapped=wrappedHelp(colInnerW);
+    const wrapped=wrappedHelp(colInnerW,isMobile,bodyPx);
     const half=Math.ceil(wrapped.length/2);
-    renderCol(wrapped.slice(0,half),colX,y);
-    renderCol(wrapped.slice(half),colX+colW/2+12,y);
+    const lY=renderCol(wrapped.slice(0,half),colX,y);
+    const rY=renderCol(wrapped.slice(half),colX+colW/2+12,y);
+    bottomY=Math.max(lY,rY);
+  }
+  ctx.restore();
+
+  helpMaxScroll=Math.max(0,bottomY-H+30);
+  helpScroll=Math.max(0,Math.min(helpScroll,helpMaxScroll));
+
+  if(helpMaxScroll>0){
+    const thumbH=Math.max(40,(H/(bottomY+30))*H);
+    const thumbY=(helpScroll/helpMaxScroll)*(H-thumbH);
+    ctx.fillStyle=C.line; ctx.fillRect(W-5,thumbY,3,thumbH);
   }
 }
 
 // ─── main draw ────────────────────────────────────────────────────────────
 let mouseX=0,mouseY=0;
+let helpTouchStartY=null,helpTouchLastY=null,helpTouchMoved=false;
 canvas.addEventListener('mousemove',e=>{mouseX=e.clientX; mouseY=e.clientY;});
+canvas.addEventListener('wheel',e=>{
+  if(showHelp){
+    helpScroll=Math.max(0,Math.min(helpMaxScroll,helpScroll+e.deltaY));
+    e.preventDefault();
+  }
+},{passive:false});
 canvas.addEventListener('touchmove',e=>{
   if(!e.touches.length) return;
   const t=e.touches[0]; mouseX=t.clientX; mouseY=t.clientY;
+  if(showHelp&&helpTouchStartY!==null){
+    helpScroll=Math.max(0,Math.min(helpMaxScroll,helpScroll+(helpTouchLastY-t.clientY)));
+    helpTouchLastY=t.clientY;
+    if(Math.abs(t.clientY-helpTouchStartY)>8) helpTouchMoved=true;
+  }
   e.preventDefault();
 },{passive:false});
 canvas.addEventListener('touchstart',e=>{
   if(!e.touches.length) return;
   const t=e.touches[0]; mouseX=t.clientX; mouseY=t.clientY;
-  // synthesize a click at the touch point
+  if(showHelp){
+    helpTouchStartY=t.clientY; helpTouchLastY=t.clientY; helpTouchMoved=false;
+    e.preventDefault(); return;
+  }
   canvas.dispatchEvent(new MouseEvent('click',{clientX:t.clientX,clientY:t.clientY}));
   e.preventDefault();
+},{passive:false});
+canvas.addEventListener('touchend',e=>{
+  if(showHelp&&helpTouchStartY!==null){
+    if(!helpTouchMoved) showHelp=false;
+    helpTouchStartY=null;
+    e.preventDefault();
+  }
 },{passive:false});
 
 function draw(){
@@ -1687,7 +1794,10 @@ canvas.addEventListener('click',e=>{
     for(const ha of hitAreas) if(mx>=ha.x&&mx<ha.x+ha.w&&my>=ha.y&&my<ha.y+ha.h){ha.action(); return;}
     return;
   }
-  if(phase==='gameover'||phase==='victory'){startRun(); return;}
+  if(phase==='gameover'||phase==='victory'){
+    for(const ha of hitAreas) if(mx>=ha.x&&mx<ha.x+ha.w&&my>=ha.y&&my<ha.y+ha.h){ha.action(); return;}
+    return;
+  }
 
   if(phase==='wager'||phase==='gambit_pick'||phase==='shop'||phase==='round_end'){
     for(const ha of hitAreas) if(mx>=ha.x&&mx<ha.x+ha.w&&my>=ha.y&&my<ha.y+ha.h){ha.action(); return;}
@@ -1744,6 +1854,7 @@ canvas.addEventListener('click',e=>{
 });
 
 document.addEventListener('keydown',e=>{
+  if(submitOverlay&&submitOverlay.style.display==='flex') return;
   if(e.key==='?'||e.key==='/'){toggleHelp(); return;}
   if(showHelp){if(e.key==='Escape'||e.key==='Enter'||e.key===' ') showHelp=false; return;}
 
@@ -1757,7 +1868,10 @@ document.addEventListener('keydown',e=>{
     if(e.key==='Enter'||e.key===' '){startRun(); return;}
     return;
   }
-  if(phase==='gameover'||phase==='victory'){startRun(); return;}
+  if(phase==='gameover'||phase==='victory'){
+    if(e.key==='Enter'||e.key===' ') startRun();
+    return;
+  }
 
   if(phase==='round_end'){
     if(roundEnd.t<4.4) roundEnd.t=4.5;
@@ -1786,6 +1900,58 @@ document.addEventListener('keydown',e=>{
     }
   }
 });
+
+// ─── submit overlay ───────────────────────────────────────────────────────
+let submitSnap=null;
+const submitOverlay=document.getElementById('submit-overlay');
+const nameInput=document.getElementById('name-input');
+const subScore=document.getElementById('sub-score');
+const subMeta=document.getElementById('sub-meta');
+const subError=document.getElementById('sub-error');
+const subStatus=document.getElementById('sub-status');
+const subSubmit=document.getElementById('sub-submit');
+
+subSubmit.addEventListener('click',doSubmitScore);
+document.getElementById('sub-cancel').addEventListener('click',()=>{submitOverlay.style.display='none'; startRun();});
+nameInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault(); doSubmitScore();}});
+
+function openSubmitOverlay(won){
+  submitSnap={score:runScore,difficulty,mode:gameMode,depth:encounter+1,gold,gambits:[...ownedGambits],won};
+  subScore.textContent=submitSnap.score+' pts';
+  subMeta.textContent=`${submitSnap.difficulty}  ·  ${submitSnap.mode}  ·  depth ${submitSnap.depth}  ·  ◆ ${submitSnap.gold}`;
+  subError.textContent='';
+  subStatus.textContent='';
+  nameInput.value=localStorage.getItem('gambit_last_name')||'';
+  submitOverlay.style.display='flex';
+  setTimeout(()=>nameInput.focus(),50);
+}
+
+async function doSubmitScore(){
+  const name=nameInput.value.trim();
+  if(!name){subError.textContent='enter a name'; return;}
+  subError.textContent='';
+  subStatus.textContent='submitting…';
+  subSubmit.disabled=true;
+  try{
+    const s=submitSnap;
+    const r=await fetch('/api/gambit/score',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({name,score:s.score,difficulty:s.difficulty,mode:s.mode,
+        depth:s.depth,gold:s.gold,gambits:s.gambits,won:s.won?1:0})
+    });
+    const data=await r.json();
+    if(!r.ok){subError.textContent=data.error||'submit failed'; subStatus.textContent=''; subSubmit.disabled=false; return;}
+    localStorage.setItem('gambit_last_name',name);
+    submitOverlay.style.display='none';
+    startRun();
+  }catch(e){
+    console.error('submit failed:',e);
+    subError.textContent='network error';
+    subStatus.textContent='';
+    subSubmit.disabled=false;
+  }
+}
 
 // ─── start ────────────────────────────────────────────────────────────────
 requestAnimationFrame(loop);
