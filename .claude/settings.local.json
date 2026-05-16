@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xxd)",
+      "Bash(node --check src/worker.js)",
+      "Bash(awk '/<script>/,/<\\\\/script>/' tools/notes.html)",
+      "Bash(sed 's/<script>//; s/<\\\\/script>//')",
+      "Bash(node --check /tmp/notes-check.js)",
+      "Bash(rm /tmp/notes-check.js)"
+    ]
+  }
+}

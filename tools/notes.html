@@ -118,7 +118,7 @@
       overflow: hidden;
     }
     .sidebar-head {
-      padding: 1rem 1rem 0.75rem;
+      padding: 3rem 1rem 0.75rem;
       border-bottom: 1px solid var(--line);
       display: flex; flex-direction: column; gap: 0.5rem;
     }
@@ -408,33 +408,61 @@
     }
     .editor-foot .stats { display: flex; gap: 1rem; }
 
-    /* ── Command palette / shortcuts overlay ── */
-    .shortcuts-overlay {
+    /* ── Modal overlays (shortcuts, markdown reference) ── */
+    .overlay {
       position: fixed; inset: 0;
       background: rgba(0,0,0,0.4);
       display: flex; align-items: center; justify-content: center;
       z-index: 400; padding: 2rem;
     }
-    .shortcuts-overlay .card {
+    .overlay .card {
       background: var(--bg); border: 1px solid var(--line);
       border-radius: 4px; padding: 1.5rem 2rem;
       max-width: 420px; width: 100%;
     }
-    .shortcuts-overlay h2 {
+    .overlay.wide .card { max-width: 640px; max-height: 80vh; overflow-y: auto; }
+    .overlay h2 {
       font-family: 'DM Mono', monospace; font-size: 0.7rem;
       letter-spacing: 0.14em; text-transform: uppercase;
       color: var(--muted); margin-bottom: 1rem;
     }
-    .shortcuts-overlay ul { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
-    .shortcuts-overlay li {
+    .overlay ul { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+    .overlay li {
       display: flex; justify-content: space-between; align-items: center;
       font-size: 0.85rem;
     }
-    .shortcuts-overlay kbd {
+    .overlay kbd {
       font-family: 'DM Mono', monospace; font-size: 0.7rem;
       background: var(--tag-bg); padding: 0.2rem 0.5rem; border-radius: 2px;
       color: var(--text);
     }
+
+    .md-ref-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0 2rem;
+    }
+    .ref-section { margin-bottom: 1.1rem; }
+    .ref-label {
+      font-family: 'DM Mono', monospace; font-size: 0.6rem;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 0.35rem;
+    }
+    .ref-row {
+      display: flex; align-items: baseline; gap: 0.75rem;
+      font-family: 'DM Mono', monospace; font-size: 0.78rem;
+      line-height: 1.85; color: var(--text);
+    }
+    .ref-row .syn { flex: 0 0 auto; color: var(--text); }
+    .ref-row .desc { color: var(--muted); font-size: 0.7rem; }
+    .md-ref-btn {
+      background: none; border: none;
+      font-family: 'DM Mono', monospace; font-size: 0.65rem;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--muted); cursor: pointer;
+      transition: color 0.15s ease; padding: 0;
+    }
+    .md-ref-btn:hover { color: var(--text); }
+
+    .sidebar-foot-actions { display: flex; gap: 0.75rem; align-items: center; }
 
     .toast {
       position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
@@ -501,7 +529,7 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-head">
         <div class="sidebar-title">
-          <span>Notes</span>
+          <span id="sidebar-title-text">Notes</span>
           <span class="count-pill" id="count-pill">0</span>
         </div>
         <div class="search-wrap">
@@ -520,7 +548,10 @@
       </div>
       <div class="sidebar-foot">
         <span><span class="save-dot" id="save-dot"></span><span id="save-status">ready</span></span>
-        <button class="logout-btn" id="logout-btn" title="Log out">Log out</button>
+        <div class="sidebar-foot-actions">
+          <button class="logout-btn" id="trash-btn">Trash</button>
+          <button class="logout-btn" id="logout-btn" title="Log out">Log out</button>
+        </div>
       </div>
     </aside>
 
@@ -537,6 +568,8 @@
             <button id="mode-split" title="Split (⌘/)">Split</button>
             <button id="mode-preview" title="Preview (⌘/)">Preview</button>
           </div>
+          <button class="head-btn" id="restore-btn" hidden>Restore</button>
+          <button class="head-btn danger" id="perma-delete-btn" hidden>Delete Forever</button>
           <button class="head-btn" id="export-btn" title="Download .md">Export</button>
           <button class="head-btn danger" id="delete-btn" title="Delete">Delete</button>
         </div>
@@ -556,6 +589,7 @@
           <div class="stats">
             <span id="stat-words">0 words</span>
             <span id="stat-chars">0 chars</span>
+            <button class="md-ref-btn" id="md-ref-btn">md guide</button>
           </div>
           <span id="editor-meta"></span>
         </div>
@@ -564,7 +598,7 @@
   </div>
 
   <!-- Shortcuts overlay -->
-  <div class="shortcuts-overlay" id="shortcuts" hidden>
+  <div class="overlay" id="shortcuts" hidden>
     <div class="card">
       <h2>Keyboard shortcuts</h2>
       <ul>
@@ -576,6 +610,68 @@
         <li><span>Show this dialog</span><kbd>⌘?</kbd></li>
         <li><span>Close dialog</span><kbd>Esc</kbd></li>
       </ul>
+    </div>
+  </div>
+
+  <!-- Markdown reference overlay -->
+  <div class="overlay wide" id="md-ref" hidden>
+    <div class="card">
+      <h2>Markdown Reference</h2>
+      <div class="md-ref-grid">
+        <div>
+          <div class="ref-section">
+            <div class="ref-label">Headings</div>
+            <div class="ref-row"><span class="syn"># Heading 1</span></div>
+            <div class="ref-row"><span class="syn">## Heading 2</span></div>
+            <div class="ref-row"><span class="syn">### Heading 3</span></div>
+          </div>
+          <div class="ref-section">
+            <div class="ref-label">Emphasis</div>
+            <div class="ref-row"><span class="syn">**bold**</span></div>
+            <div class="ref-row"><span class="syn">*italic*</span></div>
+            <div class="ref-row"><span class="syn">~~strikethrough~~</span></div>
+            <div class="ref-row"><span class="syn">`inline code`</span></div>
+          </div>
+          <div class="ref-section">
+            <div class="ref-label">Blocks</div>
+            <div class="ref-row"><span class="syn">&gt; blockquote</span></div>
+            <div class="ref-row"><span class="syn">---</span><span class="desc">horizontal rule</span></div>
+            <div class="ref-row"><span class="syn">```lang</span><span class="desc">code block</span></div>
+          </div>
+          <div class="ref-section">
+            <div class="ref-label">Links &amp; Images</div>
+            <div class="ref-row"><span class="syn">[text](url)</span></div>
+            <div class="ref-row"><span class="syn">![alt](url)</span><span class="desc">image</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="ref-section">
+            <div class="ref-label">Lists</div>
+            <div class="ref-row"><span class="syn">- item</span><span class="desc">unordered</span></div>
+            <div class="ref-row"><span class="syn">1. item</span><span class="desc">ordered</span></div>
+            <div class="ref-row"><span class="syn">- [ ] todo</span><span class="desc">task</span></div>
+            <div class="ref-row"><span class="syn">- [x] done</span><span class="desc">checked task</span></div>
+            <div class="ref-row"><span class="syn">&nbsp;&nbsp;- nested</span><span class="desc">2-space indent</span></div>
+          </div>
+          <div class="ref-section">
+            <div class="ref-label">Tables</div>
+            <div class="ref-row"><span class="syn">| Col A | Col B |</span></div>
+            <div class="ref-row"><span class="syn">|-------|-------|</span></div>
+            <div class="ref-row"><span class="syn">| val   | val   |</span></div>
+          </div>
+          <div class="ref-section">
+            <div class="ref-label">Wiki-links &amp; Tags</div>
+            <div class="ref-row"><span class="syn">[[Note Title]]</span><span class="desc">link to note</span></div>
+            <div class="ref-row"><span class="syn">#tagname</span><span class="desc">tag filter</span></div>
+          </div>
+          <div class="ref-section">
+            <div class="ref-label">Tips</div>
+            <div class="ref-row"><span class="syn">Tab</span><span class="desc">indent 2 spaces</span></div>
+            <div class="ref-row"><span class="syn">⇧Tab</span><span class="desc">outdent</span></div>
+            <div class="ref-row"><span class="desc">Paste image to upload</span></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -594,7 +690,7 @@
 
     // ── State ──
     const state = {
-      notes: [],          // {slug, title, content, updatedAt, _tags?}
+      notes: [],
       filtered: [],
       currentSlug: null,
       dirty: false,
@@ -602,6 +698,8 @@
       mode: 'edit',
       query: '',
       tagFilter: null,
+      trash: [],
+      inTrash: false,
     };
 
     const LINK_KINDS = { note: '#note:', new: '#new:', tag: '#tag:' };
@@ -738,6 +836,7 @@
       $('menu-btn').hidden = false;
       applyMode();
       await loadNotes();
+      loadTrash().then(updateTrashBtn).catch(() => {});
     }
 
     $('login-form').addEventListener('submit', async (e) => {
@@ -831,15 +930,19 @@
 
     function renderList() {
       const list = $('note-list');
-      $('count-pill').textContent = state.notes.length;
-      if (!state.filtered.length) {
-        list.innerHTML = state.query
-          ? '<div class="empty">No matches.</div>'
-          : '<div class="empty">No notes yet.<br>Press <kbd>⌘N</kbd> to create one.</div>';
+      const inTrash = state.inTrash;
+      const items = inTrash ? state.trash : state.filtered;
+      $('count-pill').textContent = inTrash ? state.trash.length : state.notes.length;
+      if (!items.length) {
+        list.innerHTML = inTrash
+          ? '<div class="empty">Trash is empty.</div>'
+          : state.query
+            ? '<div class="empty">No matches.</div>'
+            : '<div class="empty">No notes yet.<br>Press <kbd>⌘N</kbd> to create one.</div>';
         return;
       }
       list.innerHTML = '';
-      for (const n of state.filtered) {
+      for (const n of items) {
         const el = document.createElement('div');
         el.className = 'note-item' + (n.slug === state.currentSlug ? ' active' : '');
         el.dataset.slug = n.slug;
@@ -848,10 +951,10 @@
         t.textContent = n.title || n.slug;
         const m = document.createElement('div');
         m.className = 'note-item-meta';
-        m.textContent = formatRelative(n.updatedAt);
+        m.textContent = inTrash ? 'deleted ' + formatRelative(n.deletedAt) : formatRelative(n.updatedAt);
         el.appendChild(t);
         el.appendChild(m);
-        el.addEventListener('click', () => selectNote(n.slug));
+        el.addEventListener('click', () => inTrash ? openTrashNote(n.slug) : selectNote(n.slug));
         list.appendChild(el);
       }
     }
@@ -869,11 +972,12 @@
     }
 
     async function selectNote(slug) {
-      if (state.currentSlug === slug) return;
+      if (state.currentSlug === slug && !state.inTrash) return;
       if (state.dirty) await saveNow();
       try {
         const note = await api('/api/notes/' + encodeURIComponent(slug));
         state.currentSlug = slug;
+        setEditorTrashMode(false);
         $('title-input').value = note.title || '';
         $('editor').value = note.content || '';
         $('editor-meta').textContent = 'saved · ' + formatRelative(note.updatedAt);
@@ -894,8 +998,10 @@
     }
 
     async function newNote({ title = '', autoSave = false } = {}) {
+      if (state.inTrash) await setTrashView(false);
       if (state.dirty) await saveNow();
       state.currentSlug = newSlug();
+      setEditorTrashMode(false);
       $('title-input').value = title;
       $('editor').value = '';
       $('editor-meta').textContent = 'new · unsaved';
@@ -1128,19 +1234,23 @@
 
     $('delete-btn').addEventListener('click', async () => {
       if (!state.currentSlug) return;
-      if (!confirm('Delete this note? This cannot be undone.')) return;
+      if (!confirm('Move this note to trash?')) return;
       const slug = state.currentSlug;
       try {
+        const note = state.notes.find(n => n.slug === slug);
         await api('/api/notes/' + encodeURIComponent(slug), { method: 'DELETE' });
+        if (note) state.trash.unshift({ slug: note.slug, title: note.title, deletedAt: new Date().toISOString() });
         state.notes = state.notes.filter(n => n.slug !== slug);
         state.currentSlug = null;
         state.dirty = false;
         $('editor-pane-wrap').hidden = true;
         $('empty-state').hidden = false;
         applyFilter();
-        toast('Note deleted.');
+        renderTags();
+        updateTrashBtn();
+        toast('Moved to trash.');
       } catch (ex) {
-        toast('Delete failed: ' + ex.message);
+        toast('Move to trash failed: ' + ex.message);
       }
     });
 
@@ -1170,6 +1280,7 @@
       const inTextField = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName);
 
       if (e.key === 'Escape') {
+        if (!$('md-ref').hidden) { $('md-ref').hidden = true; return; }
         if (!$('shortcuts').hidden) { $('shortcuts').hidden = true; return; }
         if ($('search-input') === document.activeElement) {
           $('search-input').value = ''; state.query = ''; applyFilter();
@@ -1180,7 +1291,7 @@
       if (!mod) return;
 
       if (e.key === 's') { e.preventDefault(); if (state.dirty) saveNow(); return; }
-      if (e.key === 'n') { e.preventDefault(); if (!$('app').hidden) newNote(); return; }
+      if (e.key === 'n') { e.preventDefault(); if (!$('app').hidden && !state.inTrash) newNote(); return; }
       if (e.key === 'k') { e.preventDefault(); $('search-input').focus(); $('search-input').select(); return; }
       if (e.key === '/') { e.preventDefault(); cycleMode(); return; }
       if (e.key === 'e') { e.preventDefault(); exportCurrent(); return; }
@@ -1191,6 +1302,11 @@
 
     $('shortcuts').addEventListener('click', (e) => {
       if (e.target === $('shortcuts')) $('shortcuts').hidden = true;
+    });
+
+    $('md-ref-btn').addEventListener('click', () => { $('md-ref').hidden = false; });
+    $('md-ref').addEventListener('click', (e) => {
+      if (e.target === $('md-ref')) $('md-ref').hidden = true;
     });
 
     // ── Toast ──
@@ -1212,12 +1328,171 @@
       }
     });
 
-    setInterval(() => {
+    // ── Trash ──
+    function setEditorTrashMode(on) {
+      $('title-input').readOnly = on;
+      $('editor').readOnly = on;
+      $('restore-btn').hidden = !on;
+      $('perma-delete-btn').hidden = !on;
+      $('export-btn').hidden = on;
+      $('delete-btn').hidden = on;
+    }
+
+    function updateTrashBtn() {
+      const btn = $('trash-btn');
+      if (state.inTrash) {
+        btn.textContent = '← Notes';
+      } else {
+        btn.textContent = state.trash.length ? `Trash (${state.trash.length})` : 'Trash';
+      }
+    }
+
+    async function loadTrash() {
+      const data = await api('/api/notes/trash');
+      state.trash = data.notes || [];
+    }
+
+    async function setTrashView(on) {
+      if (state.dirty) await saveNow();
+      state.inTrash = on;
+      state.currentSlug = null;
+      setEditorTrashMode(false);
+      $('editor-pane-wrap').hidden = true;
+      $('empty-state').hidden = false;
+      $('sidebar-title-text').textContent = on ? 'Trash' : 'Notes';
+      $('new-btn').hidden = on;
+      if (on) {
+        $('tags-section').hidden = true;
+        try { await loadTrash(); } catch {}
+      } else {
+        renderTags();
+      }
+      updateTrashBtn();
+      renderList();
+    }
+
+    async function openTrashNote(slug) {
+      try {
+        const note = await api('/api/notes/trash/' + encodeURIComponent(slug));
+        state.currentSlug = slug;
+        setEditorTrashMode(true);
+        $('title-input').value = note.title || '';
+        $('editor').value = note.content || '';
+        $('editor-meta').textContent = 'deleted · ' + formatRelative(note.deletedAt);
+        $('empty-state').hidden = true;
+        $('editor-pane-wrap').hidden = false;
+        state.mode = 'preview';
+        applyMode();
+        updateStats();
+        renderList();
+      } catch (ex) {
+        toast('Could not open note: ' + ex.message);
+      }
+    }
+
+    $('trash-btn').addEventListener('click', () => setTrashView(!state.inTrash));
+
+    $('restore-btn').addEventListener('click', async () => {
+      const slug = state.currentSlug;
+      if (!slug || !state.inTrash) return;
+      try {
+        await api('/api/notes/trash/' + encodeURIComponent(slug) + '/restore', { method: 'POST' });
+        state.trash = state.trash.filter(n => n.slug !== slug);
+        state.inTrash = false;
+        state.currentSlug = null;
+        $('sidebar-title-text').textContent = 'Notes';
+        $('new-btn').hidden = false;
+        updateTrashBtn();
+        await loadNotes();
+        await selectNote(slug);
+        toast('Note restored.');
+      } catch (ex) {
+        toast('Restore failed: ' + ex.message);
+      }
+    });
+
+    $('perma-delete-btn').addEventListener('click', async () => {
+      const slug = state.currentSlug;
+      if (!slug || !state.inTrash) return;
+      if (!confirm('Permanently delete this note? This cannot be undone.')) return;
+      try {
+        await api('/api/notes/trash/' + encodeURIComponent(slug), { method: 'DELETE' });
+        state.trash = state.trash.filter(n => n.slug !== slug);
+        state.currentSlug = null;
+        setEditorTrashMode(false);
+        $('editor-pane-wrap').hidden = true;
+        $('empty-state').hidden = false;
+        updateTrashBtn();
+        renderList();
+        toast('Permanently deleted.');
+      } catch (ex) {
+        toast('Delete failed: ' + ex.message);
+      }
+    });
+
+    // ── Background sync ──
+    async function syncNotes() {
       if ($('app').hidden) return;
       if (document.visibilityState !== 'visible') return;
-      if (!state.filtered.length) return;
-      renderList();
-    }, 60000);
+      try {
+        const data = await api('/api/notes');
+        const fresh = data.notes || [];
+        const localBySlug = new Map(state.notes.map(n => [n.slug, n]));
+        const remoteSlugs = new Set(fresh.map(n => n.slug));
+
+        const toFetch = [];
+        for (const remote of fresh) {
+          const local = localBySlug.get(remote.slug);
+          if (!local || remote.updatedAt > (local.updatedAt || '')) toFetch.push(remote.slug);
+        }
+
+        let changed = false;
+
+        if (toFetch.length) {
+          const fetched = await Promise.all(
+            toFetch.map(s => api('/api/notes/' + encodeURIComponent(s)).catch(() => null))
+          );
+          for (const note of fetched) {
+            if (!note) continue;
+            const entry = { slug: note.slug, title: note.title, content: note.content, updatedAt: note.updatedAt };
+            const idx = state.notes.findIndex(n => n.slug === note.slug);
+            const isCurrentAndClean = note.slug === state.currentSlug && !state.dirty && !state.inTrash;
+            if (idx < 0) state.notes.unshift(entry);
+            else state.notes.splice(idx, 1, { ...entry, _tags: null });
+            changed = true;
+            if (isCurrentAndClean) {
+              $('editor').value = note.content || '';
+              $('title-input').value = note.title || '';
+              $('editor-meta').textContent = 'synced · ' + formatRelative(note.updatedAt);
+              updateStats();
+              renderPreview();
+              renderBacklinks();
+              toast('Note updated from another device.');
+            }
+          }
+        }
+
+        const hadDeletedCurrent = !!state.currentSlug && !state.inTrash && !remoteSlugs.has(state.currentSlug);
+        const before = state.notes.length;
+        state.notes = state.notes.filter(n => remoteSlugs.has(n.slug));
+        if (state.notes.length !== before) {
+          changed = true;
+          if (hadDeletedCurrent && !state.dirty) {
+            state.currentSlug = null;
+            $('editor-pane-wrap').hidden = true;
+            $('empty-state').hidden = false;
+            toast('Note was deleted from another device.');
+          }
+        }
+
+        if (changed && !state.inTrash) { applyFilter(); renderTags(); }
+      } catch { /* silently ignore sync errors */ }
+    }
+
+    setInterval(syncNotes, 30000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') syncNotes();
+    });
 
     $('menu-btn').addEventListener('click', () => {
       $('sidebar').classList.toggle('mobile-open');

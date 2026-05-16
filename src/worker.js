@@ -28,12 +28,14 @@ export default {
 // Session: HttpOnly cookie `notes_auth` holding the password value.
 
 const NOTES_PREFIX = 'notes/';
+const TRASH_PREFIX = 'notes-trash/';
 const ASSETS_PREFIX = 'notes-assets/';
 const ASSETS_PUBLIC_BASE = 'https://r2.sn4k.org/';
 const NOTE_MAX_BYTES = 512 * 1024;        // 512 KB per note
 const NOTE_MAX_SLUG = 80;
 const NOTE_MAX_TITLE = 200;
 const ASSET_MAX_BYTES = 10 * 1024 * 1024; // 10 MB per upload
+const MD_CONTENT_TYPE = 'text/markdown; charset=utf-8';
 const ALLOWED_ASSET_TYPES = {
   'image/png': 'png',
   'image/jpeg': 'jpg',
@@ -41,6 +43,15 @@ const ALLOWED_ASSET_TYPES = {
   'image/webp': 'webp',
   'image/svg+xml': 'svg',
 };
+
+async function* iterPrefix(env, prefix) {
+  let cursor;
+  do {
+    const res = await env.R2.list({ prefix, cursor, limit: 1000, include: ['customMetadata'] });
+    cursor = res.truncated ? res.cursor : undefined;
+    for (const obj of res.objects) yield obj;
+  } while (cursor);
+}
 
 async function handleNotes(request, env, url) {
   const parts = url.pathname.split('/').filter(Boolean); // ['api','notes', maybe slug]
@@ -55,11 +66,15 @@ async function handleNotes(request, env, url) {
 
     if (request.method === 'GET'  && sub === 'index')  return indexNotes(env);
     if (request.method === 'POST' && sub === 'upload') return uploadAsset(request, env);
+    if (request.method === 'GET'    && sub === 'trash' && !parts[3])               return listTrash(env);
+    if (request.method === 'GET'    && sub === 'trash' && parts[3] && !parts[4])    return getTrashNote(env, parts[3]);
+    if (request.method === 'POST'   && sub === 'trash' && parts[3] && parts[4] === 'restore') return restoreNote(env, parts[3]);
+    if (request.method === 'DELETE' && sub === 'trash' && parts[3] && !parts[4])    return permanentDeleteNote(env, parts[3]);
 
     if (request.method === 'GET'    && !sub)  return listNotes(env);
     if (request.method === 'GET'    && sub)   return getNote(env, sub);
     if (request.method === 'PUT'    && sub)   return putNote(request, env, sub);
-    if (request.method === 'DELETE' && sub)   return deleteNote(env, sub);
+    if (request.method === 'DELETE' && sub)   return trashNote(env, sub);
     return json({ error: 'Method not allowed' }, 405);
   } catch (e) {
     return json({ error: e.message || 'Server error' }, 500);
@@ -131,21 +146,16 @@ function sanitizeSlug(s) {
 
 async function listNotes(env) {
   const out = [];
-  let cursor;
-  do {
-    const res = await env.R2.list({ prefix: NOTES_PREFIX, cursor, limit: 1000, include: ['customMetadata'] });
-    cursor = res.truncated ? res.cursor : undefined;
-    for (const obj of res.objects) {
-      const slug = obj.key.slice(NOTES_PREFIX.length).replace(/\.md$/, '');
-      const m = obj.customMetadata || {};
-      out.push({
-        slug,
-        title: m.title || slug,
-        size: obj.size,
-        updatedAt: obj.uploaded?.toISOString?.() || m.updatedAt || '',
-      });
-    }
-  } while (cursor);
+  for await (const obj of iterPrefix(env, NOTES_PREFIX)) {
+    const slug = obj.key.slice(NOTES_PREFIX.length).replace(/\.md$/, '');
+    const m = obj.customMetadata || {};
+    out.push({
+      slug,
+      title: m.title || slug,
+      size: obj.size,
+      updatedAt: obj.uploaded?.toISOString?.() || m.updatedAt || '',
+    });
+  }
   out.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
   return json({ notes: out });
 }
@@ -177,7 +187,7 @@ async function putNote(request, env, slug) {
   const title = String(body.title || safe).trim().slice(0, NOTE_MAX_TITLE) || safe;
   const updatedAt = new Date().toISOString();
   await env.R2.put(NOTES_PREFIX + safe + '.md', content, {
-    httpMetadata: { contentType: 'text/markdown; charset=utf-8' },
+    httpMetadata: { contentType: MD_CONTENT_TYPE },
     customMetadata: { title, updatedAt },
   });
   return json({ ok: true, slug: safe, title, updatedAt });
@@ -185,12 +195,7 @@ async function putNote(request, env, slug) {
 
 async function indexNotes(env) {
   const objects = [];
-  let cursor;
-  do {
-    const res = await env.R2.list({ prefix: NOTES_PREFIX, cursor, limit: 1000, include: ['customMetadata'] });
-    cursor = res.truncated ? res.cursor : undefined;
-    objects.push(...res.objects);
-  } while (cursor);
+  for await (const obj of iterPrefix(env, NOTES_PREFIX)) objects.push(obj);
 
   const out = await Promise.all(objects.map(async (obj) => {
     const slug = obj.key.slice(NOTES_PREFIX.length).replace(/\.md$/, '');
@@ -222,10 +227,65 @@ async function uploadAsset(request, env) {
   return json({ url: ASSETS_PUBLIC_BASE + key, key, size: buf.byteLength });
 }
 
-async function deleteNote(env, slug) {
+async function trashNote(env, slug) {
   const safe = sanitizeSlug(slug);
   if (!safe) return json({ error: 'Bad slug' }, 400);
-  await env.R2.delete(NOTES_PREFIX + safe + '.md');
+  const obj = await env.R2.get(NOTES_PREFIX + safe + '.md');
+  if (!obj) return json({ ok: true });
+  const m = obj.customMetadata || {};
+  const content = await obj.text();
+  await Promise.all([
+    env.R2.put(TRASH_PREFIX + safe + '.md', content, {
+      httpMetadata: { contentType: MD_CONTENT_TYPE },
+      customMetadata: { ...m, deletedAt: new Date().toISOString() },
+    }),
+    env.R2.delete(NOTES_PREFIX + safe + '.md'),
+  ]);
+  return json({ ok: true });
+}
+
+async function listTrash(env) {
+  const out = [];
+  for await (const obj of iterPrefix(env, TRASH_PREFIX)) {
+    const slug = obj.key.slice(TRASH_PREFIX.length).replace(/\.md$/, '');
+    const m = obj.customMetadata || {};
+    out.push({ slug, title: m.title || slug, deletedAt: m.deletedAt || '', updatedAt: m.updatedAt || '' });
+  }
+  out.sort((a, b) => (b.deletedAt || '').localeCompare(a.deletedAt || ''));
+  return json({ notes: out });
+}
+
+async function getTrashNote(env, slug) {
+  const safe = sanitizeSlug(slug);
+  if (!safe) return json({ error: 'Bad slug' }, 400);
+  const obj = await env.R2.get(TRASH_PREFIX + safe + '.md');
+  if (!obj) return json({ error: 'Not found in trash' }, 404);
+  const m = obj.customMetadata || {};
+  return json({ slug: safe, title: m.title || safe, content: await obj.text(), deletedAt: m.deletedAt || '', updatedAt: m.updatedAt || '' });
+}
+
+async function restoreNote(env, slug) {
+  const safe = sanitizeSlug(slug);
+  if (!safe) return json({ error: 'Bad slug' }, 400);
+  const obj = await env.R2.get(TRASH_PREFIX + safe + '.md');
+  if (!obj) return json({ error: 'Not found in trash' }, 404);
+  const m = { ...obj.customMetadata };
+  const content = await obj.text();
+  delete m.deletedAt;
+  await Promise.all([
+    env.R2.put(NOTES_PREFIX + safe + '.md', content, {
+      httpMetadata: { contentType: MD_CONTENT_TYPE },
+      customMetadata: m,
+    }),
+    env.R2.delete(TRASH_PREFIX + safe + '.md'),
+  ]);
+  return json({ ok: true, slug: safe, title: m.title || safe });
+}
+
+async function permanentDeleteNote(env, slug) {
+  const safe = sanitizeSlug(slug);
+  if (!safe) return json({ error: 'Bad slug' }, 400);
+  await env.R2.delete(TRASH_PREFIX + safe + '.md');
   return json({ ok: true });
 }
 
@@ -247,22 +307,13 @@ async function handleApi(request, env, url) {
   }
 }
 
-async function* iterDecks(env) {
-  let cursor;
-  do {
-    const res = await env.R2.list({ prefix: PREFIX, cursor, limit: 1000, include: ['customMetadata'] });
-    cursor = res.truncated ? res.cursor : undefined;
-    for (const obj of res.objects) yield obj;
-  } while (cursor);
-}
-
 function keyToId(key) {
   return key.slice(PREFIX.length).replace(/\.json$/, '');
 }
 
 async function listDecks(env) {
   const out = [];
-  for await (const obj of iterDecks(env)) {
+  for await (const obj of iterPrefix(env, PREFIX)) {
     const m = obj.customMetadata || {};
     out.push({
       id: keyToId(obj.key),
@@ -360,7 +411,7 @@ async function hashCards(cards) {
 }
 
 async function findByHash(env, hash) {
-  for await (const obj of iterDecks(env)) {
+  for await (const obj of iterPrefix(env, PREFIX)) {
     const m = obj.customMetadata || {};
     if (m.contentHash === hash) {
       return { id: keyToId(obj.key), title: m.title || 'Untitled' };
