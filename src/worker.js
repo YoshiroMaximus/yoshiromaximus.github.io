@@ -28,9 +28,19 @@ export default {
 // Session: HttpOnly cookie `notes_auth` holding the password value.
 
 const NOTES_PREFIX = 'notes/';
+const ASSETS_PREFIX = 'notes-assets/';
+const ASSETS_PUBLIC_BASE = 'https://r2.sn4k.org/';
 const NOTE_MAX_BYTES = 512 * 1024;        // 512 KB per note
 const NOTE_MAX_SLUG = 80;
 const NOTE_MAX_TITLE = 200;
+const ASSET_MAX_BYTES = 10 * 1024 * 1024; // 10 MB per upload
+const ALLOWED_ASSET_TYPES = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+  'image/svg+xml': 'svg',
+};
 
 async function handleNotes(request, env, url) {
   const parts = url.pathname.split('/').filter(Boolean); // ['api','notes', maybe slug]
@@ -42,6 +52,9 @@ async function handleNotes(request, env, url) {
     if (request.method === 'GET'  && sub === 'me')     return notesMe(request, env);
 
     if (!isAuthed(request, env)) return json({ error: 'Unauthorized' }, 401);
+
+    if (request.method === 'GET'  && sub === 'index')  return indexNotes(env);
+    if (request.method === 'POST' && sub === 'upload') return uploadAsset(request, env);
 
     if (request.method === 'GET'    && !sub)  return listNotes(env);
     if (request.method === 'GET'    && sub)   return getNote(env, sub);
@@ -168,6 +181,45 @@ async function putNote(request, env, slug) {
     customMetadata: { title, updatedAt },
   });
   return json({ ok: true, slug: safe, title, updatedAt });
+}
+
+async function indexNotes(env) {
+  const objects = [];
+  let cursor;
+  do {
+    const res = await env.R2.list({ prefix: NOTES_PREFIX, cursor, limit: 1000, include: ['customMetadata'] });
+    cursor = res.truncated ? res.cursor : undefined;
+    objects.push(...res.objects);
+  } while (cursor);
+
+  const out = await Promise.all(objects.map(async (obj) => {
+    const slug = obj.key.slice(NOTES_PREFIX.length).replace(/\.md$/, '');
+    const m = obj.customMetadata || {};
+    const body = await env.R2.get(obj.key);
+    return {
+      slug,
+      title: m.title || slug,
+      content: body ? await body.text() : '',
+      updatedAt: obj.uploaded?.toISOString?.() || m.updatedAt || '',
+    };
+  }));
+  out.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+  return json({ notes: out });
+}
+
+async function uploadAsset(request, env) {
+  const ct = (request.headers.get('content-type') || '').toLowerCase().split(';')[0].trim();
+  const ext = ALLOWED_ASSET_TYPES[ct];
+  if (!ext) return json({ error: 'Unsupported content type. Allowed: ' + Object.keys(ALLOWED_ASSET_TYPES).join(', ') }, 415);
+  const buf = await request.arrayBuffer();
+  if (buf.byteLength === 0) return json({ error: 'Empty body.' }, 400);
+  if (buf.byteLength > ASSET_MAX_BYTES) return json({ error: `Too large (max ${ASSET_MAX_BYTES / 1024 / 1024} MB).` }, 413);
+
+  const id = crypto.randomUUID().replace(/-/g, '');
+  const stamp = new Date().toISOString().slice(0, 10);
+  const key = `${ASSETS_PREFIX}${stamp}/${id}.${ext}`;
+  await env.R2.put(key, buf, { httpMetadata: { contentType: ct } });
+  return json({ url: ASSETS_PUBLIC_BASE + key, key, size: buf.byteLength });
 }
 
 async function deleteNote(env, slug) {

@@ -6,9 +6,12 @@
   <title>Notes — Yoshiro</title>
   <link rel="icon" type="image/x-icon" href="/favistuff/favicon.ico">
   <meta name="description" content="Private markdown notes — sync to R2.">
+  <link rel="manifest" href="/tools/notes.webmanifest">
+  <meta name="theme-color" content="#111110">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -21,6 +24,7 @@
       --accent: #9b8ea0;
       --tag-bg: #e8e6e2;
       --danger: #b85450;
+      --link: #5a6b9b;
     }
     body.dark {
       --bg: #111110;
@@ -30,9 +34,11 @@
       --line: #2a2926;
       --tag-bg: #1e1d1b;
       --danger: #d97b75;
+      --link: #8da3d4;
     }
 
     html, body { height: 100%; }
+    [hidden] { display: none !important; }
     body {
       font-family: 'DM Sans', sans-serif;
       background: var(--bg);
@@ -42,7 +48,6 @@
       overflow: hidden;
     }
 
-    /* ── Theme toggle ── */
     .theme-toggle {
       position: fixed; top: 1rem; right: 1rem;
       display: flex; gap: 0.1rem; z-index: 300;
@@ -64,16 +69,13 @@
     }
     .back-link:hover { color: var(--muted); }
 
-    /* ── Login screen ── */
+    /* ── Login ── */
     .login {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       height: 100vh; padding: 2rem;
       opacity: 0; animation: fadeUp 0.5s ease 0.1s forwards;
     }
-    .login h1 {
-      font-size: 2rem; font-weight: 500; letter-spacing: -0.02em;
-      margin-bottom: 0.5rem;
-    }
+    .login h1 { font-size: 2rem; font-weight: 500; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
     .login .sub {
       font-family: 'DM Mono', monospace; font-size: 0.7rem;
       color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase;
@@ -104,10 +106,11 @@
 
     /* ── App layout ── */
     .app {
-      display: grid; grid-template-columns: 260px 1fr;
+      display: grid; grid-template-columns: 280px 1fr;
       height: 100vh;
     }
 
+    /* ── Sidebar ── */
     .sidebar {
       border-right: 1px solid var(--line);
       background: var(--bg2);
@@ -117,11 +120,33 @@
     .sidebar-head {
       padding: 1rem 1rem 0.75rem;
       border-bottom: 1px solid var(--line);
+      display: flex; flex-direction: column; gap: 0.5rem;
     }
     .sidebar-title {
       font-family: 'DM Mono', monospace; font-size: 0.65rem;
       letter-spacing: 0.14em; text-transform: uppercase;
-      color: var(--muted); margin-bottom: 0.6rem;
+      color: var(--muted);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .count-pill {
+      font-family: 'DM Mono', monospace; font-size: 0.6rem;
+      color: var(--muted); letter-spacing: 0.04em;
+    }
+    .search-wrap { position: relative; }
+    .search-input {
+      width: 100%;
+      font-family: 'DM Mono', monospace; font-size: 0.75rem;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--line); border-radius: 2px;
+      padding: 0.45rem 0.6rem 0.45rem 1.7rem; outline: none;
+      transition: border-color 0.15s ease;
+    }
+    .search-input:focus { border-color: var(--muted); }
+    .search-input::placeholder { color: var(--muted); opacity: 0.7; }
+    .search-icon {
+      position: absolute; left: 0.55rem; top: 50%; transform: translateY(-50%);
+      font-family: 'DM Mono', monospace; font-size: 0.75rem;
+      color: var(--muted); pointer-events: none;
     }
     .new-btn {
       width: 100%;
@@ -131,8 +156,13 @@
       border: 1px solid var(--line); border-radius: 2px;
       padding: 0.55rem; cursor: pointer;
       transition: background 0.15s ease;
+      display: flex; align-items: center; justify-content: space-between;
     }
     .new-btn:hover { background: var(--tag-bg); }
+    .new-btn .kbd {
+      font-size: 0.6rem; color: var(--muted); letter-spacing: 0;
+      text-transform: none;
+    }
 
     .note-list { flex: 1; overflow-y: auto; padding: 0.4rem 0; }
     .note-item {
@@ -143,10 +173,7 @@
       display: flex; flex-direction: column; gap: 0.15rem;
     }
     .note-item:hover { background: var(--bg); }
-    .note-item.active {
-      background: var(--bg);
-      border-left-color: var(--text);
-    }
+    .note-item.active { background: var(--bg); border-left-color: var(--text); }
     .note-item-title {
       font-size: 0.85rem; font-weight: 400;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -157,7 +184,77 @@
     }
     .note-list .empty {
       padding: 1rem; font-size: 0.8rem; color: var(--muted);
-      font-style: italic;
+      font-style: italic; line-height: 1.5;
+    }
+    .note-list .empty kbd {
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      background: var(--tag-bg); padding: 0.1rem 0.35rem;
+      border-radius: 2px; font-style: normal;
+    }
+
+    /* Tags */
+    .tags-section { border-top: 1px solid var(--line); padding: 0.75rem 1rem; }
+    .tags-section .label {
+      font-family: 'DM Mono', monospace; font-size: 0.6rem;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 0.5rem;
+    }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+    .tag-chip {
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--line); border-radius: 2px;
+      padding: 0.15rem 0.45rem; cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .tag-chip:hover { background: var(--tag-bg); }
+    .tag-chip.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .tag-chip .count { color: var(--muted); margin-left: 0.3rem; font-size: 0.65rem; }
+    .tag-chip.active .count { color: var(--bg); opacity: 0.7; }
+
+    /* Wiki-links */
+    .preview a.wikilink {
+      background: var(--tag-bg); color: var(--text);
+      padding: 0.05em 0.3em; border-radius: 2px;
+      text-decoration: none; border-bottom: 1px dashed var(--muted);
+    }
+    .preview a.wikilink:hover { background: var(--bg2); }
+    .preview a.wikilink.missing { color: var(--danger); border-bottom-style: dotted; }
+    .preview a.tag {
+      color: var(--accent); text-decoration: none;
+      font-family: 'DM Mono', monospace; font-size: 0.9em;
+    }
+    .preview a.tag:hover { text-decoration: underline; }
+
+    /* Backlinks panel */
+    .backlinks {
+      border-top: 1px solid var(--line);
+      padding: 1rem 2rem 1.5rem;
+      background: var(--bg2);
+    }
+    .backlinks .label {
+      font-family: 'DM Mono', monospace; font-size: 0.6rem;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 0.5rem;
+    }
+    .backlinks ul { list-style: none; display: flex; flex-direction: column; gap: 0.3rem; }
+    .backlinks li {
+      font-size: 0.85rem;
+    }
+    .backlinks a {
+      color: var(--text); text-decoration: none;
+      border-bottom: 1px dashed var(--muted);
+    }
+    .backlinks a:hover { color: var(--link); }
+    .backlinks .none { color: var(--muted); font-size: 0.8rem; font-style: italic; }
+
+    /* Offline badge */
+    .offline-badge {
+      position: fixed; top: 1rem; left: 50%; transform: translateX(-50%);
+      background: var(--danger); color: white;
+      font-family: 'DM Mono', monospace; font-size: 0.65rem;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 0.3rem 0.7rem; border-radius: 2px; z-index: 350;
     }
 
     .sidebar-foot {
@@ -167,6 +264,14 @@
       font-family: 'DM Mono', monospace; font-size: 0.65rem;
       color: var(--muted); letter-spacing: 0.06em;
     }
+    .save-dot {
+      display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--muted); margin-right: 0.4rem; vertical-align: middle;
+      transition: background 0.2s ease;
+    }
+    .save-dot.saving { background: #c8a05a; }
+    .save-dot.saved  { background: #7a9490; }
+    .save-dot.error  { background: var(--danger); }
     .logout-btn {
       background: none; border: none; color: var(--muted);
       font-family: inherit; font-size: inherit; letter-spacing: inherit;
@@ -175,18 +280,18 @@
     }
     .logout-btn:hover { color: var(--text); }
 
-    /* ── Editor ── */
+    /* ── Editor / Preview ── */
     .editor-wrap {
       display: flex; flex-direction: column; overflow: hidden;
       padding-top: 3rem;
     }
     .editor-head {
       padding: 0 2rem 0.75rem;
-      display: flex; align-items: center; gap: 1rem;
+      display: flex; align-items: center; gap: 0.75rem;
       border-bottom: 1px solid var(--line);
     }
     .title-input {
-      flex: 1;
+      flex: 1; min-width: 0;
       font-family: 'DM Sans', sans-serif; font-size: 1.4rem;
       font-weight: 500; letter-spacing: -0.02em;
       background: none; border: none; outline: none;
@@ -194,41 +299,159 @@
     }
     .title-input::placeholder { color: var(--muted); opacity: 0.5; }
 
-    .editor-meta {
-      font-family: 'DM Mono', monospace; font-size: 0.65rem;
-      color: var(--muted); letter-spacing: 0.08em;
-      white-space: nowrap;
+    .view-toggle {
+      display: flex; gap: 1px; background: var(--line);
+      border: 1px solid var(--line); border-radius: 2px; overflow: hidden;
     }
-    .delete-btn {
+    .view-toggle button {
+      font-family: 'DM Mono', monospace; font-size: 0.65rem;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      background: var(--bg); color: var(--muted);
+      border: none; padding: 0.35rem 0.6rem; cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .view-toggle button:hover { color: var(--text); }
+    .view-toggle button.active { background: var(--text); color: var(--bg); }
+
+    .head-btn {
       background: none; border: none;
       font-family: 'DM Mono', monospace; font-size: 0.65rem;
-      letter-spacing: 0.08em; text-transform: uppercase;
-      color: var(--muted); cursor: pointer; padding: 0.3rem 0.5rem;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--muted); cursor: pointer; padding: 0.35rem 0.5rem;
       transition: color 0.15s ease;
     }
-    .delete-btn:hover { color: var(--danger); }
+    .head-btn:hover { color: var(--text); }
+    .head-btn.danger:hover { color: var(--danger); }
+
+    .panes {
+      flex: 1; display: flex; overflow: hidden;
+      background: var(--bg);
+    }
+    .pane {
+      flex: 1; overflow-y: auto;
+      padding: 1.5rem 2rem 4rem;
+    }
+    .pane + .pane { border-left: 1px solid var(--line); }
 
     .editor {
-      flex: 1;
+      width: 100%; height: 100%; min-height: 100%;
       font-family: 'DM Mono', monospace; font-size: 0.9rem;
       line-height: 1.7;
-      background: var(--bg); color: var(--text);
+      background: transparent; color: var(--text);
       border: none; outline: none; resize: none;
-      padding: 1.5rem 2rem 2rem;
-      width: 100%;
+      padding: 0;
     }
     .editor::placeholder { color: var(--muted); opacity: 0.6; }
 
+    /* Pane needs to hold the textarea full-height without scrolling itself */
+    .pane.editor-pane { padding: 0; display: flex; }
+    .pane.editor-pane .editor { padding: 1.5rem 2rem 4rem; }
+
+    /* Rendered markdown */
+    .preview { font-family: 'DM Sans', sans-serif; font-size: 0.95rem; line-height: 1.7; }
+    .preview h1, .preview h2, .preview h3, .preview h4, .preview h5, .preview h6 {
+      font-weight: 500; letter-spacing: -0.02em;
+      margin: 1.6em 0 0.6em; line-height: 1.25;
+    }
+    .preview h1:first-child, .preview h2:first-child, .preview h3:first-child { margin-top: 0; }
+    .preview h1 { font-size: 1.8rem; }
+    .preview h2 { font-size: 1.4rem; }
+    .preview h3 { font-size: 1.15rem; }
+    .preview h4 { font-size: 1rem; }
+    .preview p, .preview ul, .preview ol, .preview blockquote, .preview pre, .preview table { margin: 0 0 1em; }
+    .preview ul, .preview ol { padding-left: 1.5em; }
+    .preview li { margin: 0.25em 0; }
+    .preview a { color: var(--link); text-decoration: underline; text-underline-offset: 2px; }
+    .preview a:hover { opacity: 0.8; }
+    .preview blockquote {
+      border-left: 3px solid var(--line); padding: 0.3em 1em;
+      color: var(--muted); font-style: italic;
+    }
+    .preview code {
+      font-family: 'DM Mono', monospace; font-size: 0.85em;
+      background: var(--tag-bg); padding: 0.1em 0.35em; border-radius: 2px;
+    }
+    .preview pre {
+      font-family: 'DM Mono', monospace;
+      background: var(--bg2); border: 1px solid var(--line); border-radius: 2px;
+      padding: 0.9em 1.1em; overflow-x: auto; font-size: 0.85rem; line-height: 1.6;
+    }
+    .preview pre code { background: none; padding: 0; font-size: inherit; }
+    .preview hr { border: none; border-top: 1px solid var(--line); margin: 2em 0; }
+    .preview table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+    .preview th, .preview td { border: 1px solid var(--line); padding: 0.4em 0.7em; text-align: left; }
+    .preview th { background: var(--bg2); font-weight: 500; }
+    .preview img { max-width: 100%; height: auto; border-radius: 2px; }
+    .preview input[type="checkbox"] { margin-right: 0.4em; }
+
     .empty-state {
-      flex: 1; display: flex; align-items: center; justify-content: center;
-      color: var(--muted); font-style: italic; font-size: 0.9rem;
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: var(--muted); font-size: 0.9rem; gap: 0.5rem;
+    }
+    .empty-state .hint {
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      letter-spacing: 0.06em;
+    }
+    .empty-state kbd {
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      background: var(--tag-bg); padding: 0.1rem 0.35rem;
+      border-radius: 2px; color: var(--text);
     }
 
-    @media (max-width: 720px) {
+    .editor-foot {
+      border-top: 1px solid var(--line);
+      padding: 0.5rem 2rem;
+      font-family: 'DM Mono', monospace; font-size: 0.65rem;
+      color: var(--muted); letter-spacing: 0.06em;
+      display: flex; gap: 1.5rem; justify-content: space-between;
+    }
+    .editor-foot .stats { display: flex; gap: 1rem; }
+
+    /* ── Command palette / shortcuts overlay ── */
+    .shortcuts-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 400; padding: 2rem;
+    }
+    .shortcuts-overlay .card {
+      background: var(--bg); border: 1px solid var(--line);
+      border-radius: 4px; padding: 1.5rem 2rem;
+      max-width: 420px; width: 100%;
+    }
+    .shortcuts-overlay h2 {
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 1rem;
+    }
+    .shortcuts-overlay ul { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+    .shortcuts-overlay li {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.85rem;
+    }
+    .shortcuts-overlay kbd {
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      background: var(--tag-bg); padding: 0.2rem 0.5rem; border-radius: 2px;
+      color: var(--text);
+    }
+
+    .toast {
+      position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+      background: var(--text); color: var(--bg);
+      font-family: 'DM Mono', monospace; font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      padding: 0.6rem 1rem; border-radius: 2px;
+      z-index: 500;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+
+    @media (max-width: 760px) {
       .app { grid-template-columns: 1fr; }
       .sidebar { display: none; }
       .sidebar.mobile-open { display: flex; position: fixed; inset: 0; z-index: 200; }
-      .editor-wrap { padding-top: 3rem; }
       .menu-btn {
         position: fixed; top: 1rem; left: 4.5rem;
         font-family: 'DM Mono', monospace; font-size: 0.7rem;
@@ -236,10 +459,15 @@
         cursor: pointer; z-index: 300; letter-spacing: 0.06em;
       }
       .menu-btn:hover { color: var(--muted); }
+      .panes { flex-direction: column; }
+      .pane + .pane { border-left: none; border-top: 1px solid var(--line); }
+      .view-toggle button { padding: 0.35rem 0.45rem; }
+      .editor-head { padding: 0 1rem 0.5rem; gap: 0.4rem; flex-wrap: wrap; }
+      .editor-foot { padding: 0.5rem 1rem; flex-wrap: wrap; gap: 0.5rem; }
+      .pane.editor-pane .editor { padding: 1rem; }
+      .pane { padding: 1rem 1rem 4rem; }
     }
-    @media (min-width: 721px) {
-      .menu-btn { display: none; }
-    }
+    @media (min-width: 761px) { .menu-btn { display: none; } }
 
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(8px); }
@@ -272,27 +500,87 @@
   <div class="app" id="app" hidden>
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-head">
-        <div class="sidebar-title">Notes</div>
-        <button class="new-btn" id="new-btn">+ New note</button>
+        <div class="sidebar-title">
+          <span>Notes</span>
+          <span class="count-pill" id="count-pill">0</span>
+        </div>
+        <div class="search-wrap">
+          <span class="search-icon">/</span>
+          <input class="search-input" id="search-input" type="search" placeholder="Search…">
+        </div>
+        <button class="new-btn" id="new-btn">
+          <span>+ New note</span>
+          <span class="kbd">⌘N</span>
+        </button>
       </div>
       <div class="note-list" id="note-list"></div>
+      <div class="tags-section" id="tags-section" hidden>
+        <div class="label">Tags</div>
+        <div class="tag-list" id="tag-list"></div>
+      </div>
       <div class="sidebar-foot">
-        <span id="save-status">ready</span>
-        <button class="logout-btn" id="logout-btn">Log out</button>
+        <span><span class="save-dot" id="save-dot"></span><span id="save-status">ready</span></span>
+        <button class="logout-btn" id="logout-btn" title="Log out">Log out</button>
       </div>
     </aside>
+
     <main class="editor-wrap" id="editor-wrap">
-      <div class="empty-state" id="empty-state">Pick a note or create one.</div>
-      <div id="editor-pane" hidden style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+      <div class="empty-state" id="empty-state">
+        <div>Pick a note or create one.</div>
+        <div class="hint"><kbd>⌘N</kbd> new · <kbd>⌘K</kbd> search · <kbd>⌘/</kbd> shortcuts</div>
+      </div>
+      <div id="editor-pane-wrap" hidden style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
         <div class="editor-head">
           <input class="title-input" id="title-input" placeholder="Untitled" maxlength="200">
-          <span class="editor-meta" id="editor-meta"></span>
-          <button class="delete-btn" id="delete-btn">Delete</button>
+          <div class="view-toggle" role="tablist" aria-label="View mode">
+            <button id="mode-edit" class="active" title="Edit (⌘/)">Edit</button>
+            <button id="mode-split" title="Split (⌘/)">Split</button>
+            <button id="mode-preview" title="Preview (⌘/)">Preview</button>
+          </div>
+          <button class="head-btn" id="export-btn" title="Download .md">Export</button>
+          <button class="head-btn danger" id="delete-btn" title="Delete">Delete</button>
         </div>
-        <textarea class="editor" id="editor" placeholder="# Start writing&#10;&#10;Markdown supported. Auto-saves as you go."></textarea>
+        <div class="panes" id="panes">
+          <div class="pane editor-pane" id="pane-editor">
+            <textarea class="editor" id="editor" placeholder="# Start writing&#10;&#10;Markdown supported. Auto-saves as you go.&#10;&#10;Tip: tab indents, ⌘S forces save."></textarea>
+          </div>
+          <div class="pane" id="pane-preview" hidden>
+            <div class="preview" id="preview"></div>
+            <div class="backlinks" id="backlinks" hidden>
+              <div class="label">Linked from</div>
+              <ul id="backlinks-list"></ul>
+            </div>
+          </div>
+        </div>
+        <div class="editor-foot">
+          <div class="stats">
+            <span id="stat-words">0 words</span>
+            <span id="stat-chars">0 chars</span>
+          </div>
+          <span id="editor-meta"></span>
+        </div>
       </div>
     </main>
   </div>
+
+  <!-- Shortcuts overlay -->
+  <div class="shortcuts-overlay" id="shortcuts" hidden>
+    <div class="card">
+      <h2>Keyboard shortcuts</h2>
+      <ul>
+        <li><span>New note</span><kbd>⌘N</kbd></li>
+        <li><span>Search notes</span><kbd>⌘K</kbd></li>
+        <li><span>Toggle view (Edit / Split / Preview)</span><kbd>⌘/</kbd></li>
+        <li><span>Force save</span><kbd>⌘S</kbd></li>
+        <li><span>Export current note</span><kbd>⌘E</kbd></li>
+        <li><span>Show this dialog</span><kbd>⌘?</kbd></li>
+        <li><span>Close dialog</span><kbd>Esc</kbd></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="offline-badge" id="offline-badge" hidden>● Offline</div>
 
   <script>
     // ── Theme ──
@@ -306,13 +594,114 @@
 
     // ── State ──
     const state = {
-      notes: [],          // [{slug, title, updatedAt, size}]
+      notes: [],          // {slug, title, content, updatedAt, _tags?}
+      filtered: [],
       currentSlug: null,
       dirty: false,
       saveTimer: null,
+      mode: 'edit',
+      query: '',
+      tagFilter: null,
     };
 
+    const LINK_KINDS = { note: '#note:', new: '#new:', tag: '#tag:' };
+    const TAG_RE = /(?:^|[\s(])#([a-zA-Z][\w-]{0,30})\b/g;
+    function stripCodeBlocks(text) {
+      return text.replace(/```[\s\S]*?```/g, '').replace(/`[^`\n]+`/g, '');
+    }
+    function parseLinkHref(href) {
+      for (const [kind, prefix] of Object.entries(LINK_KINDS)) {
+        if (href.startsWith(prefix)) {
+          return { kind, value: decodeURIComponent(href.slice(prefix.length)) };
+        }
+      }
+      return null;
+    }
+
     const $ = (id) => document.getElementById(id);
+
+    // ── Markdown rendering ──
+    if (window.marked) {
+      marked.setOptions({ gfm: true, breaks: true });
+    }
+    function renderMd(text) {
+      if (!window.marked) return escapeHtml(text);
+      // Pre-process [[wiki-links]] and #tags BEFORE markdown parsing
+      // so marked doesn't mangle them.
+      const pre = preprocessLinks(text || '');
+      const html = marked.parse(pre);
+      return sanitize(html);
+    }
+
+    function preprocessLinks(text) {
+      // Mask code blocks/inline code so we don't touch their contents.
+      const blocks = [];
+      const masked = text
+        .replace(/```[\s\S]*?```/g, m => ` B${blocks.push(m) - 1} `)
+        .replace(/`[^`\n]+`/g, m => ` B${blocks.push(m) - 1} `);
+
+      const withLinks = masked
+        .replace(/\[\[([^\[\]\n]+?)\]\]/g, (_, t) => {
+          const target = t.trim();
+          const note = findNoteByTitle(target);
+          const href = note
+            ? LINK_KINDS.note + encodeURIComponent(note.slug)
+            : LINK_KINDS.new + encodeURIComponent(target);
+          return `[${target}](${href})`;
+        })
+        .replace(TAG_RE, (_, lead, tag) =>
+          `${lead}[#${tag}](${LINK_KINDS.tag}${encodeURIComponent(tag)})`);
+
+      return withLinks.replace(/ B(\d+) /g, (_, i) => blocks[+i]);
+    }
+
+    function findNoteByTitle(title) {
+      const lc = title.toLowerCase();
+      return state.notes.find(n =>
+        (n.title || '').toLowerCase() === lc || n.slug.toLowerCase() === lc
+      );
+    }
+    // Minimal sanitizer: strip <script>, on* attrs, javascript: URLs.
+    function sanitize(html) {
+      const tmpl = document.createElement('template');
+      tmpl.innerHTML = html;
+      const walker = document.createTreeWalker(tmpl.content, NodeFilter.SHOW_ELEMENT);
+      const toRemove = [];
+      let node;
+      while ((node = walker.nextNode())) {
+        const tag = node.tagName.toLowerCase();
+        if (tag === 'script' || tag === 'style' || tag === 'iframe' || tag === 'object' || tag === 'embed') {
+          toRemove.push(node); continue;
+        }
+        for (const attr of [...node.attributes]) {
+          const n = attr.name.toLowerCase();
+          const v = attr.value.trim().toLowerCase();
+          if (n.startsWith('on')) node.removeAttribute(attr.name);
+          else if ((n === 'href' || n === 'src') && (v.startsWith('javascript:') || v.startsWith('data:text/html'))) {
+            node.removeAttribute(attr.name);
+          }
+        }
+        if (tag === 'a') {
+          const parsed = parseLinkHref(node.getAttribute('href') || '');
+          if (parsed?.kind === 'note') {
+            node.classList.add('wikilink');
+          } else if (parsed?.kind === 'new') {
+            node.classList.add('wikilink', 'missing');
+            node.setAttribute('title', 'Click to create');
+          } else if (parsed?.kind === 'tag') {
+            node.classList.add('tag');
+          } else {
+            node.setAttribute('target', '_blank');
+            node.setAttribute('rel', 'noopener noreferrer');
+          }
+        }
+      }
+      toRemove.forEach(n => n.remove());
+      return tmpl.innerHTML;
+    }
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+    }
 
     // ── API ──
     async function api(path, opts = {}) {
@@ -347,6 +736,7 @@
       $('login').hidden = true;
       $('app').hidden = false;
       $('menu-btn').hidden = false;
+      applyMode();
       await loadNotes();
     }
 
@@ -363,16 +753,9 @@
           }),
         });
         $('login-pass').value = '';
-        // verify the cookie actually stuck
-        const me = await api('/api/notes/me');
-        if (!me.authed) {
-          err.textContent = 'Login succeeded but session cookie was blocked by the browser. Are you on https?';
-          return;
-        }
         await showApp();
       } catch (ex) {
         err.textContent = ex.message || 'Login failed.';
-        console.error('login error', ex);
       } finally {
         btn.disabled = false;
       }
@@ -383,24 +766,80 @@
       try { await api('/api/notes/logout', { method: 'POST' }); } catch {}
       state.currentSlug = null;
       state.notes = [];
+      $('editor-pane-wrap').hidden = true;
+      $('empty-state').hidden = false;
       showLogin();
     });
 
     // ── Notes ──
     async function loadNotes() {
-      const data = await api('/api/notes');
+      const data = await api('/api/notes/index');
       state.notes = data.notes || [];
+      applyFilter();
+      renderTags();
+    }
+
+    function extractTags(text) {
+      if (!text) return [];
+      const tags = new Set();
+      for (const m of stripCodeBlocks(text).matchAll(TAG_RE)) tags.add(m[1].toLowerCase());
+      return [...tags];
+    }
+    function tagsOf(note) {
+      if (!note._tags) note._tags = extractTags(note.content);
+      return note._tags;
+    }
+
+    function renderTags() {
+      const counts = new Map();
+      for (const n of state.notes) {
+        for (const t of tagsOf(n)) counts.set(t, (counts.get(t) || 0) + 1);
+      }
+      const list = $('tag-list');
+      if (!counts.size) { $('tags-section').hidden = true; return; }
+      $('tags-section').hidden = false;
+      list.innerHTML = '';
+      const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+      for (const [t, c] of sorted) {
+        const chip = document.createElement('button');
+        chip.className = 'tag-chip' + (state.tagFilter === t ? ' active' : '');
+        chip.innerHTML = `#${escapeHtml(t)}<span class="count">${c}</span>`;
+        chip.addEventListener('click', () => {
+          state.tagFilter = state.tagFilter === t ? null : t;
+          renderTags();
+          applyFilter();
+        });
+        list.appendChild(chip);
+      }
+    }
+
+    function applyFilter() {
+      const q = state.query.trim().toLowerCase();
+      let res = state.notes.slice();
+      if (state.tagFilter) {
+        res = res.filter(n => tagsOf(n).includes(state.tagFilter));
+      }
+      if (q) {
+        res = res.filter(n =>
+          (n.title || n.slug).toLowerCase().includes(q) ||
+          (n.content || '').toLowerCase().includes(q)
+        );
+      }
+      state.filtered = res;
       renderList();
     }
 
     function renderList() {
       const list = $('note-list');
-      if (!state.notes.length) {
-        list.innerHTML = '<div class="empty">No notes yet.</div>';
+      $('count-pill').textContent = state.notes.length;
+      if (!state.filtered.length) {
+        list.innerHTML = state.query
+          ? '<div class="empty">No matches.</div>'
+          : '<div class="empty">No notes yet.<br>Press <kbd>⌘N</kbd> to create one.</div>';
         return;
       }
       list.innerHTML = '';
-      for (const n of state.notes) {
+      for (const n of state.filtered) {
         const el = document.createElement('div');
         el.className = 'note-item' + (n.slug === state.currentSlug ? ' active' : '');
         el.dataset.slug = n.slug;
@@ -409,7 +848,7 @@
         t.textContent = n.title || n.slug;
         const m = document.createElement('div');
         m.className = 'note-item-meta';
-        m.textContent = formatDate(n.updatedAt);
+        m.textContent = formatRelative(n.updatedAt);
         el.appendChild(t);
         el.appendChild(m);
         el.addEventListener('click', () => selectNote(n.slug));
@@ -417,13 +856,16 @@
       }
     }
 
-    function formatDate(iso) {
+    function formatRelative(iso) {
       if (!iso) return '';
       const d = new Date(iso);
-      const now = new Date();
-      const same = d.toDateString() === now.toDateString();
-      if (same) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+      const diff = (Date.now() - d.getTime()) / 1000;
+      if (diff < 30) return 'just now';
+      if (diff < 60) return Math.floor(diff) + 's ago';
+      if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+      if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+      if (diff < 86400 * 7) return Math.floor(diff / 86400) + 'd ago';
+      return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: diff > 86400 * 365 ? 'numeric' : undefined });
     }
 
     async function selectNote(slug) {
@@ -434,31 +876,39 @@
         state.currentSlug = slug;
         $('title-input').value = note.title || '';
         $('editor').value = note.content || '';
-        $('editor-meta').textContent = 'saved · ' + formatDate(note.updatedAt);
+        $('editor-meta').textContent = 'saved · ' + formatRelative(note.updatedAt);
         $('empty-state').hidden = true;
-        $('editor-pane').hidden = false;
+        $('editor-pane-wrap').hidden = false;
         state.dirty = false;
+        setSaveDot('saved');
+        updateStats();
+        renderPreview();
+        renderBacklinks();
         renderList();
-        if (window.matchMedia('(max-width: 720px)').matches) {
+        if (window.matchMedia('(max-width: 760px)').matches) {
           $('sidebar').classList.remove('mobile-open');
         }
       } catch (ex) {
-        alert('Could not open note: ' + ex.message);
+        toast('Could not open note: ' + ex.message);
       }
     }
 
-    $('new-btn').addEventListener('click', async () => {
+    async function newNote({ title = '', autoSave = false } = {}) {
       if (state.dirty) await saveNow();
-      const slug = newSlug();
-      state.currentSlug = slug;
-      $('title-input').value = '';
+      state.currentSlug = newSlug();
+      $('title-input').value = title;
       $('editor').value = '';
       $('editor-meta').textContent = 'new · unsaved';
       $('empty-state').hidden = true;
-      $('editor-pane').hidden = false;
-      state.dirty = false;
-      $('title-input').focus();
-    });
+      $('editor-pane-wrap').hidden = false;
+      state.dirty = !!title;
+      setSaveDot(autoSave ? 'saving' : '', autoSave ? 'editing…' : 'ready');
+      updateStats();
+      renderPreview();
+      if (autoSave) await saveNow();
+      (title ? $('editor') : $('title-input')).focus();
+    }
+    $('new-btn').addEventListener('click', () => newNote());
 
     function newSlug() {
       const rand = Math.random().toString(36).slice(2, 8);
@@ -468,9 +918,11 @@
 
     function markDirty() {
       state.dirty = true;
-      $('save-status').textContent = 'editing…';
+      setSaveDot('saving', 'editing…');
       if (state.saveTimer) clearTimeout(state.saveTimer);
       state.saveTimer = setTimeout(saveNow, 1200);
+      updateStats();
+      renderPreview();
     }
 
     async function saveNow() {
@@ -479,29 +931,200 @@
       const slug = state.currentSlug;
       const title = $('title-input').value.trim() || 'Untitled';
       const content = $('editor').value;
-      $('save-status').textContent = 'saving…';
+      setSaveDot('saving', 'saving…');
       try {
         const res = await api('/api/notes/' + encodeURIComponent(slug), {
           method: 'PUT',
           body: JSON.stringify({ title, content }),
         });
         state.dirty = false;
-        $('save-status').textContent = 'saved';
-        $('editor-meta').textContent = 'saved · ' + formatDate(res.updatedAt);
-        // refresh list entry
+        setSaveDot('saved', 'saved');
+        $('editor-meta').textContent = 'saved · ' + formatRelative(res.updatedAt);
         const idx = state.notes.findIndex(n => n.slug === slug);
-        const entry = { slug, title, updatedAt: res.updatedAt, size: content.length };
+        const entry = { slug, title, content, updatedAt: res.updatedAt };
         if (idx >= 0) state.notes.splice(idx, 1);
         state.notes.unshift(entry);
-        renderList();
+        applyFilter();
+        renderTags();
+        renderBacklinks();
       } catch (ex) {
-        $('save-status').textContent = 'save failed';
+        setSaveDot('error', 'save failed');
         console.error(ex);
+        toast('Save failed: ' + ex.message);
       }
+    }
+
+    function setSaveDot(cls, text) {
+      const dot = $('save-dot');
+      dot.classList.remove('saving', 'saved', 'error');
+      if (cls) dot.classList.add(cls);
+      if (text) $('save-status').textContent = text;
+    }
+
+    function updateStats() {
+      const text = $('editor').value;
+      const chars = text.length;
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      $('stat-words').textContent = words + (words === 1 ? ' word' : ' words');
+      $('stat-chars').textContent = chars + (chars === 1 ? ' char' : ' chars');
+    }
+
+    let previewTimer = null;
+    function renderPreview() {
+      if (state.mode === 'edit') return;
+      if (previewTimer) clearTimeout(previewTimer);
+      previewTimer = setTimeout(() => {
+        $('preview').innerHTML = renderMd($('editor').value);
+      }, 80);
+    }
+
+    function renderBacklinks() {
+      const backsEl = $('backlinks');
+      const listEl = $('backlinks-list');
+      if (!state.currentSlug) { backsEl.hidden = true; return; }
+      const current = state.notes.find(n => n.slug === state.currentSlug);
+      const targetTitle = ($('title-input').value || current?.title || '').trim().toLowerCase();
+      const targetSlug = state.currentSlug.toLowerCase();
+      if (!targetTitle) { backsEl.hidden = true; return; }
+      const re = /\[\[([^\[\]\n]+?)\]\]/g;
+      const sources = [];
+      for (const n of state.notes) {
+        if (n.slug === state.currentSlug) continue;
+        const txt = n.content || '';
+        re.lastIndex = 0;
+        let m;
+        while ((m = re.exec(txt))) {
+          const ref = m[1].trim().toLowerCase();
+          if (ref === targetTitle || ref === targetSlug) {
+            sources.push(n);
+            break;
+          }
+        }
+      }
+      backsEl.hidden = false;
+      if (!sources.length) {
+        listEl.innerHTML = '<li class="none">No backlinks yet.</li>';
+        return;
+      }
+      listEl.innerHTML = '';
+      for (const s of sources) {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = '#note:' + encodeURIComponent(s.slug);
+        a.textContent = s.title || s.slug;
+        a.addEventListener('click', (e) => { e.preventDefault(); selectNote(s.slug); });
+        li.appendChild(a);
+        listEl.appendChild(li);
+      }
+    }
+
+    // Intercept clicks on rendered wiki/tag links in the preview
+    $('preview').addEventListener('click', (e) => {
+      const a = e.target.closest('a');
+      if (!a) return;
+      const parsed = parseLinkHref(a.getAttribute('href') || '');
+      if (!parsed) return;
+      e.preventDefault();
+      if (parsed.kind === 'note') selectNote(parsed.value);
+      else if (parsed.kind === 'new') newNote({ title: parsed.value, autoSave: true });
+      else if (parsed.kind === 'tag') {
+        const tag = parsed.value.toLowerCase();
+        state.tagFilter = state.tagFilter === tag ? null : tag;
+        renderTags(); applyFilter();
+      }
+    });
+
+
+    function applyMode() {
+      $('mode-edit').classList.toggle('active', state.mode === 'edit');
+      $('mode-split').classList.toggle('active', state.mode === 'split');
+      $('mode-preview').classList.toggle('active', state.mode === 'preview');
+      $('pane-editor').hidden = state.mode === 'preview';
+      $('pane-preview').hidden = state.mode === 'edit';
+      if (state.mode !== 'edit') renderPreview();
+    }
+    $('mode-edit').addEventListener('click', () => { state.mode = 'edit'; applyMode(); });
+    $('mode-split').addEventListener('click', () => { state.mode = 'split'; applyMode(); });
+    $('mode-preview').addEventListener('click', () => { state.mode = 'preview'; applyMode(); });
+
+    function cycleMode() {
+      const order = ['edit', 'split', 'preview'];
+      state.mode = order[(order.indexOf(state.mode) + 1) % order.length];
+      applyMode();
     }
 
     $('editor').addEventListener('input', markDirty);
     $('title-input').addEventListener('input', markDirty);
+
+    // Paste image → upload to R2 → insert markdown
+    $('editor').addEventListener('paste', async (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const imageItems = [...items].filter(it => it.type.startsWith('image/'));
+      if (!imageItems.length) return;
+      e.preventDefault();
+      const ta = $('editor');
+      const insertAt = ta.selectionStart;
+      for (const it of imageItems) {
+        const file = it.getAsFile();
+        if (!file) continue;
+        const placeholder = `![uploading…](${file.name || 'pasted'})`;
+        ta.setRangeText(placeholder, insertAt, ta.selectionEnd, 'end');
+        markDirty();
+        try {
+          const url = await uploadImage(file);
+          const md = `![${file.name?.replace(/\.[^.]+$/, '') || 'image'}](${url})`;
+          ta.value = ta.value.replace(placeholder, md);
+          markDirty();
+          toast('Image uploaded');
+        } catch (ex) {
+          ta.value = ta.value.replace(placeholder, '');
+          toast('Upload failed: ' + ex.message);
+        }
+      }
+    });
+
+    async function uploadImage(file) {
+      const res = await fetch('/api/notes/upload', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'content-type': file.type },
+        body: file,
+      });
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      return data.url;
+    }
+
+    // Tab key inserts spaces, doesn't move focus
+    $('editor').addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const ta = e.target;
+        const start = ta.selectionStart, end = ta.selectionEnd;
+        const indent = '  ';
+        if (start === end) {
+          ta.value = ta.value.slice(0, start) + indent + ta.value.slice(end);
+          ta.selectionStart = ta.selectionEnd = start + indent.length;
+        } else {
+          // indent / outdent multiline
+          const before = ta.value.slice(0, start);
+          const sel = ta.value.slice(start, end);
+          const after = ta.value.slice(end);
+          if (e.shiftKey) {
+            const dedented = sel.replace(/^( {1,2}|\t)/gm, '');
+            ta.value = before + dedented + after;
+            ta.selectionStart = start; ta.selectionEnd = start + dedented.length;
+          } else {
+            const indented = sel.replace(/^/gm, indent);
+            ta.value = before + indented + after;
+            ta.selectionStart = start; ta.selectionEnd = start + indented.length;
+          }
+        }
+        markDirty();
+      }
+    });
 
     $('delete-btn').addEventListener('click', async () => {
       if (!state.currentSlug) return;
@@ -512,15 +1135,75 @@
         state.notes = state.notes.filter(n => n.slug !== slug);
         state.currentSlug = null;
         state.dirty = false;
-        $('editor-pane').hidden = true;
+        $('editor-pane-wrap').hidden = true;
         $('empty-state').hidden = false;
-        renderList();
+        applyFilter();
+        toast('Note deleted.');
       } catch (ex) {
-        alert('Delete failed: ' + ex.message);
+        toast('Delete failed: ' + ex.message);
       }
     });
 
-    // Save on tab close / nav away
+    $('export-btn').addEventListener('click', exportCurrent);
+    function exportCurrent() {
+      if (!state.currentSlug) return;
+      const title = $('title-input').value.trim() || 'untitled';
+      const content = $('editor').value;
+      const safe = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || state.currentSlug;
+      const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = safe + '.md';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    // ── Search ──
+    $('search-input').addEventListener('input', (e) => {
+      state.query = e.target.value;
+      applyFilter();
+    });
+
+    // ── Keyboard shortcuts ──
+    document.addEventListener('keydown', (e) => {
+      const mod = e.metaKey || e.ctrlKey;
+      const inTextField = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName);
+
+      if (e.key === 'Escape') {
+        if (!$('shortcuts').hidden) { $('shortcuts').hidden = true; return; }
+        if ($('search-input') === document.activeElement) {
+          $('search-input').value = ''; state.query = ''; applyFilter();
+          $('search-input').blur();
+        }
+        return;
+      }
+      if (!mod) return;
+
+      if (e.key === 's') { e.preventDefault(); if (state.dirty) saveNow(); return; }
+      if (e.key === 'n') { e.preventDefault(); if (!$('app').hidden) newNote(); return; }
+      if (e.key === 'k') { e.preventDefault(); $('search-input').focus(); $('search-input').select(); return; }
+      if (e.key === '/') { e.preventDefault(); cycleMode(); return; }
+      if (e.key === 'e') { e.preventDefault(); exportCurrent(); return; }
+      if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+        e.preventDefault(); $('shortcuts').hidden = !$('shortcuts').hidden; return;
+      }
+    });
+
+    $('shortcuts').addEventListener('click', (e) => {
+      if (e.target === $('shortcuts')) $('shortcuts').hidden = true;
+    });
+
+    // ── Toast ──
+    let toastTimer = null;
+    function toast(msg) {
+      const el = $('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+    }
+
+    // ── Lifecycle ──
     window.addEventListener('beforeunload', (e) => {
       if (state.dirty) {
         saveNow();
@@ -529,18 +1212,31 @@
       }
     });
 
-    // Mobile sidebar toggle
+    setInterval(() => {
+      if ($('app').hidden) return;
+      if (document.visibilityState !== 'visible') return;
+      if (!state.filtered.length) return;
+      renderList();
+    }, 60000);
+
     $('menu-btn').addEventListener('click', () => {
       $('sidebar').classList.toggle('mobile-open');
     });
 
-    // Keyboard: Cmd/Ctrl-S to force save
-    document.addEventListener('keydown', (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault();
-        if (state.dirty) saveNow();
-      }
-    });
+    // ── Offline indicator ──
+    function updateOnline() {
+      $('offline-badge').hidden = navigator.onLine;
+    }
+    window.addEventListener('online', updateOnline);
+    window.addEventListener('offline', updateOnline);
+    updateOnline();
+
+    // ── Service worker (app shell cache) ──
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/tools/notes-sw.js', { scope: '/tools/' }).catch(() => {});
+      });
+    }
 
     checkAuth();
   </script>
