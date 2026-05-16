@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notes — Yoshiro</title>
+  <link rel="icon" type="image/x-icon" href="/favistuff/favicon.ico">
+  <meta name="description" content="Private markdown notes — sync to R2.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #f5f4f0;
+      --bg2: #eeecea;
+      --text: #1a1a1a;
+      --muted: #888;
+      --line: #d8d6d0;
+      --accent: #9b8ea0;
+      --tag-bg: #e8e6e2;
+      --danger: #b85450;
+    }
+    body.dark {
+      --bg: #111110;
+      --bg2: #1a1917;
+      --text: #e8e6e2;
+      --muted: #666;
+      --line: #2a2926;
+      --tag-bg: #1e1d1b;
+      --danger: #d97b75;
+    }
+
+    html, body { height: 100%; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      transition: background 0.2s ease, color 0.2s ease;
+      overflow: hidden;
+    }
+
+    /* ── Theme toggle ── */
+    .theme-toggle {
+      position: fixed; top: 1rem; right: 1rem;
+      display: flex; gap: 0.1rem; z-index: 300;
+    }
+    .theme-btn {
+      font-family: 'DM Mono', monospace; font-size: 1rem;
+      color: var(--line); background: none; border: none;
+      cursor: pointer; padding: 0.15rem 0.3rem; line-height: 1;
+      transition: color 0.2s ease; user-select: none;
+    }
+    .theme-btn:hover { color: var(--muted); }
+    .theme-btn.active { color: var(--text); }
+
+    .back-link {
+      position: fixed; top: 1rem; left: 1rem;
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      color: var(--line); text-decoration: none;
+      letter-spacing: 0.06em; transition: color 0.2s ease; z-index: 300;
+    }
+    .back-link:hover { color: var(--muted); }
+
+    /* ── Login screen ── */
+    .login {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 100vh; padding: 2rem;
+      opacity: 0; animation: fadeUp 0.5s ease 0.1s forwards;
+    }
+    .login h1 {
+      font-size: 2rem; font-weight: 500; letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .login .sub {
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase;
+      margin-bottom: 2rem;
+    }
+    .login form { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; max-width: 280px; }
+    .login input {
+      font-family: 'DM Mono', monospace; font-size: 0.85rem;
+      background: var(--bg2); color: var(--text);
+      border: 1px solid var(--line); border-radius: 2px;
+      padding: 0.7rem 0.85rem; outline: none;
+      transition: border-color 0.15s ease;
+    }
+    .login input:focus { border-color: var(--muted); }
+    .login button {
+      font-family: 'DM Mono', monospace; font-size: 0.75rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      background: var(--text); color: var(--bg);
+      border: none; padding: 0.75rem; cursor: pointer; border-radius: 2px;
+      transition: opacity 0.15s ease;
+    }
+    .login button:hover { opacity: 0.85; }
+    .login button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .login .err {
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      color: var(--danger); margin-top: 0.25rem; min-height: 1rem;
+    }
+
+    /* ── App layout ── */
+    .app {
+      display: grid; grid-template-columns: 260px 1fr;
+      height: 100vh;
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: var(--bg2);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .sidebar-head {
+      padding: 1rem 1rem 0.75rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .sidebar-title {
+      font-family: 'DM Mono', monospace; font-size: 0.65rem;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 0.6rem;
+    }
+    .new-btn {
+      width: 100%;
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--line); border-radius: 2px;
+      padding: 0.55rem; cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .new-btn:hover { background: var(--tag-bg); }
+
+    .note-list { flex: 1; overflow-y: auto; padding: 0.4rem 0; }
+    .note-item {
+      padding: 0.55rem 1rem;
+      cursor: pointer;
+      border-left: 2px solid transparent;
+      transition: background 0.15s ease, border-color 0.15s ease;
+      display: flex; flex-direction: column; gap: 0.15rem;
+    }
+    .note-item:hover { background: var(--bg); }
+    .note-item.active {
+      background: var(--bg);
+      border-left-color: var(--text);
+    }
+    .note-item-title {
+      font-size: 0.85rem; font-weight: 400;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .note-item-meta {
+      font-family: 'DM Mono', monospace; font-size: 0.6rem;
+      color: var(--muted); letter-spacing: 0.04em;
+    }
+    .note-list .empty {
+      padding: 1rem; font-size: 0.8rem; color: var(--muted);
+      font-style: italic;
+    }
+
+    .sidebar-foot {
+      padding: 0.75rem 1rem;
+      border-top: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+      font-family: 'DM Mono', monospace; font-size: 0.65rem;
+      color: var(--muted); letter-spacing: 0.06em;
+    }
+    .logout-btn {
+      background: none; border: none; color: var(--muted);
+      font-family: inherit; font-size: inherit; letter-spacing: inherit;
+      cursor: pointer; text-transform: uppercase;
+      transition: color 0.15s ease;
+    }
+    .logout-btn:hover { color: var(--text); }
+
+    /* ── Editor ── */
+    .editor-wrap {
+      display: flex; flex-direction: column; overflow: hidden;
+      padding-top: 3rem;
+    }
+    .editor-head {
+      padding: 0 2rem 0.75rem;
+      display: flex; align-items: center; gap: 1rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .title-input {
+      flex: 1;
+      font-family: 'DM Sans', sans-serif; font-size: 1.4rem;
+      font-weight: 500; letter-spacing: -0.02em;
+      background: none; border: none; outline: none;
+      color: var(--text); padding: 0.4rem 0;
+    }
+    .title-input::placeholder { color: var(--muted); opacity: 0.5; }
+
+    .editor-meta {
+      font-family: 'DM Mono', monospace; font-size: 0.65rem;
+      color: var(--muted); letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+    .delete-btn {
+      background: none; border: none;
+      font-family: 'DM Mono', monospace; font-size: 0.65rem;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); cursor: pointer; padding: 0.3rem 0.5rem;
+      transition: color 0.15s ease;
+    }
+    .delete-btn:hover { color: var(--danger); }
+
+    .editor {
+      flex: 1;
+      font-family: 'DM Mono', monospace; font-size: 0.9rem;
+      line-height: 1.7;
+      background: var(--bg); color: var(--text);
+      border: none; outline: none; resize: none;
+      padding: 1.5rem 2rem 2rem;
+      width: 100%;
+    }
+    .editor::placeholder { color: var(--muted); opacity: 0.6; }
+
+    .empty-state {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-style: italic; font-size: 0.9rem;
+    }
+
+    @media (max-width: 720px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .sidebar.mobile-open { display: flex; position: fixed; inset: 0; z-index: 200; }
+      .editor-wrap { padding-top: 3rem; }
+      .menu-btn {
+        position: fixed; top: 1rem; left: 4.5rem;
+        font-family: 'DM Mono', monospace; font-size: 0.7rem;
+        background: none; border: none; color: var(--line);
+        cursor: pointer; z-index: 300; letter-spacing: 0.06em;
+      }
+      .menu-btn:hover { color: var(--muted); }
+    }
+    @media (min-width: 721px) {
+      .menu-btn { display: none; }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="theme-toggle">
+    <button class="theme-btn" id="btn-light" onclick="setTheme('light')" title="Light">+</button>
+    <button class="theme-btn" id="btn-dark" onclick="setTheme('dark')" title="Dark">−</button>
+  </div>
+  <a class="back-link" href="/tools.html">← tools</a>
+
+  <!-- Login -->
+  <div class="login" id="login" hidden>
+    <h1>Notes</h1>
+    <p class="sub">private · markdown · r2-backed</p>
+    <form id="login-form">
+      <input id="login-user" type="text" placeholder="username" autocomplete="username" required>
+      <input id="login-pass" type="password" placeholder="password" autocomplete="current-password" required>
+      <button type="submit" id="login-submit">Sign in</button>
+      <div class="err" id="login-err"></div>
+    </form>
+  </div>
+
+  <!-- App -->
+  <button class="menu-btn" id="menu-btn" hidden>≡ notes</button>
+  <div class="app" id="app" hidden>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-head">
+        <div class="sidebar-title">Notes</div>
+        <button class="new-btn" id="new-btn">+ New note</button>
+      </div>
+      <div class="note-list" id="note-list"></div>
+      <div class="sidebar-foot">
+        <span id="save-status">ready</span>
+        <button class="logout-btn" id="logout-btn">Log out</button>
+      </div>
+    </aside>
+    <main class="editor-wrap" id="editor-wrap">
+      <div class="empty-state" id="empty-state">Pick a note or create one.</div>
+      <div id="editor-pane" hidden style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+        <div class="editor-head">
+          <input class="title-input" id="title-input" placeholder="Untitled" maxlength="200">
+          <span class="editor-meta" id="editor-meta"></span>
+          <button class="delete-btn" id="delete-btn">Delete</button>
+        </div>
+        <textarea class="editor" id="editor" placeholder="# Start writing&#10;&#10;Markdown supported. Auto-saves as you go."></textarea>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ── Theme ──
+    function setTheme(theme) {
+      document.body.classList.toggle('dark', theme === 'dark');
+      document.getElementById('btn-light').classList.toggle('active', theme === 'light');
+      document.getElementById('btn-dark').classList.toggle('active', theme === 'dark');
+      localStorage.setItem('theme', theme);
+    }
+    setTheme(localStorage.getItem('theme') || 'light');
+
+    // ── State ──
+    const state = {
+      notes: [],          // [{slug, title, updatedAt, size}]
+      currentSlug: null,
+      dirty: false,
+      saveTimer: null,
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    // ── API ──
+    async function api(path, opts = {}) {
+      const res = await fetch(path, {
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/json', ...(opts.headers || {}) },
+        ...opts,
+      });
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      return data;
+    }
+
+    // ── Auth ──
+    async function checkAuth() {
+      try {
+        const me = await api('/api/notes/me');
+        if (me.authed) showApp();
+        else showLogin();
+      } catch { showLogin(); }
+    }
+
+    function showLogin() {
+      $('login').hidden = false;
+      $('app').hidden = true;
+      $('menu-btn').hidden = true;
+      setTimeout(() => $('login-user').focus(), 50);
+    }
+
+    async function showApp() {
+      $('login').hidden = true;
+      $('app').hidden = false;
+      $('menu-btn').hidden = false;
+      await loadNotes();
+    }
+
+    $('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = $('login-err'); err.textContent = '';
+      const btn = $('login-submit'); btn.disabled = true;
+      try {
+        await api('/api/notes/login', {
+          method: 'POST',
+          body: JSON.stringify({
+            username: $('login-user').value,
+            password: $('login-pass').value,
+          }),
+        });
+        $('login-pass').value = '';
+        showApp();
+      } catch (ex) {
+        err.textContent = ex.message;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    $('logout-btn').addEventListener('click', async () => {
+      if (state.dirty) await saveNow();
+      try { await api('/api/notes/logout', { method: 'POST' }); } catch {}
+      state.currentSlug = null;
+      state.notes = [];
+      showLogin();
+    });
+
+    // ── Notes ──
+    async function loadNotes() {
+      const data = await api('/api/notes');
+      state.notes = data.notes || [];
+      renderList();
+    }
+
+    function renderList() {
+      const list = $('note-list');
+      if (!state.notes.length) {
+        list.innerHTML = '<div class="empty">No notes yet.</div>';
+        return;
+      }
+      list.innerHTML = '';
+      for (const n of state.notes) {
+        const el = document.createElement('div');
+        el.className = 'note-item' + (n.slug === state.currentSlug ? ' active' : '');
+        el.dataset.slug = n.slug;
+        const t = document.createElement('div');
+        t.className = 'note-item-title';
+        t.textContent = n.title || n.slug;
+        const m = document.createElement('div');
+        m.className = 'note-item-meta';
+        m.textContent = formatDate(n.updatedAt);
+        el.appendChild(t);
+        el.appendChild(m);
+        el.addEventListener('click', () => selectNote(n.slug));
+        list.appendChild(el);
+      }
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      const now = new Date();
+      const same = d.toDateString() === now.toDateString();
+      if (same) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+
+    async function selectNote(slug) {
+      if (state.currentSlug === slug) return;
+      if (state.dirty) await saveNow();
+      try {
+        const note = await api('/api/notes/' + encodeURIComponent(slug));
+        state.currentSlug = slug;
+        $('title-input').value = note.title || '';
+        $('editor').value = note.content || '';
+        $('editor-meta').textContent = 'saved · ' + formatDate(note.updatedAt);
+        $('empty-state').hidden = true;
+        $('editor-pane').hidden = false;
+        state.dirty = false;
+        renderList();
+        if (window.matchMedia('(max-width: 720px)').matches) {
+          $('sidebar').classList.remove('mobile-open');
+        }
+      } catch (ex) {
+        alert('Could not open note: ' + ex.message);
+      }
+    }
+
+    $('new-btn').addEventListener('click', async () => {
+      if (state.dirty) await saveNow();
+      const slug = newSlug();
+      state.currentSlug = slug;
+      $('title-input').value = '';
+      $('editor').value = '';
+      $('editor-meta').textContent = 'new · unsaved';
+      $('empty-state').hidden = true;
+      $('editor-pane').hidden = false;
+      state.dirty = false;
+      $('title-input').focus();
+    });
+
+    function newSlug() {
+      const rand = Math.random().toString(36).slice(2, 8);
+      const stamp = new Date().toISOString().slice(0, 10);
+      return `note-${stamp}-${rand}`;
+    }
+
+    function markDirty() {
+      state.dirty = true;
+      $('save-status').textContent = 'editing…';
+      if (state.saveTimer) clearTimeout(state.saveTimer);
+      state.saveTimer = setTimeout(saveNow, 1200);
+    }
+
+    async function saveNow() {
+      if (!state.currentSlug) return;
+      if (state.saveTimer) { clearTimeout(state.saveTimer); state.saveTimer = null; }
+      const slug = state.currentSlug;
+      const title = $('title-input').value.trim() || 'Untitled';
+      const content = $('editor').value;
+      $('save-status').textContent = 'saving…';
+      try {
+        const res = await api('/api/notes/' + encodeURIComponent(slug), {
+          method: 'PUT',
+          body: JSON.stringify({ title, content }),
+        });
+        state.dirty = false;
+        $('save-status').textContent = 'saved';
+        $('editor-meta').textContent = 'saved · ' + formatDate(res.updatedAt);
+        // refresh list entry
+        const idx = state.notes.findIndex(n => n.slug === slug);
+        const entry = { slug, title, updatedAt: res.updatedAt, size: content.length };
+        if (idx >= 0) state.notes.splice(idx, 1);
+        state.notes.unshift(entry);
+        renderList();
+      } catch (ex) {
+        $('save-status').textContent = 'save failed';
+        console.error(ex);
+      }
+    }
+
+    $('editor').addEventListener('input', markDirty);
+    $('title-input').addEventListener('input', markDirty);
+
+    $('delete-btn').addEventListener('click', async () => {
+      if (!state.currentSlug) return;
+      if (!confirm('Delete this note? This cannot be undone.')) return;
+      const slug = state.currentSlug;
+      try {
+        await api('/api/notes/' + encodeURIComponent(slug), { method: 'DELETE' });
+        state.notes = state.notes.filter(n => n.slug !== slug);
+        state.currentSlug = null;
+        state.dirty = false;
+        $('editor-pane').hidden = true;
+        $('empty-state').hidden = false;
+        renderList();
+      } catch (ex) {
+        alert('Delete failed: ' + ex.message);
+      }
+    });
+
+    // Save on tab close / nav away
+    window.addEventListener('beforeunload', (e) => {
+      if (state.dirty) {
+        saveNow();
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
+    // Mobile sidebar toggle
+    $('menu-btn').addEventListener('click', () => {
+      $('sidebar').classList.toggle('mobile-open');
+    });
+
+    // Keyboard: Cmd/Ctrl-S to force save
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        if (state.dirty) saveNow();
+      }
+    });
+
+    checkAuth();
+  </script>
+</body>
+</html>
