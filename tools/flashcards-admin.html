@@ -82,6 +82,7 @@
     .btn.danger { color: var(--skip); border-color: var(--skip); }
     .btn.danger:hover { background: var(--skip); color: var(--bg); }
     .btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .btn.small { padding: 0.35rem 0.7rem; font-size: 0.65rem; }
 
     .row {
       display: flex; justify-content: space-between; align-items: center;
@@ -96,6 +97,29 @@
       color: var(--muted); letter-spacing: 0.06em;
     }
     .row .title { font-size: 0.9rem; }
+    .row .actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+
+    .edit-form {
+      padding: 0.9rem;
+      background: var(--bg2);
+      border: 1px solid var(--line); border-radius: 2px;
+      margin: -0.2rem 0 0.4rem;
+      display: flex; flex-direction: column; gap: 0.5rem;
+    }
+    .edit-form label {
+      font-family: 'DM Mono', monospace; font-size: 0.6rem;
+      color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase;
+      display: block; margin-bottom: 0.2rem;
+    }
+    .edit-form input, .edit-form select {
+      width: 100%;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--line); border-radius: 2px;
+      padding: 0.45rem 0.7rem;
+      font-family: 'DM Mono', monospace; font-size: 0.8rem;
+    }
+    .edit-form input:focus, .edit-form select:focus { outline: none; border-color: var(--muted); }
+    .edit-actions { display: flex; gap: 0.4rem; justify-content: flex-end; }
     .status {
       font-family: 'DM Mono', monospace; font-size: 0.75rem;
       color: var(--muted); margin-top: 1rem;
@@ -158,30 +182,89 @@
       } catch (e) { setStatus(e.message, true); }
     }
 
+    const MODES = ['standard', 'fill-blank', 'vocab', 'define', 'language', 'formula', 'dates', 'quote'];
+
     function render(decks) {
       const list = document.getElementById('list');
       list.innerHTML = '';
       for (const d of decks) {
+        const wrap = document.createElement('div');
+        wrap.dataset.id = d.id;
+
         const row = document.createElement('div');
         row.className = 'row';
         const submitter = d.submitter ? ` · by ${escapeHtml(d.submitter)}` : '';
         const date = d.createdAt ? new Date(d.createdAt).toISOString().slice(0, 10) : '';
+        const cardCount = d.cardCount || 0;
         row.innerHTML = `
           <div style="min-width:0;flex:1">
-            <div class="title">${escapeHtml(d.title)}</div>
-            <div class="meta">${d.cardCount} cards · ${escapeHtml(d.mode)} · ${date}${submitter} · ${escapeHtml(d.id)}</div>
+            <div class="title">${escapeHtml(d.title || 'Untitled')}</div>
+            <div class="meta">${cardCount} cards · ${escapeHtml(d.mode)} · ${date}${submitter} · ${escapeHtml(d.id)}</div>
           </div>
-          <button class="btn danger">Delete</button>
+          <div class="actions">
+            <button class="btn small edit-btn">Edit</button>
+            <button class="btn small danger del-btn">Delete</button>
+          </div>
         `;
-        row.querySelector('button').onclick = () => del(d.id, d.title, row);
-        list.appendChild(row);
+        row.querySelector('.del-btn').onclick = () => del(d, wrap);
+        row.querySelector('.edit-btn').onclick = () => toggleEdit(d, wrap);
+        wrap.appendChild(row);
+        list.appendChild(wrap);
       }
     }
 
-    async function del(id, title, row) {
-      if (!confirm(`Delete "${title}"?`)) return;
+    function toggleEdit(d, wrap) {
+      const existing = wrap.querySelector('.edit-form');
+      if (existing) { existing.remove(); return; }
+      const form = document.createElement('div');
+      form.className = 'edit-form';
+      const modeOpts = MODES.map(m =>
+        `<option value="${m}"${m === d.mode ? ' selected' : ''}>${m}</option>`
+      ).join('');
+      form.innerHTML = `
+        <div>
+          <label>Title</label>
+          <input type="text" class="f-title" maxlength="120" value="${escapeHtml(d.title || '')}">
+        </div>
+        <div>
+          <label>Mode</label>
+          <select class="f-mode">${modeOpts}</select>
+        </div>
+        <div>
+          <label>Author</label>
+          <input type="text" class="f-sub" maxlength="60" value="${escapeHtml(d.submitter || '')}" placeholder="anonymous">
+        </div>
+        <div class="edit-actions">
+          <button class="btn small cancel-btn">Cancel</button>
+          <button class="btn small primary save-btn">Save</button>
+        </div>
+      `;
+      form.querySelector('.cancel-btn').onclick = () => form.remove();
+      form.querySelector('.save-btn').onclick = async () => {
+        const body = {
+          title: form.querySelector('.f-title').value,
+          mode: form.querySelector('.f-mode').value,
+          submitter: form.querySelector('.f-sub').value,
+        };
+        try {
+          const r = await fetch('/api/decks/' + encodeURIComponent(d.id), {
+            method: 'PATCH',
+            headers: { 'content-type': 'application/json', 'x-admin-pass': pass() },
+            body: JSON.stringify(body),
+          });
+          const data = await r.json();
+          if (!r.ok) throw new Error(data.error || 'Save failed.');
+          setStatus(`Saved "${data.title}".`);
+          load();
+        } catch (e) { setStatus(e.message, true); }
+      };
+      wrap.appendChild(form);
+    }
+
+    async function del(d, wrap) {
+      if (!confirm(`Delete "${d.title || 'Untitled'}"?`)) return;
       try {
-        const r = await fetch('/api/decks/' + encodeURIComponent(id), {
+        const r = await fetch('/api/decks/' + encodeURIComponent(d.id), {
           method: 'DELETE',
           headers: { 'x-admin-pass': pass() },
         });
@@ -189,8 +272,8 @@
           const data = await r.json().catch(() => ({}));
           throw new Error(data.error || `Delete failed (${r.status}).`);
         }
-        row.remove();
-        setStatus(`Deleted "${title}".`);
+        wrap.remove();
+        setStatus(`Deleted "${d.title || 'Untitled'}".`);
       } catch (e) { setStatus(e.message, true); }
     }
   </script>

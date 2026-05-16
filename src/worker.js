@@ -27,6 +27,7 @@ async function handleApi(request, env, url) {
     if (request.method === 'GET' && !id) return listDecks(env);
     if (request.method === 'GET' && id)  return getDeck(env, id);
     if (request.method === 'POST' && !id) return submitDeck(request, env);
+    if (request.method === 'PATCH' && id) return patchDeck(request, env, id);
     if (request.method === 'DELETE' && id) return deleteDeck(request, env, id);
     return json({ error: 'Method not allowed' }, 405);
   } catch (e) {
@@ -38,7 +39,7 @@ async function listDecks(env) {
   const out = [];
   let cursor;
   do {
-    const res = await env.R2.list({ prefix: PREFIX, cursor, limit: 1000 });
+    const res = await env.R2.list({ prefix: PREFIX, cursor, limit: 1000, include: ['customMetadata'] });
     cursor = res.truncated ? res.cursor : undefined;
     for (const obj of res.objects) {
       const m = obj.customMetadata || {};
@@ -114,6 +115,50 @@ async function submitDeck(request, env) {
   });
 
   return json({ id, title: deck.title, mode: deck.mode, cardCount: deck.cards.length, createdAt }, 201);
+}
+
+async function patchDeck(request, env, id) {
+  const pass = request.headers.get('x-admin-pass') || '';
+  if (!env.ADMIN_PASSWORD || pass !== env.ADMIN_PASSWORD) {
+    return json({ error: 'Unauthorized' }, 401);
+  }
+  const safe = sanitizeId(id);
+  if (!safe) return json({ error: 'Bad id' }, 400);
+
+  const key = PREFIX + safe + '.json';
+  const obj = await env.R2.get(key);
+  if (!obj) return json({ error: 'Not found' }, 404);
+  const existing = await obj.json();
+
+  let patch;
+  try { patch = await request.json(); } catch { return json({ error: 'Invalid JSON.' }, 400); }
+
+  if (patch.title != null) {
+    const t = String(patch.title).trim();
+    if (!t) return json({ error: 'Title cannot be empty.' }, 400);
+    if (t.length > MAX_TITLE) return json({ error: `Title too long (max ${MAX_TITLE}).` }, 400);
+    existing.title = t;
+  }
+  if (patch.mode != null) {
+    if (!VALID_MODES.includes(patch.mode)) return json({ error: 'Invalid mode.' }, 400);
+    existing.mode = patch.mode;
+  }
+  if (patch.submitter != null) {
+    existing.submitter = String(patch.submitter).trim().slice(0, MAX_SUBMITTER);
+  }
+
+  await env.R2.put(key, JSON.stringify(existing), {
+    httpMetadata: { contentType: 'application/json' },
+    customMetadata: {
+      title: existing.title,
+      mode: existing.mode,
+      cardCount: String(existing.cards?.length || 0),
+      submitter: existing.submitter || '',
+      createdAt: existing.createdAt || new Date().toISOString(),
+    },
+  });
+
+  return json({ ok: true, id: safe, title: existing.title, mode: existing.mode, submitter: existing.submitter });
 }
 
 async function deleteDeck(request, env, id) {
