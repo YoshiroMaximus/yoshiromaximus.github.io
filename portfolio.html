@@ -186,6 +186,39 @@
     }
 
     /* ── Self-hosted ── */
+    .services-toggle {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.85rem 1.25rem;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text);
+      letter-spacing: 0.06em;
+      transition: background 0.2s ease;
+      user-select: none;
+    }
+    .services-toggle::-webkit-details-marker { display: none; }
+    .services-toggle:hover { background: var(--bg2); }
+    .services-toggle .count {
+      color: var(--muted);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+    }
+    .services-toggle .chevron {
+      color: var(--muted);
+      font-size: 0.7rem;
+      transition: transform 0.25s ease;
+      margin-left: 0.75rem;
+    }
+    details[open] .services-toggle .chevron { transform: rotate(90deg); }
+    details[open] .services-toggle { border-bottom-color: transparent; }
+    details .services-list { border-top: none; }
+    .services-details { margin-top: 0.5rem; }
     .services-list {
       display: flex;
       flex-direction: column;
@@ -581,36 +614,6 @@
       </div>
     </section>
 
-    <!-- Self-hosted -->
-    <section id="self-hosted">
-      <p class="section-label">Self-hosted</p>
-      <div class="services-list">
-        <div class="service-row">
-          <span class="service-name">immich</span>
-          <span class="service-purpose">photo backup + management</span>
-        </div>
-        <div class="service-row">
-          <span class="service-name">voidauth</span>
-          <span class="service-purpose">sso for all my services</span>
-        </div>
-        <div class="service-row">
-          <span class="service-name">jellyfin</span>
-          <span class="service-purpose">media streaming</span>
-        </div>
-        <div class="service-row">
-          <span class="service-name">vaultwarden</span>
-          <span class="service-purpose">password manager</span>
-        </div>
-        <div class="service-row">
-          <span class="service-name">copyparty</span>
-          <span class="service-purpose">file sync + storage</span>
-        </div>
-        <div class="service-row">
-          <span class="service-name">navidrome</span>
-          <span class="service-purpose">music streaming</span>
-        </div>
-      </div>
-    </section>
 
     <!-- Projects -->
     <section id="projects">
@@ -651,6 +654,38 @@
             <img src="images/homelab.png" alt="Homelab build" loading="lazy" decoding="async">
             <span class="project-img-label">add photo</span>
           </div>
+          <details class="services-details" onclick="event.stopPropagation()">
+            <summary class="services-toggle">
+              <span>Services running on it <span class="count">· 6</span></span>
+              <span class="chevron">›</span>
+            </summary>
+            <div class="services-list">
+              <div class="service-row">
+                <span class="service-name">immich</span>
+                <span class="service-purpose">photo backup + management</span>
+              </div>
+              <div class="service-row">
+                <span class="service-name">voidauth</span>
+                <span class="service-purpose">sso for all my services</span>
+              </div>
+              <div class="service-row">
+                <span class="service-name">jellyfin</span>
+                <span class="service-purpose">media streaming</span>
+              </div>
+              <div class="service-row">
+                <span class="service-name">vaultwarden</span>
+                <span class="service-purpose">password manager</span>
+              </div>
+              <div class="service-row">
+                <span class="service-name">copyparty</span>
+                <span class="service-purpose">file sync + storage</span>
+              </div>
+              <div class="service-row">
+                <span class="service-name">navidrome</span>
+                <span class="service-purpose">music streaming</span>
+              </div>
+            </div>
+          </details>
         </div>
 
         <div class="project-card">

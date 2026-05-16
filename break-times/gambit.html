@@ -95,7 +95,7 @@ const ENCOUNTERS=[
 const ALL_GAMBITS=[
   {id:'necromancer',   name:'Necromancer',    desc:'Capture → spawn pawn on your back rank.'},
   {id:'pawn_rush',     name:'Pawn Rush',      desc:'Your pawns always advance 2 squares.'},
-  {id:'bloodlust',     name:'Bloodlust',      desc:'After capturing, take one free bonus move.'},
+  {id:'bloodlust',     name:'Bloodlust',      desc:'After capturing a piece worth 3+, take one free bonus move.'},
   {id:'promotion_rush',name:'Promotion Rush', desc:'Pawns promote at rank 4 instead of 5.'},
   {id:'fortune',       name:'Fortune',        desc:'Gold tiles appear. Stand on them for +12g.'},
   {id:'regicide',      name:'Regicide',       desc:'Your King moves and attacks as a Queen.'},
@@ -114,7 +114,14 @@ const SHOP_CATALOG=[
   {id:'queen', name:'+1 Queen', cost:280,desc:'Add a queen — cost scales with how many you own.'},
 ];
 const QUEEN_COSTS=[280,520,940,1700,3200];
-function queenCost(){return QUEEN_COSTS[Math.min(roster.queen,QUEEN_COSTS.length-1)]+(roster.queen>=QUEEN_COSTS.length?2000*(roster.queen-QUEEN_COSTS.length+1):0);}
+// Prices scale with how deep you are in the run.
+function priceMult(){return 1+encounter*0.18;}
+function queenPriceMult(){return 1+encounter*0.32;}
+function queenCost(){
+  const base=QUEEN_COSTS[Math.min(roster.queen,QUEEN_COSTS.length-1)]+(roster.queen>=QUEEN_COSTS.length?2000*(roster.queen-QUEEN_COSTS.length+1):0);
+  return Math.round(base*queenPriceMult());
+}
+function itemCost(item){return item.id==='queen'?queenCost():Math.round(item.cost*priceMult());}
 
 const MODIFIER_POOL=[null,null,null,'fog','mines','kinghill'];
 
@@ -125,6 +132,20 @@ let roster={queen:0,rook:1,bishop:0,knight:0,pawns:3};
 let hiEncounter=+localStorage.getItem('gambit_hi')||0;
 let hiScore=+localStorage.getItem('gambit_hiscore')||0;
 let runScore=0;
+let difficulty=localStorage.getItem('gambit_diff')||'medium';
+
+// Battle log: recent moves & events, newest last
+let battleLog=[];
+function logEntry(kind,text){battleLog.push({kind,text}); if(battleLog.length>40) battleLog.shift();}
+
+// Difficulty knobs used by the AI
+const DIFF_PROFILES={
+  easy:       {topN:5, weights:[0.30,0.25,0.20,0.15,0.10], chaos:0.35, optimalBoss:false},
+  medium:     {topN:4, weights:[0.55,0.27,0.12,0.06],      chaos:0.15, optimalBoss:true},
+  hard:       {topN:3, weights:[0.75,0.18,0.07],           chaos:0.06, optimalBoss:true},
+  grandmaster:{topN:1, weights:[1],                        chaos:0,    optimalBoss:true},
+};
+function diffProfile(){return DIFF_PROFILES[difficulty]||DIFF_PROFILES.medium;}
 
 // round timing & scoring
 let battleTime=0;
@@ -156,6 +177,8 @@ let modFlash=0;
 let gambitOptions=[],gambitPicksLeft=0,gambitHover=-1;
 let shopHover=-1;
 let hitAreas=[];
+// tooltips are rectangles with hover-only descriptions (battle HUD)
+let tooltipZones=[];
 
 // ─── chess engine ────────────────────────────────────────────────────────
 function inBounds(r,c){return r>=0&&r<6&&c>=0&&c<6;}
@@ -234,7 +257,8 @@ function getAllLegal(board,color){
 }
 
 // ─── events ──────────────────────────────────────────────────────────────
-function showEvent(title,sub){eventTitle=title; eventSub=sub; eventFlash=2.8;}
+const EVENT_FLASH_DUR=4.5;
+function showEvent(title,sub){eventTitle=title; eventSub=sub; eventFlash=EVENT_FLASH_DUR; logEntry('event',title);}
 
 function triggerRandomEvent(){
   const pool=['summon_pawn','enemy_blunder','earthquake','power_up','gold_drop','enemy_summon','mirror','swap_sides'];
@@ -344,7 +368,7 @@ function setupBattle(){
     for(let r=2;r<5;r++) for(let c=0;c<6;c++) if(!board[r][c]) candidates.push([r,c]);
     for(let i=0;i<2&&candidates.length;i++) mineSquares.push(candidates.splice(Math.floor(Math.random()*candidates.length),1)[0]);
   }
-  modFlash = battleModifier ? 3 : 0;
+  modFlash = battleModifier ? 4.5 : 0;
 
   const eventInterval=ownedGambits.includes('chaos_theory')?3:5;
   eventTimer=eventInterval;
@@ -352,6 +376,7 @@ function setupBattle(){
   battleTime=0;
   capturedValue=0;
   goldStartOfBattle=gold;
+  battleLog=[];
 }
 
 // ─── after move shared logic ──────────────────────────────────────────────
@@ -379,11 +404,16 @@ function checkMineAndKinghill(movedRow,movedCol,color){
 }
 
 // ─── player move ─────────────────────────────────────────────────────────
+function moveNotation(fr,fc,tr,tc){
+  const files='abcdef';
+  return files[fc]+(fr+1)+files[tc]+(tr+1);
+}
 function doPlayerMove(fr,fc,tr,tc,isBonus=false){
   const captured=board[tr][tc];
   if(captured) capturedValue+=PIECE_VALUE[captured.type]||0;
   lastMove={fr,fc,tr,tc};
   const pieceType=board[fr][fc]?.type;
+  logEntry('move',`you · ${pieceType} ${moveNotation(fr,fc,tr,tc)}${captured?` ×${captured.type}`:''}${isBonus?' ◆':''}`);
   board=applyMove(board,fr,fc,tr,tc);
 
   // Pawn promotion
@@ -416,7 +446,8 @@ function doPlayerMove(fr,fc,tr,tc,isBonus=false){
   const eventInterval=ownedGambits.includes('chaos_theory')?3:5;
   if(moveCount%eventInterval===0) triggerRandomEvent();
 
-  if(captured&&ownedGambits.includes('bloodlust')&&!isBonus){
+  // Bloodlust: bonus move only on captures of value ≥ knight (no free queens from pawn snipes)
+  if(captured&&ownedGambits.includes('bloodlust')&&!isBonus&&(PIECE_VALUE[captured.type]||0)>=3){
     bloodlustBonus=true; return;
   }
 
@@ -474,20 +505,21 @@ function doAIMove(){
     if(alreadyThreatened&&target) score+=PIECE_VALUE[piece.type]*3;
 
     // Random chaos — occasional wild surges make AI unpredictable
-    if(Math.random()<0.15) score+=Math.random()*30;
+    const prof=diffProfile();
+    if(Math.random()<prof.chaos) score+=Math.random()*30;
 
     return {...m,score};
   });
 
   scored.sort((a,b)=>b.score-a.score);
 
-  // Bosses always play optimally; others have weighted randomness
+  const prof=diffProfile();
   let chosen;
-  if(enc.boss){
+  if(enc.boss&&prof.optimalBoss){
     chosen=scored[0];
   } else {
-    const topN=Math.min(4,scored.length);
-    const w=[0.55,0.27,0.12,0.06];
+    const topN=Math.min(prof.topN,scored.length);
+    const w=prof.weights;
     let r=Math.random();
     chosen=scored[topN-1];
     for(let i=0;i<topN;i++){if(r<w[i]){chosen=scored[i]; break;} r-=w[i];}
@@ -496,6 +528,9 @@ function doAIMove(){
 }
 
 function execAI({from:[fr,fc],to:[tr,tc]}){
+  const captured=board[tr][tc];
+  const pieceType=board[fr][fc]?.type;
+  logEntry('move',`foe · ${pieceType} ${moveNotation(fr,fc,tr,tc)}${captured?` ×${captured.type}`:''}`);
   lastMove={fr,fc,tr,tc};
   board=applyMove(board,fr,fc,tr,tc);
 
@@ -513,6 +548,24 @@ function execAI({from:[fr,fc],to:[tr,tc]}){
 }
 
 // ─── battle end ───────────────────────────────────────────────────────────
+function syncRosterToSurvivors(){
+  // Pieces that died this battle stay dead — must be re-bought in the shop.
+  const survivors={queen:0,rook:0,bishop:0,knight:0,pawns:0};
+  for(let r=0;r<6;r++) for(let c=0;c<6;c++){
+    const p=board[r][c]; if(!p||p.color!=='white') continue;
+    if(p.type==='pawn') survivors.pawns++;
+    else if(p.type==='queen') survivors.queen++;
+    else if(p.type==='rook') survivors.rook++;
+    else if(p.type==='bishop') survivors.bishop++;
+    else if(p.type==='knight') survivors.knight++;
+  }
+  roster.queen=survivors.queen;
+  roster.rook=survivors.rook;
+  roster.bishop=survivors.bishop;
+  roster.knight=survivors.knight;
+  roster.pawns=survivors.pawns;
+}
+
 function endBattle(playerWon){
   if(playerWon===null){setupBattle(); return;}
   if(!playerWon){
@@ -523,6 +576,7 @@ function endBattle(playerWon){
     localStorage.setItem('gambit_hiscore',hiScore);
     return;
   }
+  syncRosterToSurvivors();
   const enc=ENCOUNTERS[encounter];
   const reward=enc.goldReward+Math.floor(wager*wagerMult);
   gold+=reward;
@@ -570,9 +624,8 @@ function canBuy(id){
 }
 function buyItem(id,cost){
   if(!canBuy(id)) return;
-  const realCost=id==='queen'?queenCost():cost;
-  if(gold<realCost) return;
-  gold-=realCost;
+  if(gold<cost) return;
+  gold-=cost;
   if(id==='pawn') roster.pawns++; else roster[id]++;
 }
 function leaveShop(){encounter++; phase='wager';}
@@ -615,6 +668,7 @@ function isVisibleUnderFog(r,c){
 
 // ─── draw board ───────────────────────────────────────────────────────────
 function drawBoard(){
+  tooltipZones=[]; hitAreas=[];
   const {x:bx,y:by,hudX,hudY,mobile}=boardOrigin();
 
   for(let r=0;r<6;r++){
@@ -696,7 +750,7 @@ function drawBoard(){
   if(battleModifier&&modFlash>0){
     const fade=Math.min(1,modFlash)*Math.min(1,modFlash*0.8);
     const isDark=document.body.classList.contains('dark');
-    const bandY=by-2, bandH=44;
+    const bandY=by-4, bandH=54;
     ctx.fillStyle=isDark?`rgba(17,17,16,${0.72*fade})`:`rgba(245,244,240,${0.78*fade})`;
     ctx.fillRect(bx,bandY,SQ*6,bandH);
     ctx.strokeStyle=`rgba(200,160,32,${0.6*fade})`; ctx.lineWidth=1;
@@ -709,29 +763,32 @@ function drawBoard(){
       mines:'Two squares are mined — step with care.',
       kinghill:'Place your King on the center to win.'
     }[battleModifier]||'';
-    ctx.font=`500 13px 'DM Mono',monospace`; ctx.fillStyle=C.text;
-    ctx.fillText(modLabel,bx+SQ*3,bandY+15);
-    ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-    ctx.fillText(modDesc,bx+SQ*3,bandY+31);
+    ctx.font=`500 16px 'DM Mono',monospace`; ctx.fillStyle=C.text;
+    ctx.fillText(modLabel,bx+SQ*3,bandY+19);
+    ctx.font=`300 12px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    ctx.fillText(modDesc,bx+SQ*3,bandY+39);
     ctx.globalAlpha=1;
   }
 
+  // Tooltip (drawn last so it sits on top)
+  drawTooltip();
+
   // Event flash (semi-transparent toast above board)
   if(eventFlash>0){
-    const fade=Math.min(1,eventFlash*1.5)*Math.min(1,(2.8-eventFlash)*3);
+    const fade=Math.min(1,eventFlash*1.5)*Math.min(1,(EVENT_FLASH_DUR-eventFlash)*3);
     const a=Math.max(0,fade);
     const isDark=document.body.classList.contains('dark');
-    const tY=by-2, tH=40;
-    ctx.fillStyle=isDark?`rgba(17,17,16,${0.6*a})`:`rgba(245,244,240,${0.7*a})`;
+    const tY=by-4, tH=50;
+    ctx.fillStyle=isDark?`rgba(17,17,16,${0.62*a})`:`rgba(245,244,240,${0.72*a})`;
     ctx.fillRect(bx+SQ*0.5,tY,SQ*5,tH);
     ctx.strokeStyle=`rgba(140,140,140,${0.35*a})`; ctx.lineWidth=1;
     ctx.strokeRect(bx+SQ*0.5+0.5,tY+0.5,SQ*5-1,tH-1);
     ctx.globalAlpha=a;
     ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.font=`500 12px 'DM Mono',monospace`; ctx.fillStyle=C.text;
-    ctx.fillText(eventTitle,bx+SQ*3,tY+14);
-    ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-    ctx.fillText(eventSub,bx+SQ*3,tY+28);
+    ctx.font=`500 15px 'DM Mono',monospace`; ctx.fillStyle=C.text;
+    ctx.fillText(eventTitle,bx+SQ*3,tY+18);
+    ctx.font=`300 12px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    ctx.fillText(eventSub,bx+SQ*3,tY+36);
     ctx.globalAlpha=1;
   }
 }
@@ -739,98 +796,195 @@ function drawBoard(){
 // ─── HUD ─────────────────────────────────────────────────────────────────
 function fmtTime(s){const m=Math.floor(s/60),r=Math.floor(s%60);return `${m}:${r.toString().padStart(2,'0')}`;}
 
+function drawTooltip(){
+  const z=tooltipZones.find(t=>mouseX>=t.x&&mouseX<t.x+t.w&&mouseY>=t.y&&mouseY<t.y+t.h);
+  if(!z) return;
+  ctx.font=`300 11px 'DM Mono',monospace`;
+  const words=z.text.split(' ');
+  const maxW=Math.min(280,W-32);
+  const lines=[]; let line='';
+  words.forEach(w=>{
+    const test=line?line+' '+w:w;
+    if(ctx.measureText(test).width>maxW&&line){lines.push(line); line=w;}
+    else line=test;
+  });
+  if(line) lines.push(line);
+  const padX=10,padY=8,lh=15;
+  const tw=Math.max(...lines.map(l=>ctx.measureText(l).width))+padX*2;
+  const th=lines.length*lh+padY*2;
+  let tx=mouseX+14, ty=mouseY+14;
+  if(tx+tw>W-8) tx=mouseX-tw-14;
+  if(ty+th>H-8) ty=mouseY-th-14;
+  const isDark=document.body.classList.contains('dark');
+  ctx.fillStyle=isDark?'rgba(20,20,18,0.96)':'rgba(250,250,246,0.96)';
+  ctx.fillRect(tx,ty,tw,th);
+  ctx.strokeStyle=C.line; ctx.lineWidth=1;
+  ctx.strokeRect(tx+0.5,ty+0.5,tw-1,th-1);
+  ctx.textAlign='left'; ctx.textBaseline='top'; ctx.fillStyle=C.text;
+  lines.forEach((l,i)=>ctx.fillText(l,tx+padX,ty+padY+i*lh));
+}
+
+const MOD_DESCS={
+  fog:'Fog of War — enemy pieces hidden when no white piece is within 2 squares.',
+  mines:'Minefield — two hidden squares destroy any piece that lands on them.',
+  kinghill:'King of the Hill — move your King to the center 2×2 to win.',
+};
+
 function drawHUD(hx,by,mobile){
   const enc=ENCOUNTERS[encounter];
   ctx.textAlign='left'; ctx.textBaseline='top';
 
   if(mobile){
-    // Single compact row of stats
     let x=hx;
     const top=by;
-    ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-    ctx.fillText(`${encounter+1}/7`,x,top); x+=44;
-    ctx.font=`400 11px 'DM Mono',monospace`; ctx.fillStyle=enc.boss?'#c89020':C.text;
-    ctx.fillText(enc.name+(enc.boss?'★':''),x,top); x+=Math.max(110,ctx.measureText(enc.name).width+24);
-    ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
-    ctx.fillText(`◆${gold}`,x,top); x+=70;
-    ctx.fillStyle=C.muted; ctx.font=`300 10px 'DM Mono',monospace`;
+    ctx.font=`300 12px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    ctx.fillText(`${encounter+1}/7`,x,top); x+=52;
+    ctx.font=`500 13px 'DM Mono',monospace`; ctx.fillStyle=enc.boss?'#c89020':C.text;
+    ctx.fillText(enc.name+(enc.boss?' ★':''),x,top); x+=Math.max(120,ctx.measureText(enc.name).width+32);
+    ctx.font=`400 13px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
+    ctx.fillText(`◆${gold}`,x,top); x+=78;
+    ctx.fillStyle=C.muted; ctx.font=`300 12px 'DM Mono',monospace`;
     ctx.fillText(fmtTime(battleTime),x,top);
 
-    // Second row: turn + modifier + score running
-    let y2=top+18;
-    ctx.font=`400 11px 'DM Mono',monospace`;
+    let y2=top+22;
+    ctx.font=`500 13px 'DM Mono',monospace`;
     ctx.fillStyle=turnColor==='white'&&!aiThinking?C.text:C.muted;
     ctx.fillText(aiThinking?'thinking...':bloodlustBonus?'◆ bonus move':'your turn',hx,y2);
     if(battleModifier){
-      ctx.font=`300 9px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+      ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
       const ml={fog:'fog',mines:'mines',kinghill:'hill'}[battleModifier]||battleModifier;
-      ctx.fillText(`[ ${ml} ]`,hx+120,y2+1);
+      const label=`[ ${ml} ]`;
+      const lw=ctx.measureText(label).width;
+      ctx.fillText(label,hx+140,y2+1);
+      tooltipZones.push({x:hx+140,y:y2-2,w:lw+6,h:18,text:MOD_DESCS[battleModifier]||battleModifier});
     }
-    // Gambits row
     if(ownedGambits.length){
-      let y3=y2+18;
-      ctx.font=`300 9px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-      const names=ownedGambits.map(id=>ALL_GAMBITS.find(g=>g.id===id)?.name||id).join(' · ');
-      ctx.fillText(names,hx,y3);
+      let y3=y2+22;
+      ctx.font=`400 11px 'DM Mono',monospace`; ctx.fillStyle=C.text;
+      let cx=hx;
+      ownedGambits.forEach(id=>{
+        const g=ALL_GAMBITS.find(g=>g.id===id); if(!g) return;
+        const tw=ctx.measureText(g.name).width;
+        if(cx+tw>W-16){cx=hx; y3+=18;}
+        ctx.fillText(g.name,cx,y3);
+        tooltipZones.push({x:cx-2,y:y3-2,w:tw+4,h:16,text:`${g.name} — ${g.desc}`});
+        cx+=tw+14;
+      });
     }
-    // Hex button
     if(ownedGambits.includes('hex')&&!hexUsed){
-      ctx.font=`400 10px 'DM Mono',monospace`;
+      ctx.font=`500 12px 'DM Mono',monospace`;
       ctx.fillStyle=hexMode?C.text:C.muted;
-      ctx.fillText(hexMode?'[ H ] hex active':'[ H ] hex',W-90,top);
+      const label=hexMode?'[ H ] hex active':'[ H ] hex';
+      const lw=ctx.measureText(label).width;
+      ctx.fillText(label,W-lw-16,top);
+      hitAreas.push({x:W-lw-20,y:top-4,w:lw+12,h:22,action:()=>{if(turnColor==='white'&&!aiThinking){hexMode=!hexMode; if(hexMode){selected=null; validMoves=[];}}}});
+      tooltipZones.push({x:W-lw-20,y:top-4,w:lw+12,h:22,text:'Hex — once per battle, remove any non-king enemy piece.'});
     }
+    if(bloodlustBonus){
+      const label='[skip bonus]';
+      ctx.font=`400 11px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+      const lw=ctx.measureText(label).width;
+      ctx.fillText(label,W-lw-16,top+22);
+      hitAreas.push({x:W-lw-20,y:top+18,w:lw+12,h:20,action:()=>{bloodlustBonus=false; selected=null; validMoves=[]; turnColor='black'; aiThinking=true; aiTimer=0.55;}});
+    }
+    drawBattleLog(hx,top+(ownedGambits.length?80:60),W-hx-16,H-(top+(ownedGambits.length?80:60))-12,true);
     return;
   }
 
   let y=by;
-  const lh=19;
+  const lh=22;
 
-  ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-  ctx.fillText(`${encounter+1} / 7`,hx,y); y+=lh;
+  ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+  ctx.fillText(`${encounter+1} / 7  ·  ${difficulty}`,hx,y); y+=lh;
 
-  ctx.font=`400 14px 'DM Mono',monospace`; ctx.fillStyle=enc.boss?'#c89020':C.text;
-  ctx.fillText(enc.name+(enc.boss?'  ★':''),hx,y); y+=lh*1.4;
+  ctx.font=`500 16px 'DM Mono',monospace`; ctx.fillStyle=enc.boss?'#c89020':C.text;
+  ctx.fillText(enc.name+(enc.boss?'  ★':''),hx,y); y+=lh*1.3;
 
   if(battleModifier){
     const ml={fog:'fog',mines:'mines',kinghill:'hill'}[battleModifier]||battleModifier;
-    ctx.font=`300 9px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-    ctx.fillText(`[ ${ml} ]`,hx,y); y+=lh;
+    ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    const label=`[ ${ml} ]`;
+    ctx.fillText(label,hx,y);
+    const lw=ctx.measureText(label).width;
+    tooltipZones.push({x:hx-2,y:y-2,w:lw+6,h:18,text:MOD_DESCS[battleModifier]||battleModifier});
+    y+=lh;
   }
   y+=4;
 
-  ctx.font=`400 12px 'DM Mono',monospace`;
+  ctx.font=`500 14px 'DM Mono',monospace`;
   ctx.fillStyle=turnColor==='white'&&!aiThinking?C.text:C.muted;
-  ctx.fillText(aiThinking?'thinking...':bloodlustBonus?'◆ bonus move':'your turn',hx,y); y+=lh*1.4;
+  ctx.fillText(aiThinking?'thinking...':bloodlustBonus?'◆ bonus move':'your turn',hx,y); y+=lh*1.3;
 
-  ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
+  ctx.font=`400 13px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
   ctx.fillText(`◆ ${gold}`,hx,y); y+=lh;
-  ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-  ctx.fillText(`time  ${fmtTime(battleTime)}`,hx,y); y+=lh*1.4;
+  ctx.font=`300 12px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+  ctx.fillText(`time  ${fmtTime(battleTime)}`,hx,y); y+=lh*1.2;
 
   if(wager>0){
-    ctx.font=`300 9px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
     ctx.fillText(`bet  ${wager}g  ×${wagerMult}`,hx,y); y+=lh;
   }
   y+=4;
 
   if(ownedGambits.length){
-    ctx.font=`300 9px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-    ctx.fillText('gambits',hx,y); y+=lh*0.9;
+    ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    ctx.fillText('gambits',hx,y); y+=lh*0.85;
     ownedGambits.forEach(id=>{
       const g=ALL_GAMBITS.find(g=>g.id===id);
       if(!g) return;
-      ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.text;
-      ctx.fillText(g.name,hx,y); y+=lh*1.1;
+      ctx.font=`400 12px 'DM Mono',monospace`; ctx.fillStyle=C.text;
+      ctx.fillText(g.name,hx,y);
+      const tw=ctx.measureText(g.name).width;
+      tooltipZones.push({x:hx-2,y:y-2,w:tw+6,h:18,text:`${g.name} — ${g.desc}`});
+      y+=lh*0.95;
     });
     y+=4;
   }
 
   // Hex button
   if(ownedGambits.includes('hex')&&!hexUsed){
-    ctx.font=`400 10px 'DM Mono',monospace`;
+    ctx.font=`500 12px 'DM Mono',monospace`;
     ctx.fillStyle=hexMode?C.text:C.muted;
-    ctx.fillText(hexMode?'[ H ]  hex — click enemy':'[ H ]  hex — ready',hx,y);
+    const label=hexMode?'[ H ]  hex — click enemy':'[ H ]  hex — ready';
+    ctx.fillText(label,hx,y);
+    const lw=ctx.measureText(label).width;
+    hitAreas.push({x:hx-2,y:y-2,w:lw+6,h:20,action:()=>{if(turnColor==='white'&&!aiThinking){hexMode=!hexMode; if(hexMode){selected=null; validMoves=[];}}}});
+    tooltipZones.push({x:hx-2,y:y-2,w:lw+6,h:20,text:'Hex — once per battle, remove any non-king enemy piece.'});
+    y+=lh;
   }
+
+  // Skip-bonus button (replaces the old click-off-to-cancel)
+  if(bloodlustBonus){
+    ctx.font=`400 11px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    const label='[ skip bonus move ]';
+    ctx.fillText(label,hx,y);
+    const lw=ctx.measureText(label).width;
+    hitAreas.push({x:hx-2,y:y-2,w:lw+6,h:18,action:()=>{bloodlustBonus=false; selected=null; validMoves=[]; turnColor='black'; aiThinking=true; aiTimer=0.55;}});
+    y+=lh;
+  }
+  y+=6;
+
+  // History log
+  drawBattleLog(hx,y,200,H-y-20,false);
+}
+
+function drawBattleLog(x,y,w,h,compact){
+  if(h<40||battleLog.length===0) return;
+  ctx.textAlign='left'; ctx.textBaseline='top';
+  ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+  ctx.fillText('history',x,y);
+  const lh=compact?13:14;
+  const maxLines=Math.max(3,Math.floor((h-16)/lh));
+  const items=battleLog.slice(-maxLines);
+  let ly=y+14;
+  items.forEach(it=>{
+    ctx.font=`300 ${compact?10:11}px 'DM Mono',monospace`;
+    ctx.fillStyle=it.kind==='event'?'#c89020':(it.text.startsWith('foe')?C.muted:C.text);
+    let txt=it.text;
+    while(ctx.measureText(txt).width>w-4&&txt.length>6) txt=txt.slice(0,-2);
+    if(txt!==it.text) txt=txt.slice(0,-1)+'…';
+    ctx.fillText(txt,x,ly); ly+=lh;
+  });
 }
 
 // ─── round end (score tally animation) ─────────────────────────────────────
@@ -988,7 +1142,7 @@ function drawShop(){
   const ox=W/2-itemW/2;
 
   SHOP_CATALOG.forEach((item,i)=>{
-    const cost=item.id==='queen'?queenCost():item.cost;
+    const cost=itemCost(item);
     const atCap=!canBuy(item.id);
     const canAfford=gold>=cost&&!atCap;
     const hovered=mouseX>=ox&&mouseX<ox+itemW&&mouseY>=oy&&mouseY<oy+itemH;
@@ -1099,20 +1253,58 @@ function drawOverlay(){
 
   if(phase==='title'){
     ctx.font=`400 58px 'DM Mono',monospace`; ctx.fillStyle=C.text;
-    ctx.fillText('gambit',W/2,H*0.38);
+    ctx.fillText('gambit',W/2,H*0.32);
     ctx.font=`300 12px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-    ctx.fillText('chess  ·  roguelite  ·  wager',W/2,H*0.38+50);
+    ctx.fillText('chess  ·  roguelite  ·  wager',W/2,H*0.32+50);
     if(hiEncounter>0){
       ctx.font=`300 10px 'DM Mono',monospace`;
-      ctx.fillText(`best  ${hiEncounter} / 7`,W/2,H*0.38+74);
+      ctx.fillText(`best  ${hiEncounter} / 7`,W/2,H*0.32+74);
     }
     if(hiScore>0){
       ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
-      ctx.fillText(`high score  ${hiScore}`,W/2,H*0.38+92);
+      ctx.fillText(`high score  ${hiScore}`,W/2,H*0.32+92);
       ctx.fillStyle=C.muted;
     }
-    ctx.font=`300 11px 'DM Mono',monospace`;
-    ctx.fillText('click or any key to begin',W/2,H*0.72);
+
+    // Difficulty picker
+    ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    ctx.fillText('difficulty',W/2,H*0.32+128);
+    const diffs=['easy','medium','hard','grandmaster'];
+    const cw=Math.min(110,(W-40)/diffs.length);
+    const gap=8;
+    const totalW=diffs.length*cw+(diffs.length-1)*gap;
+    let dx=W/2-totalW/2;
+    const dy=H*0.32+144;
+    diffs.forEach(d=>{
+      const sel=d===difficulty;
+      const hov=mouseX>=dx&&mouseX<dx+cw&&mouseY>=dy&&mouseY<dy+28;
+      ctx.fillStyle=sel?C.line:(hov?C.sqLight:'transparent');
+      ctx.fillRect(dx,dy,cw,28);
+      ctx.strokeStyle=sel?C.text:C.line; ctx.lineWidth=1;
+      ctx.strokeRect(dx+0.5,dy+0.5,cw-1,27);
+      ctx.font=`400 11px 'DM Mono',monospace`; ctx.fillStyle=sel?C.text:C.muted;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(d,dx+cw/2,dy+14);
+      hitAreas.push({x:dx,y:dy,w:cw,h:28,action:()=>{difficulty=d; localStorage.setItem('gambit_diff',d);}});
+      dx+=cw+gap;
+    });
+
+    // Start button
+    const sbW=180,sbH=36;
+    const sbx=W/2-sbW/2, sby=H*0.32+196;
+    const hov=mouseX>=sbx&&mouseX<sbx+sbW&&mouseY>=sby&&mouseY<sby+sbH;
+    ctx.fillStyle=hov?C.text:'transparent';
+    ctx.fillRect(sbx,sby,sbW,sbH);
+    ctx.strokeStyle=C.text; ctx.lineWidth=1;
+    ctx.strokeRect(sbx+0.5,sby+0.5,sbW-1,sbH-1);
+    ctx.font=`500 13px 'DM Mono',monospace`; ctx.fillStyle=hov?C.bg:C.text;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('begin run',sbx+sbW/2,sby+sbH/2);
+    hitAreas.push({x:sbx,y:sby,w:sbW,h:sbH,action:startRun});
+
+    ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('press enter to begin',W/2,sby+sbH+22);
 
   } else if(phase==='gameover'){
     ctx.font=`400 58px 'DM Mono',monospace`; ctx.fillStyle=C.text;
@@ -1190,7 +1382,11 @@ function loop(t){
 canvas.addEventListener('click',e=>{
   const mx=e.clientX,my=e.clientY;
 
-  if(phase==='title'||phase==='gameover'||phase==='victory'){startRun(); return;}
+  if(phase==='title'){
+    for(const ha of hitAreas) if(mx>=ha.x&&mx<ha.x+ha.w&&my>=ha.y&&my<ha.y+ha.h){ha.action(); return;}
+    return;
+  }
+  if(phase==='gameover'||phase==='victory'){startRun(); return;}
 
   if(phase==='wager'||phase==='gambit_pick'||phase==='shop'||phase==='round_end'){
     for(const ha of hitAreas) if(mx>=ha.x&&mx<ha.x+ha.w&&my>=ha.y&&my<ha.y+ha.h){ha.action(); return;}
@@ -1198,6 +1394,8 @@ canvas.addEventListener('click',e=>{
   }
 
   if(phase==='battle'){
+    // HUD hit areas (hex toggle, skip-bonus) take priority
+    for(const ha of hitAreas) if(mx>=ha.x&&mx<ha.x+ha.w&&my>=ha.y&&my<ha.y+ha.h){ha.action(); return;}
     if(turnColor!=='white'||aiThinking) return;
     const cell=screenToCell(mx,my);
 
@@ -1215,10 +1413,8 @@ canvas.addEventListener('click',e=>{
     }
 
     if(bloodlustBonus){
-      if(!cell){
-        bloodlustBonus=false; selected=null; validMoves=[];
-        turnColor='black'; aiThinking=true; aiTimer=0.55; return;
-      }
+      // Click-outside no longer ends the bonus — only Escape or the "skip" HUD button.
+      if(!cell){selected=null; validMoves=[]; return;}
       const [r,c]=cell;
       if(selected){
         const [sr,sc]=selected;
@@ -1229,8 +1425,7 @@ canvas.addEventListener('click',e=>{
       if(board[r][c]?.color==='white'){
         selected=[r,c]; validMoves=legalMoves(board,r,c);
       } else {
-        bloodlustBonus=false; selected=null; validMoves=[];
-        turnColor='black'; aiThinking=true; aiTimer=0.55;
+        selected=null; validMoves=[];
       }
       return;
     }
@@ -1248,7 +1443,17 @@ canvas.addEventListener('click',e=>{
 });
 
 document.addEventListener('keydown',e=>{
-  if(phase==='title'||phase==='gameover'||phase==='victory'){startRun(); return;}
+  if(phase==='title'){
+    const diffs=['easy','medium','hard','grandmaster'];
+    if(e.key==='ArrowLeft'||e.key==='ArrowRight'){
+      const idx=diffs.indexOf(difficulty);
+      const next=diffs[(idx+(e.key==='ArrowRight'?1:diffs.length-1))%diffs.length];
+      difficulty=next; localStorage.setItem('gambit_diff',next); return;
+    }
+    if(e.key==='Enter'||e.key===' '){startRun(); return;}
+    return;
+  }
+  if(phase==='gameover'||phase==='victory'){startRun(); return;}
 
   if(phase==='round_end'){
     if(roundEnd.t<4.4) roundEnd.t=4.5;
