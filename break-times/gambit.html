@@ -162,14 +162,27 @@ function isBeatingHiScore(){return runStartHi>0&&runScore>runStartHi;}
 let battleLog=[];
 function logEntry(kind,text){battleLog.push({kind,text}); if(battleLog.length>40) battleLog.shift();}
 
-// Difficulty knobs used by the AI
 const DIFF_PROFILES={
-  easy:       {topN:5, weights:[0.30,0.25,0.20,0.15,0.10], chaos:0.35, optimalBoss:false},
-  medium:     {topN:4, weights:[0.55,0.27,0.12,0.06],      chaos:0.15, optimalBoss:true},
-  hard:       {topN:3, weights:[0.75,0.18,0.07],           chaos:0.06, optimalBoss:true},
-  grandmaster:{topN:1, weights:[1],                        chaos:0,    optimalBoss:true},
+  easy:       {topN:5, weights:[0.30,0.25,0.20,0.15,0.10], chaos:0.35, optimalBoss:false, rosterDeaths:false},
+  medium:     {topN:4, weights:[0.55,0.27,0.12,0.06],      chaos:0.15, optimalBoss:true,  rosterDeaths:true},
+  hard:       {topN:3, weights:[0.75,0.18,0.07],           chaos:0.06, optimalBoss:true,  rosterDeaths:true},
+  grandmaster:{topN:1, weights:[1],                        chaos:0,    optimalBoss:true,  rosterDeaths:true},
 };
 function diffProfile(){return DIFF_PROFILES[difficulty]||DIFF_PROFILES.medium;}
+
+function wrapText(text,maxW){
+  const words=text.split(' '), lines=[];
+  let line='', maxLineW=0;
+  for(const w of words){
+    const test=line?line+' '+w:w;
+    if(ctx.measureText(test).width>maxW&&line){
+      maxLineW=Math.max(maxLineW,ctx.measureText(line).width);
+      lines.push(line); line=w;
+    } else line=test;
+  }
+  if(line){lines.push(line); maxLineW=Math.max(maxLineW,ctx.measureText(line).width);}
+  return {lines,maxLineW};
+}
 
 // round timing & scoring
 let battleTime=0;
@@ -197,9 +210,7 @@ let eventTitle='',eventSub='',eventFlash=0;
 // modifier intro flash
 let modFlash=0;
 
-// gambit pick / shop
-let gambitOptions=[],gambitPicksLeft=0,gambitHover=-1;
-let shopHover=-1;
+let gambitOptions=[],gambitPicksLeft=0;
 let hitAreas=[];
 // tooltips are rectangles with hover-only descriptions (battle HUD)
 let tooltipZones=[];
@@ -572,9 +583,6 @@ function execAI({from:[fr,fc],to:[tr,tc]}){
 }
 
 // ─── battle end ───────────────────────────────────────────────────────────
-// On easy difficulty, pieces respawn each battle — no permanent loss.
-function rosterDeathsEnabled(){return difficulty!=='easy';}
-
 function syncRosterToSurvivors(){
   // Pieces that died this battle stay dead — must be re-bought in the shop.
   const survivors={queen:0,rook:0,bishop:0,knight:0,pawns:0};
@@ -603,7 +611,7 @@ function endBattle(playerWon){
     localStorage.setItem('gambit_hiscore',hiScore);
     return;
   }
-  if(rosterDeathsEnabled()) syncRosterToSurvivors();
+  if(diffProfile().rosterDeaths) syncRosterToSurvivors();
   const enc=ENCOUNTERS[encounter];
   const reward=enc.goldReward+Math.floor(wager*wagerMult);
   gold+=reward;
@@ -622,11 +630,9 @@ function endBattle(playerWon){
 }
 
 // ─── gambit pick ─────────────────────────────────────────────────────────
-// Emergency shop: open if the player is running short on pieces.
-// Starting roster has 4 non-king pieces; if they're down below that, give a chance to restock.
+const MIN_ROSTER_BEFORE_SHOP=4;
 function needsEmergencyShop(){
-  const total=roster.queen+roster.rook+roster.bishop+roster.knight+roster.pawns;
-  return total<4;
+  return roster.queen+roster.rook+roster.bishop+roster.knight+roster.pawns<MIN_ROSTER_BEFORE_SHOP;
 }
 function startGambitPick(){
   if(gambitPicksLeft<=0){
@@ -638,7 +644,6 @@ function startGambitPick(){
   const pool=ALL_GAMBITS.filter(g=>!ownedGambits.includes(g.id));
   if(!pool.length){gambitPicksLeft=0; startGambitPick(); return;}
   gambitOptions=[...pool].sort(()=>Math.random()-0.5).slice(0,Math.min(3,pool.length));
-  gambitHover=-1;
   phase='gambit_pick';
 }
 function pickGambit(idx){
@@ -834,17 +839,9 @@ function drawTooltip(){
   const z=tooltipZones.find(t=>mouseX>=t.x&&mouseX<t.x+t.w&&mouseY>=t.y&&mouseY<t.y+t.h);
   if(!z) return;
   ctx.font=`300 11px 'DM Mono',monospace`;
-  const words=z.text.split(' ');
-  const maxW=Math.min(280,W-32);
-  const lines=[]; let line='';
-  words.forEach(w=>{
-    const test=line?line+' '+w:w;
-    if(ctx.measureText(test).width>maxW&&line){lines.push(line); line=w;}
-    else line=test;
-  });
-  if(line) lines.push(line);
+  const {lines,maxLineW}=wrapText(z.text,Math.min(280,W-32));
   const padX=10,padY=8,lh=15;
-  const tw=Math.max(...lines.map(l=>ctx.measureText(l).width))+padX*2;
+  const tw=maxLineW+padX*2;
   const th=lines.length*lh+padY*2;
   let tx=mouseX+14, ty=mouseY+14;
   if(tx+tw>W-8) tx=mouseX-tw-14;
@@ -1140,15 +1137,8 @@ function drawGambitPick(){
     ctx.fillText(g.name,cx,cy-28);
 
     ctx.font=`300 9px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-    // Wrap description
-    const words=g.desc.split(' '); let line='';
     let ty=cy-8;
-    words.forEach((w,wi)=>{
-      const test=line+(line?' ':'')+w;
-      if(ctx.measureText(test).width>cardW-20&&line){ctx.fillText(line,cx,ty); ty+=14; line=w;}
-      else line=test;
-      if(wi===words.length-1) ctx.fillText(line,cx,ty);
-    });
+    wrapText(g.desc,cardW-20).lines.forEach(l=>{ctx.fillText(l,cx,ty); ty+=14;});
 
     ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
     ctx.fillText(`[ ${i+1} ]`,cx,cy+46);
@@ -1307,7 +1297,7 @@ function drawOverlay(){
     // Difficulty picker
     ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
     ctx.fillText('difficulty',W/2,H*0.32+128);
-    const diffs=['easy','medium','hard','grandmaster'];
+    const diffs=Object.keys(DIFF_PROFILES);
     const cw=Math.min(110,(W-40)/diffs.length);
     const gap=8;
     const totalW=diffs.length*cw+(diffs.length-1)*gap;
@@ -1441,6 +1431,19 @@ const HELP_SECTIONS=[
    ]},
 ];
 
+// Memoized wrap of HELP_SECTIONS keyed by column width — the lines never change,
+// only the column width does (and only on resize).
+const helpWrapCache=new Map();
+function wrappedHelp(width){
+  const key=width|0;
+  let cached=helpWrapCache.get(key);
+  if(cached) return cached;
+  ctx.font=`300 11px 'DM Mono',monospace`;
+  cached=HELP_SECTIONS.map(sec=>({h:sec.h,wrapped:sec.lines.flatMap(ln=>wrapText(ln,width).lines)}));
+  helpWrapCache.set(key,cached);
+  return cached;
+}
+
 function drawHelpOverlay(){
   const isDark=document.body.classList.contains('dark');
   ctx.fillStyle=isDark?'rgba(10,10,8,0.92)':'rgba(248,247,243,0.94)';
@@ -1457,50 +1460,24 @@ function drawHelpOverlay(){
   ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
   ctx.fillText('chess · roguelite · wager — click anywhere or press ? / Esc to close',colX,y); y+=24;
 
-  const half=Math.ceil(HELP_SECTIONS.length/2);
-  const col2X=colX+colW/2+12;
-  const colInnerW=colW/2-12;
-
-  const renderCol=(sections,x)=>{
-    let cy=y;
+  const renderCol=(sections,x,cy)=>{
     sections.forEach(sec=>{
       ctx.font=`500 12px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
       ctx.fillText(sec.h,x,cy); cy+=18;
       ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle=C.text;
-      sec.lines.forEach(ln=>{
-        // wrap
-        const words=ln.split(' '); let line='';
-        words.forEach(w=>{
-          const test=line?line+' '+w:w;
-          if(ctx.measureText(test).width>colInnerW&&line){ctx.fillText(line,x,cy); cy+=15; line=w;}
-          else line=test;
-        });
-        if(line){ctx.fillText(line,x,cy); cy+=15;}
-      });
+      sec.wrapped.forEach(l=>{ctx.fillText(l,x,cy); cy+=15;});
       cy+=10;
     });
   };
-  // Single column if window is narrow
+
   if(W<720){
-    let cy=y;
-    HELP_SECTIONS.forEach(sec=>{
-      ctx.font=`500 12px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
-      ctx.fillText(sec.h,colX,cy); cy+=18;
-      ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle=C.text;
-      sec.lines.forEach(ln=>{
-        const words=ln.split(' '); let line='';
-        words.forEach(w=>{
-          const test=line?line+' '+w:w;
-          if(ctx.measureText(test).width>colW-8&&line){ctx.fillText(line,colX,cy); cy+=15; line=w;}
-          else line=test;
-        });
-        if(line){ctx.fillText(line,colX,cy); cy+=15;}
-      });
-      cy+=10;
-    });
+    renderCol(wrappedHelp(colW-8),colX,y);
   } else {
-    renderCol(HELP_SECTIONS.slice(0,half),colX);
-    renderCol(HELP_SECTIONS.slice(half),col2X);
+    const colInnerW=colW/2-12;
+    const wrapped=wrappedHelp(colInnerW);
+    const half=Math.ceil(wrapped.length/2);
+    renderCol(wrapped.slice(0,half),colX,y);
+    renderCol(wrapped.slice(half),colX+colW/2+12,y);
   }
 }
 
@@ -1617,7 +1594,7 @@ document.addEventListener('keydown',e=>{
   if(showHelp){if(e.key==='Escape'||e.key==='Enter'||e.key===' ') showHelp=false; return;}
 
   if(phase==='title'){
-    const diffs=['easy','medium','hard','grandmaster'];
+    const diffs=Object.keys(DIFF_PROFILES);
     if(e.key==='ArrowLeft'||e.key==='ArrowRight'){
       const idx=diffs.indexOf(difficulty);
       const next=diffs[(idx+(e.key==='ArrowRight'?1:diffs.length-1))%diffs.length];
