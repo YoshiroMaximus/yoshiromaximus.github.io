@@ -807,10 +807,10 @@ DNA is replicated during the ___ phase || S
 
       // Render next card behind (peek), then top card
       if (order.length > 1) {
-        const peek = buildCard(deck.cards[order[1]], 1);
+        const peek = buildCard(deck.cards[order[1]], 1, order[1] + 1);
         stage.appendChild(peek);
       }
-      const top = buildCard(deck.cards[order[0]], 0);
+      const top = buildCard(deck.cards[order[0]], 0, order[0] + 1);
       stage.appendChild(top);
       currentCardEl = top;
       if (studyMode === 'type') {
@@ -820,7 +820,7 @@ DNA is replicated during the ___ phase || S
       }
     }
 
-    function buildCard(card, depth) {
+    function buildCard(card, depth, idxInDeck) {
       const el = document.createElement('div');
       el.className = 'card';
       el.style.zIndex = String(100 - depth);
@@ -829,7 +829,6 @@ DNA is replicated during the ___ phase || S
         : `translate(0, ${depth * 8}px) scale(${1 - depth * 0.04})`;
       el.style.opacity = depth === 0 ? '1' : '0.7';
 
-      const idxInDeck = deck.cards.indexOf(card) + 1;
       const isTop = depth === 0;
       const typingHTML = (studyMode === 'type' && isTop) ? `
         <div class="type-zone">
@@ -996,7 +995,6 @@ DNA is replicated during the ___ phase || S
     // ── Public library ──
     async function loadLibrary() {
       const list = document.getElementById('library-list');
-      const empty = document.getElementById('library-empty');
       list.innerHTML = '<p class="hint">Loading…</p>';
       try {
         const r = await fetch('/api/decks');
@@ -1032,10 +1030,12 @@ DNA is replicated during the ___ phase || S
     }
 
     async function loadLibraryDeck(id) {
+      showErr('Loading deck…');
       try {
         const r = await fetch('/api/decks/' + encodeURIComponent(id));
         if (!r.ok) throw new Error('Could not load deck.');
         const d = await r.json();
+        showErr('');
         startDeck({ title: d.title, mode: d.mode, cards: d.cards });
       } catch (e) { showErr(e.message); }
     }
@@ -1048,10 +1048,11 @@ DNA is replicated during the ___ phase || S
     function openShare() {
       if (!deck) return;
       const status = document.getElementById('share-status');
+      const submit = document.getElementById('share-submit-btn');
       status.textContent = '';
       status.className = 'modal-status';
-      document.getElementById('share-submit-btn').disabled = false;
-      document.getElementById('share-submit-btn').style.display = '';
+      submit.disabled = false;
+      submit.style.display = '';
       document.getElementById('share-cancel-btn').textContent = 'Cancel';
       document.getElementById('share-link-row').classList.remove('show');
       document.getElementById('share-modal').classList.add('show');
@@ -1060,7 +1061,7 @@ DNA is replicated during the ___ phase || S
       document.getElementById('share-modal').classList.remove('show');
     }
 
-    function showShareLink(id, title) {
+    function showShareLink(id) {
       const row = document.getElementById('share-link-row');
       const input = document.getElementById('share-link');
       input.value = deckShareUrl(id);
@@ -1112,13 +1113,13 @@ DNA is replicated during the ___ phase || S
         if (r.status === 409 && data.duplicate && data.id) {
           status.className = 'modal-status';
           status.textContent = `Already in the library as "${data.title}". Share link below.`;
-          showShareLink(data.id, data.title);
+          showShareLink(data.id);
           return;
         }
         if (!r.ok) throw new Error(data.error || 'Submission failed.');
         status.className = 'modal-status ok';
         status.textContent = 'Published ✓';
-        showShareLink(data.id, data.title);
+        showShareLink(data.id);
         loadLibrary();
       } catch (e) {
         status.className = 'modal-status no';
@@ -1127,7 +1128,7 @@ DNA is replicated during the ___ phase || S
       }
     }
 
-    loadLibrary();
+    if (!/[#&](deck|lib)=/.test(location.hash)) loadLibrary();
 
     function finish() {
       document.getElementById('deck').classList.add('hidden');
