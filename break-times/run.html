@@ -32,13 +32,37 @@
       font-family: 'DM Mono', monospace; font-size: 1.1rem;
       color: var(--muted); cursor: pointer; padding: 4px; z-index: 100;
     }
+    #mute {
+      position: fixed; top: 1.5rem; right: 3.5rem;
+      background: none; border: none;
+      font-family: 'DM Mono', monospace; font-size: 0.85rem;
+      color: var(--muted); cursor: pointer; padding: 4px; z-index: 100;
+    }
+    #mute:hover { color: var(--text); }
   </style>
 </head>
 <body>
   <a href="../break.html" id="back">← break</a>
   <button id="theme" onclick="toggleTheme()">+</button>
+  <button id="mute" onclick="toggleMute()" title="mute / unmute music">♪</button>
+  <audio id="bgm" src="/audio/zeldatwilightprincess.mp3" loop preload="auto"></audio>
   <canvas id="c"></canvas>
   <script>
+  const bgm = document.getElementById('bgm');
+  bgm.volume = 0.4;
+  let muted = localStorage.getItem('run_muted') === '1';
+  function updateMuteBtn() { document.getElementById('mute').textContent = muted ? '♪̸' : '♪'; }
+  function toggleMute() {
+    muted = !muted;
+    localStorage.setItem('run_muted', muted ? '1' : '0');
+    updateMuteBtn();
+    if (muted) bgm.pause(); else bgm.play().catch(() => {});
+  }
+  function startBgm() { if (!muted) bgm.play().catch(() => {}); }
+  document.addEventListener('pointerdown', startBgm, { once: true });
+  document.addEventListener('keydown', startBgm, { once: true });
+  updateMuteBtn();
+
   function getTheme() { return localStorage.getItem('theme') || 'light'; }
   function applyTheme(t) {
     document.body.classList.toggle('dark', t === 'dark');

@@ -23,14 +23,33 @@ canvas{display:block;cursor:default;touch-action:none;}
 #back:hover{color:var(--muted);}
 #help{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--muted);background:none;border:none;cursor:pointer;letter-spacing:0.06em;z-index:100;padding:6px 10px;}
 #help:hover{color:var(--text);}
+#mute{position:fixed;top:1.5rem;right:3.5rem;background:none;border:none;font-family:'DM Mono',monospace;font-size:0.85rem;color:var(--muted);cursor:pointer;padding:4px;z-index:100;}
+#mute:hover{color:var(--text);}
 </style>
 </head>
 <body>
 <a href="../break.html" id="back">← break</a>
 <button id="theme" onclick="toggleTheme()">+</button>
+<button id="mute" onclick="toggleMute()" title="mute / unmute music">♪</button>
 <button id="help" onclick="toggleHelp()">? how to play</button>
+<audio id="bgm" src="/audio/pikmintodaysresults.mp3" loop preload="auto"></audio>
 <canvas id="c"></canvas>
 <script>
+// ─── audio ───────────────────────────────────────────────────────────────
+const bgm=document.getElementById('bgm');
+bgm.volume=0.4;
+let muted=localStorage.getItem('gambit_muted')==='1';
+function updateMuteBtn(){document.getElementById('mute').textContent=muted?'♪̸':'♪';}
+function toggleMute(){
+  muted=!muted; localStorage.setItem('gambit_muted',muted?'1':'0');
+  updateMuteBtn();
+  if(muted) bgm.pause(); else bgm.play().catch(()=>{});
+}
+function startBgm(){if(!muted) bgm.play().catch(()=>{});}
+document.addEventListener('pointerdown',startBgm,{once:true});
+document.addEventListener('keydown',startBgm,{once:true});
+updateMuteBtn();
+
 // ─── theme ───────────────────────────────────────────────────────────────
 function getTheme(){return localStorage.getItem('theme')||'light';}
 function applyTheme(t){
@@ -132,11 +151,62 @@ const MODIFIER_POOL=[null,null,null,'fog','mines','kinghill'];
 let phase='title';
 let encounter=0, gold=50, ownedGambits=[];
 let roster={queen:0,rook:1,bishop:0,knight:0,pawns:3};
-let hiEncounter=+localStorage.getItem('gambit_hi')||0;
-let hiScore=+localStorage.getItem('gambit_hiscore')||0;
+let gameMode=localStorage.getItem('gambit_mode')||'campaign';
+function hiScoreKey(mode=gameMode){return mode==='infinite'?'gambit_hiscore_inf':'gambit_hiscore';}
+function hiDepthKey(mode=gameMode){return mode==='infinite'?'gambit_hi_inf':'gambit_hi';}
+let hiEncounter=+localStorage.getItem(hiDepthKey())||0;
+let hiScore=+localStorage.getItem(hiScoreKey())||0;
 let runScore=0;
 let runStartHi=0;
 let difficulty=localStorage.getItem('gambit_diff')||'medium';
+
+// Procedurally generated encounters for infinite mode, cached per run so a
+// retry-from-roundEnd-tally doesn't re-roll the army you just lost to.
+let infEncounters=[];
+const INF_NAMES_REG=['Skirmisher','Footman','Rover','Pikeman','Recruit','Wraith','Outrider','Hireling','Raider'];
+const INF_NAMES_BOSS=['Marauder','Inquisitor','Sentinel','Reaper','Tyrant','Ascendant','Warden','Conqueror'];
+function pickName(arr,seed){return arr[seed%arr.length];}
+
+function generateEncounter(depth){
+  const isBoss=(depth+1)%5===0;
+  const budget=Math.min(3+Math.floor(depth*0.7)+(isBoss?2:0),12);
+  const pool=['pawn','pawn','pawn','knight','bishop','rook'];
+  if(depth>=3) pool.push('knight','bishop');
+  if(depth>=5) pool.push('rook','queen');
+  if(depth>=9) pool.push('queen');
+  if(isBoss) pool.push('queen','rook','rook');
+
+  const occupied=new Set();
+  const black=[];
+  const kingCol=Math.floor(Math.random()*6);
+  black.push({type:'king',row:5,col:kingCol}); occupied.add(`5,${kingCol}`);
+
+  let placed=1, attempts=0;
+  while(placed<budget&&attempts<200){
+    attempts++;
+    const type=pool[Math.floor(Math.random()*pool.length)];
+    const r=type==='pawn'?(3+Math.floor(Math.random()*2)):(4+Math.floor(Math.random()*2));
+    const c=Math.floor(Math.random()*6);
+    const key=`${r},${c}`;
+    if(occupied.has(key)) continue;
+    occupied.add(key); black.push({type,row:r,col:c}); placed++;
+  }
+  const name=isBoss?pickName(INF_NAMES_BOSS,depth):pickName(INF_NAMES_REG,depth);
+  return {name,boss:isBoss,goldReward:Math.round(40+depth*9+(isBoss?70:0)),black};
+}
+
+function currentEncounter(){
+  if(gameMode==='campaign') return ENCOUNTERS[encounter];
+  if(!infEncounters[encounter]) infEncounters[encounter]=generateEncounter(encounter);
+  return infEncounters[encounter];
+}
+function isScheduledShop(){
+  if(gameMode==='campaign') return encounter===2||encounter===5;
+  // In infinite: shop after every 3rd wave that isn't itself a boss
+  // (bosses already grant 2 gambit picks, so they don't need a shop chaser).
+  return (encounter+1)%3===0&&(encounter+1)%5!==0;
+}
+function isFinalEncounter(){return gameMode==='campaign'&&encounter===6;}
 
 // Rainbow text helper — cycles hue per character + over time
 function drawRainbowText(text,x,y,font){
@@ -371,7 +441,7 @@ function triggerRandomEvent(){
 // ─── battle setup ────────────────────────────────────────────────────────
 function setupBattle(){
   board=Array.from({length:6},()=>Array(6).fill(null));
-  ENCOUNTERS[encounter].black.forEach(({type,row,col})=>{board[row][col]={type,color:'black',moved:false};});
+  currentEncounter().black.forEach(({type,row,col})=>{board[row][col]={type,color:'black',moved:false};});
 
   const backRow=[];
   for(let i=0;i<roster.queen;i++) backRow.push('queen');
@@ -495,7 +565,7 @@ function doAIMove(){
   const moves=getAllLegal(board,'black');
   if(!moves.length){endBattle(true); return;}
 
-  const enc=ENCOUNTERS[encounter];
+  const enc=currentEncounter();
 
   // Checkmate in 1 — always take it
   for(const m of moves){
@@ -606,26 +676,26 @@ function endBattle(playerWon){
   if(!playerWon){
     phase='gameover';
     hiEncounter=Math.max(hiEncounter,encounter);
-    localStorage.setItem('gambit_hi',hiEncounter);
+    localStorage.setItem(hiDepthKey(),hiEncounter);
     hiScore=Math.max(hiScore,runScore);
-    localStorage.setItem('gambit_hiscore',hiScore);
+    localStorage.setItem(hiScoreKey(),hiScore);
     return;
   }
   if(diffProfile().rosterDeaths) syncRosterToSurvivors();
-  const enc=ENCOUNTERS[encounter];
+  const enc=currentEncounter();
   const reward=enc.goldReward+Math.floor(wager*wagerMult);
   gold+=reward;
   hiEncounter=Math.max(hiEncounter,encounter+1);
-  localStorage.setItem('gambit_hi',hiEncounter);
+  localStorage.setItem(hiDepthKey(),hiEncounter);
 
-  // Build round-end tally
   const goldEarned=Math.max(0,gold-goldStartOfBattle);
   const capPts=capturedValue*10;
   const timeBonus=Math.max(0,Math.round((180-battleTime)*1.5));
-  const total=goldEarned+capPts+timeBonus;
-  roundEnd={active:true,gold:goldEarned,captures:capPts,timeBonus,total,t:0,
-            wasBoss:enc.boss,nextIsShop:(encounter===2||encounter===5),
-            isFinal:encounter===6};
+  const depthBonus=gameMode==='infinite'?encounter*15:0;
+  const total=goldEarned+capPts+timeBonus+depthBonus;
+  roundEnd={active:true,gold:goldEarned,captures:capPts,timeBonus,depthBonus,total,t:0,
+            wasBoss:enc.boss,nextIsShop:isScheduledShop(),
+            isFinal:isFinalEncounter()};
   phase='round_end';
 }
 
@@ -636,7 +706,7 @@ function needsEmergencyShop(){
 }
 function startGambitPick(){
   if(gambitPicksLeft<=0){
-    if(encounter===2||encounter===5||needsEmergencyShop()){phase='shop'; return;}
+    if(isScheduledShop()||needsEmergencyShop()){phase='shop'; return;}
     encounter++;
     phase='wager';
     return;
@@ -674,7 +744,10 @@ function startRun(){
   roster={queen:0,rook:1,bishop:0,knight:0,pawns:3};
   wager=0; wagerMult=1;
   runScore=0;
+  hiEncounter=+localStorage.getItem(hiDepthKey())||0;
+  hiScore=+localStorage.getItem(hiScoreKey())||0;
   runStartHi=hiScore;
+  infEncounters=[];
   roundEnd={active:false,gold:0,captures:0,timeBonus:0,total:0,t:0};
   phase='wager';
 }
@@ -862,14 +935,14 @@ const MOD_DESCS={
 };
 
 function drawHUD(hx,by,mobile){
-  const enc=ENCOUNTERS[encounter];
+  const enc=currentEncounter();
   ctx.textAlign='left'; ctx.textBaseline='top';
 
   if(mobile){
     let x=hx;
     const top=by;
     ctx.font=`300 12px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-    ctx.fillText(`${encounter+1}/7`,x,top); x+=52;
+    ctx.fillText(`${gameMode==='infinite'?`depth ${encounter+1}`:`${encounter+1}/7`}`,x,top); x+=52;
     ctx.font=`500 13px 'DM Mono',monospace`; ctx.fillStyle=enc.boss?'#c89020':C.text;
     ctx.fillText(enc.name+(enc.boss?' ★':''),x,top); x+=Math.max(120,ctx.measureText(enc.name).width+32);
     ctx.font=`400 13px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
@@ -926,7 +999,7 @@ function drawHUD(hx,by,mobile){
   const lh=22;
 
   ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-  ctx.fillText(`${encounter+1} / 7  ·  ${difficulty}`,hx,y); y+=lh;
+  ctx.fillText(`${gameMode==='infinite'?`depth ${encounter+1}`:`${encounter+1} / 7`}  ·  ${difficulty}`,hx,y); y+=lh;
 
   ctx.font=`500 16px 'DM Mono',monospace`; ctx.fillStyle=enc.boss?'#c89020':C.text;
   ctx.fillText(enc.name+(enc.boss?'  ★':''),hx,y); y+=lh*1.3;
@@ -1031,7 +1104,7 @@ function advanceFromRoundEnd(){
   re.active=false;
 
   if(re.isFinal){phase='victory'; return;}
-  const enc=ENCOUNTERS[encounter];
+  const enc=currentEncounter();
   gambitPicksLeft=enc.boss?2:1;
   startGambitPick();
 }
@@ -1041,7 +1114,7 @@ function drawRoundEnd(){
   ctx.fillStyle=C.bg; ctx.fillRect(0,0,W,H);
   ctx.textAlign='center'; ctx.textBaseline='middle';
 
-  const enc=ENCOUNTERS[encounter];
+  const enc=currentEncounter();
   const re=roundEnd;
   const t=re.t;
 
@@ -1053,7 +1126,7 @@ function drawRoundEnd(){
   const done=t>=4.4;
 
   ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-  ctx.fillText(`encounter ${encounter+1} / 7  defeated`,W/2,H*0.18);
+  ctx.fillText(gameMode==='infinite'?`depth ${encounter+1}  cleared`:`encounter ${encounter+1} / 7  defeated`,W/2,H*0.18);
   ctx.font=`400 24px 'DM Mono',monospace`; ctx.fillStyle=re.wasBoss?'#c89020':C.text;
   ctx.fillText(enc.name+(re.wasBoss?'  ★':''),W/2,H*0.26);
 
@@ -1075,6 +1148,7 @@ function drawRoundEnd(){
   drawRow('gold earned',re.gold,showGold,'pts');
   drawRow('pieces captured',re.captures,showCap,'pts');
   drawRow('time bonus',re.timeBonus,showTime,'pts');
+  if(re.depthBonus>0) drawRow('depth bonus',re.depthBonus,showTime,'pts');
 
   y+=8;
   ctx.globalAlpha=showTot;
@@ -1207,11 +1281,11 @@ function drawShop(){
 function drawWager(){
   hitAreas=[];
   ctx.fillStyle=C.bg; ctx.fillRect(0,0,W,H);
-  const enc=ENCOUNTERS[encounter];
+  const enc=currentEncounter();
 
   ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-  ctx.fillText(`encounter ${encounter+1} / 7`,W/2,H*0.26);
+  ctx.fillText(gameMode==='infinite'?`depth ${encounter+1}`:`encounter ${encounter+1} / 7`,W/2,H*0.26);
   ctx.font=`400 26px 'DM Mono',monospace`; ctx.fillStyle=enc.boss?'#c89020':C.text;
   ctx.fillText(enc.name+(enc.boss?'  ★':''),W/2,H*0.34);
   ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
@@ -1286,7 +1360,7 @@ function drawOverlay(){
     ctx.fillText('chess  ·  roguelite  ·  wager',W/2,H*0.32+50);
     if(hiEncounter>0){
       ctx.font=`300 10px 'DM Mono',monospace`;
-      ctx.fillText(`best  ${hiEncounter} / 7`,W/2,H*0.32+74);
+      ctx.fillText(gameMode==='infinite'?`best  depth ${hiEncounter}`:`best  ${hiEncounter} / 7`,W/2,H*0.32+74);
     }
     if(hiScore>0){
       ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
@@ -1294,32 +1368,40 @@ function drawOverlay(){
       ctx.fillStyle=C.muted;
     }
 
-    // Difficulty picker
-    ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-    ctx.fillText('difficulty',W/2,H*0.32+128);
-    const diffs=Object.keys(DIFF_PROFILES);
-    const cw=Math.min(110,(W-40)/diffs.length);
-    const gap=8;
-    const totalW=diffs.length*cw+(diffs.length-1)*gap;
-    let dx=W/2-totalW/2;
-    const dy=H*0.32+144;
-    diffs.forEach(d=>{
-      const sel=d===difficulty;
-      const hov=mouseX>=dx&&mouseX<dx+cw&&mouseY>=dy&&mouseY<dy+28;
-      ctx.fillStyle=sel?C.line:(hov?C.sqLight:'transparent');
-      ctx.fillRect(dx,dy,cw,28);
-      ctx.strokeStyle=sel?C.text:C.line; ctx.lineWidth=1;
-      ctx.strokeRect(dx+0.5,dy+0.5,cw-1,27);
-      ctx.font=`400 11px 'DM Mono',monospace`; ctx.fillStyle=sel?C.text:C.muted;
+    const drawPicker=(label,opts,selected,onPick,labelY,rowY,cwMax)=>{
       ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillText(d,dx+cw/2,dy+14);
-      hitAreas.push({x:dx,y:dy,w:cw,h:28,action:()=>{difficulty=d; localStorage.setItem('gambit_diff',d);}});
-      dx+=cw+gap;
-    });
+      ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+      ctx.fillText(label,W/2,labelY);
+      const cwL=Math.min(cwMax,(W-40)/opts.length);
+      const gap=8;
+      const totalW=opts.length*cwL+(opts.length-1)*gap;
+      let dx=W/2-totalW/2;
+      opts.forEach(o=>{
+        const sel=o===selected;
+        const hov=mouseX>=dx&&mouseX<dx+cwL&&mouseY>=rowY&&mouseY<rowY+28;
+        ctx.fillStyle=sel?C.line:(hov?C.sqLight:'transparent');
+        ctx.fillRect(dx,rowY,cwL,28);
+        ctx.strokeStyle=sel?C.text:C.line; ctx.lineWidth=1;
+        ctx.strokeRect(dx+0.5,rowY+0.5,cwL-1,27);
+        ctx.font=`400 11px 'DM Mono',monospace`; ctx.fillStyle=sel?C.text:C.muted;
+        ctx.fillText(o,dx+cwL/2,rowY+14);
+        hitAreas.push({x:dx,y:rowY,w:cwL,h:28,action:()=>onPick(o)});
+        dx+=cwL+gap;
+      });
+    };
 
-    // Start button
+    drawPicker('mode',['campaign','infinite'],gameMode,m=>{
+      gameMode=m; localStorage.setItem('gambit_mode',m);
+      hiEncounter=+localStorage.getItem(hiDepthKey())||0;
+      hiScore=+localStorage.getItem(hiScoreKey())||0;
+    },H*0.32+118,H*0.32+132,160);
+
+    drawPicker('difficulty',Object.keys(DIFF_PROFILES),difficulty,d=>{
+      difficulty=d; localStorage.setItem('gambit_diff',d);
+    },H*0.32+172,H*0.32+186,110);
+
     const sbW=180,sbH=36;
-    const sbx=W/2-sbW/2, sby=H*0.32+196;
+    const sbx=W/2-sbW/2, sby=H*0.32+232;
     const hov=mouseX>=sbx&&mouseX<sbx+sbW&&mouseY>=sby&&mouseY<sby+sbH;
     ctx.fillStyle=hov?C.text:'transparent';
     ctx.fillRect(sbx,sby,sbW,sbH);
@@ -1338,13 +1420,13 @@ function drawOverlay(){
     ctx.font=`400 58px 'DM Mono',monospace`; ctx.fillStyle=C.text;
     ctx.fillText('—',W/2,H*0.36);
     ctx.font=`400 14px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-    ctx.fillText(`encounter ${encounter+1}  —  ${ENCOUNTERS[encounter].name}`,W/2,H*0.36+52);
+    ctx.fillText(gameMode==='infinite'?`depth ${encounter+1}  —  ${currentEncounter().name}`:`encounter ${encounter+1}  —  ${currentEncounter().name}`,W/2,H*0.36+52);
     if(wager>0){
       ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle='#b04040';
       ctx.fillText(`lost wager of  ${wager}g`,W/2,H*0.36+72);
     }
     ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
-    ctx.fillText(`best  ${hiEncounter} / 7`,W/2,H*0.36+90);
+    ctx.fillText(gameMode==='infinite'?`best  depth ${hiEncounter}`:`best  ${hiEncounter} / 7`,W/2,H*0.36+90);
     ctx.font=`400 12px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
     ctx.fillText(`score  ${runScore}    high  ${hiScore}`,W/2,H*0.36+112);
     ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
@@ -1376,7 +1458,9 @@ function toggleHelp(){showHelp=!showHelp;}
 const HELP_SECTIONS=[
   {h:'the goal',
    lines:[
-     'defeat all 7 encounters in a row to win the run.',
+     'campaign — beat all 7 encounters in a row to win the run.',
+     'infinite — go as deep as you can; bosses appear every 5 waves',
+     'and there is no end, just a high-score depth.',
      'each round is a 6×6 chess battle. capture the enemy king, or',
      'leave them with no legal moves, to win.',
    ]},
