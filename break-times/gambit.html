@@ -21,11 +21,14 @@ canvas{display:block;cursor:default;touch-action:none;}
 #theme{position:fixed;top:1.5rem;right:1.5rem;background:none;border:none;font-family:'DM Mono',monospace;font-size:1.1rem;color:var(--muted);cursor:pointer;padding:4px;z-index:100;}
 #back{position:fixed;top:1.5rem;left:1.5rem;font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--line);text-decoration:none;letter-spacing:0.06em;z-index:100;}
 #back:hover{color:var(--muted);}
+#help{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--muted);background:none;border:none;cursor:pointer;letter-spacing:0.06em;z-index:100;padding:6px 10px;}
+#help:hover{color:var(--text);}
 </style>
 </head>
 <body>
 <a href="../break.html" id="back">← break</a>
 <button id="theme" onclick="toggleTheme()">+</button>
+<button id="help" onclick="toggleHelp()">? how to play</button>
 <canvas id="c"></canvas>
 <script>
 // ─── theme ───────────────────────────────────────────────────────────────
@@ -132,7 +135,28 @@ let roster={queen:0,rook:1,bishop:0,knight:0,pawns:3};
 let hiEncounter=+localStorage.getItem('gambit_hi')||0;
 let hiScore=+localStorage.getItem('gambit_hiscore')||0;
 let runScore=0;
+let runStartHi=0;
 let difficulty=localStorage.getItem('gambit_diff')||'medium';
+
+// Rainbow text helper — cycles hue per character + over time
+function drawRainbowText(text,x,y,font){
+  ctx.font=font;
+  const t=performance.now()/1000;
+  let cx=x;
+  if(ctx.textAlign==='center'){cx=x-ctx.measureText(text).width/2;}
+  else if(ctx.textAlign==='right'){cx=x-ctx.measureText(text).width;}
+  const savedAlign=ctx.textAlign;
+  ctx.textAlign='left';
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    const hue=(t*80+i*18)%360;
+    ctx.fillStyle=`hsl(${hue},85%,55%)`;
+    ctx.fillText(ch,cx,y);
+    cx+=ctx.measureText(ch).width;
+  }
+  ctx.textAlign=savedAlign;
+}
+function isBeatingHiScore(){return runStartHi>0&&runScore>runStartHi;}
 
 // Battle log: recent moves & events, newest last
 let battleLog=[];
@@ -548,6 +572,9 @@ function execAI({from:[fr,fc],to:[tr,tc]}){
 }
 
 // ─── battle end ───────────────────────────────────────────────────────────
+// On easy difficulty, pieces respawn each battle — no permanent loss.
+function rosterDeathsEnabled(){return difficulty!=='easy';}
+
 function syncRosterToSurvivors(){
   // Pieces that died this battle stay dead — must be re-bought in the shop.
   const survivors={queen:0,rook:0,bishop:0,knight:0,pawns:0};
@@ -576,7 +603,7 @@ function endBattle(playerWon){
     localStorage.setItem('gambit_hiscore',hiScore);
     return;
   }
-  syncRosterToSurvivors();
+  if(rosterDeathsEnabled()) syncRosterToSurvivors();
   const enc=ENCOUNTERS[encounter];
   const reward=enc.goldReward+Math.floor(wager*wagerMult);
   gold+=reward;
@@ -595,9 +622,15 @@ function endBattle(playerWon){
 }
 
 // ─── gambit pick ─────────────────────────────────────────────────────────
+// Emergency shop: open if the player is running short on pieces.
+// Starting roster has 4 non-king pieces; if they're down below that, give a chance to restock.
+function needsEmergencyShop(){
+  const total=roster.queen+roster.rook+roster.bishop+roster.knight+roster.pawns;
+  return total<4;
+}
 function startGambitPick(){
   if(gambitPicksLeft<=0){
-    if(encounter===2||encounter===5){phase='shop'; return;}
+    if(encounter===2||encounter===5||needsEmergencyShop()){phase='shop'; return;}
     encounter++;
     phase='wager';
     return;
@@ -636,6 +669,7 @@ function startRun(){
   roster={queen:0,rook:1,bishop:0,knight:0,pawns:3};
   wager=0; wagerMult=1;
   runScore=0;
+  runStartHi=hiScore;
   roundEnd={active:false,gold:0,captures:0,timeBonus:0,total:0,t:0};
   phase='wager';
 }
@@ -969,15 +1003,19 @@ function drawHUD(hx,by,mobile){
 }
 
 function drawBattleLog(x,y,w,h,compact){
-  if(h<40||battleLog.length===0) return;
+  if(battleLog.length===0) return;
+  const lh=compact?13:14;
+  const headerH=14, bottomPad=8;
+  const avail=h-headerH-bottomPad;
+  const maxLines=Math.floor(avail/lh);
+  if(maxLines<1||w<60) return;
   ctx.textAlign='left'; ctx.textBaseline='top';
   ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
   ctx.fillText('history',x,y);
-  const lh=compact?13:14;
-  const maxLines=Math.max(3,Math.floor((h-16)/lh));
   const items=battleLog.slice(-maxLines);
-  let ly=y+14;
+  let ly=y+headerH;
   items.forEach(it=>{
+    if(ly+lh>y+h) return;
     ctx.font=`300 ${compact?10:11}px 'DM Mono',monospace`;
     ctx.fillStyle=it.kind==='event'?'#c89020':(it.text.startsWith('foe')?C.muted:C.text);
     let txt=it.text;
@@ -1327,13 +1365,142 @@ function drawOverlay(){
     ctx.fillText('victory',W/2,H*0.34);
     ctx.font=`300 13px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
     ctx.fillText('all seven defeated',W/2,H*0.34+50);
-    ctx.font=`400 13px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
-    ctx.fillText(`◆ ${gold}  gold   ·   score  ${runScore}`,W/2,H*0.34+76);
+    if(isBeatingHiScore()){
+      drawRainbowText(`◆ ${gold}  gold   ·   score  ${runScore}`,W/2,H*0.34+76,`500 14px 'DM Mono',monospace`);
+    } else {
+      ctx.font=`400 13px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
+      ctx.fillText(`◆ ${gold}  gold   ·   score  ${runScore}`,W/2,H*0.34+76);
+    }
     if(ownedGambits.length){
       ctx.font=`300 10px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
       ctx.fillText(ownedGambits.map(id=>ALL_GAMBITS.find(g=>g.id===id)?.name||id).join('  ·  '),W/2,H*0.34+100);
     }
     ctx.fillText('click or any key to play again',W/2,H*0.72);
+  }
+}
+
+// ─── help / tutorial ───────────────────────────────────────────────────────
+let showHelp=false;
+function toggleHelp(){showHelp=!showHelp;}
+
+const HELP_SECTIONS=[
+  {h:'the goal',
+   lines:[
+     'defeat all 7 encounters in a row to win the run.',
+     'each round is a 6×6 chess battle. capture the enemy king, or',
+     'leave them with no legal moves, to win.',
+   ]},
+  {h:'a round, step by step',
+   lines:[
+     '1. wager — bet gold for a multiplier on your win reward.',
+     '2. battle — play chess on a 6×6 board against the AI.',
+     '3. round score — gold, captures, and a time bonus tally up.',
+     '4. gambit pick — choose a new permanent power (2 after a boss).',
+     '5. shop — appears after bosses, or if your roster gets thin.',
+   ]},
+  {h:'pieces & promotion',
+   lines:[
+     'pawns promote to queens on the far rank (rank 5).',
+     'pieces that die in battle stay dead — you must rebuy them in',
+     'the shop. you start each run with 1 rook + 3 pawns + king.',
+   ]},
+  {h:'gambits',
+   lines:[
+     'permanent powers you collect between rounds.',
+     'examples: necromancer (capture → spawn pawn), bloodlust',
+     '(big capture → free bonus move), hex (delete one enemy/battle),',
+     'regicide (king moves like a queen), fortune (gold tiles spawn).',
+     'hover any gambit name in the HUD to read its description.',
+   ]},
+  {h:'battle modifiers',
+   lines:[
+     'each battle rolls a random twist (sometimes none):',
+     '· fog of war — enemy pieces hidden when no white piece is near',
+     '· minefield — two hidden squares destroy whatever steps on them',
+     '· king of the hill — move your king to the center 2×2 to win',
+   ]},
+  {h:'random events',
+   lines:[
+     'every 5 moves (or 3 with chaos theory) something happens:',
+     'reinforcements, blunders, earthquakes, gold rain, swaps, etc.',
+     'they can swing a game — adapt to them.',
+   ]},
+  {h:'controls',
+   lines:[
+     'click your piece, then click a highlighted square to move.',
+     'H — activate hex (if owned + unused).',
+     'Esc — deselect, or cancel hex / skip bonus move.',
+     'arrow keys on title screen — change difficulty. enter — begin.',
+   ]},
+  {h:'difficulty',
+   lines:[
+     'easy — AI plays loose and noisy.',
+     'medium — default, bosses play optimally.',
+     'hard — AI almost always picks one of the best moves.',
+     'grandmaster — AI plays optimally every turn.',
+   ]},
+];
+
+function drawHelpOverlay(){
+  const isDark=document.body.classList.contains('dark');
+  ctx.fillStyle=isDark?'rgba(10,10,8,0.92)':'rgba(248,247,243,0.94)';
+  ctx.fillRect(0,0,W,H);
+
+  const padX=Math.min(60,W*0.08);
+  const colW=Math.min(W-padX*2,720);
+  const colX=W/2-colW/2;
+  let y=Math.max(40,H*0.08);
+
+  ctx.textAlign='left'; ctx.textBaseline='top';
+  ctx.font=`500 22px 'DM Mono',monospace`; ctx.fillStyle=C.text;
+  ctx.fillText('how to play',colX,y); y+=32;
+  ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle=C.muted;
+  ctx.fillText('chess · roguelite · wager — click anywhere or press ? / Esc to close',colX,y); y+=24;
+
+  const half=Math.ceil(HELP_SECTIONS.length/2);
+  const col2X=colX+colW/2+12;
+  const colInnerW=colW/2-12;
+
+  const renderCol=(sections,x)=>{
+    let cy=y;
+    sections.forEach(sec=>{
+      ctx.font=`500 12px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
+      ctx.fillText(sec.h,x,cy); cy+=18;
+      ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle=C.text;
+      sec.lines.forEach(ln=>{
+        // wrap
+        const words=ln.split(' '); let line='';
+        words.forEach(w=>{
+          const test=line?line+' '+w:w;
+          if(ctx.measureText(test).width>colInnerW&&line){ctx.fillText(line,x,cy); cy+=15; line=w;}
+          else line=test;
+        });
+        if(line){ctx.fillText(line,x,cy); cy+=15;}
+      });
+      cy+=10;
+    });
+  };
+  // Single column if window is narrow
+  if(W<720){
+    let cy=y;
+    HELP_SECTIONS.forEach(sec=>{
+      ctx.font=`500 12px 'DM Mono',monospace`; ctx.fillStyle='#c8a020';
+      ctx.fillText(sec.h,colX,cy); cy+=18;
+      ctx.font=`300 11px 'DM Mono',monospace`; ctx.fillStyle=C.text;
+      sec.lines.forEach(ln=>{
+        const words=ln.split(' '); let line='';
+        words.forEach(w=>{
+          const test=line?line+' '+w:w;
+          if(ctx.measureText(test).width>colW-8&&line){ctx.fillText(line,colX,cy); cy+=15; line=w;}
+          else line=test;
+        });
+        if(line){ctx.fillText(line,colX,cy); cy+=15;}
+      });
+      cy+=10;
+    });
+  } else {
+    renderCol(HELP_SECTIONS.slice(0,half),colX);
+    renderCol(HELP_SECTIONS.slice(half),col2X);
   }
 }
 
@@ -1361,6 +1528,7 @@ function draw(){
   else if(phase==='shop') drawShop();
   else if(phase==='wager') drawWager();
   else drawOverlay();
+  if(showHelp) drawHelpOverlay();
 }
 
 // ─── loop ────────────────────────────────────────────────────────────────
@@ -1381,6 +1549,8 @@ function loop(t){
 // ─── input ────────────────────────────────────────────────────────────────
 canvas.addEventListener('click',e=>{
   const mx=e.clientX,my=e.clientY;
+
+  if(showHelp){showHelp=false; return;}
 
   if(phase==='title'){
     for(const ha of hitAreas) if(mx>=ha.x&&mx<ha.x+ha.w&&my>=ha.y&&my<ha.y+ha.h){ha.action(); return;}
@@ -1443,6 +1613,9 @@ canvas.addEventListener('click',e=>{
 });
 
 document.addEventListener('keydown',e=>{
+  if(e.key==='?'||e.key==='/'){toggleHelp(); return;}
+  if(showHelp){if(e.key==='Escape'||e.key==='Enter'||e.key===' ') showHelp=false; return;}
+
   if(phase==='title'){
     const diffs=['easy','medium','hard','grandmaster'];
     if(e.key==='ArrowLeft'||e.key==='ArrowRight'){
