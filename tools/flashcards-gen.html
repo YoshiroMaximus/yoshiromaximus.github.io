@@ -162,6 +162,60 @@
       display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
     }
     @media (max-width: 480px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    /* ── Mode picker ── */
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+    }
+    @media (max-width: 520px) { .mode-grid { grid-template-columns: 1fr; } }
+
+    .mode-card {
+      position: relative;
+      text-align: left;
+      padding: 0.75rem 0.85rem;
+      background: var(--bg2);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: border 0.15s ease, background 0.15s ease, transform 0.1s ease;
+      font-family: inherit;
+      color: var(--text);
+    }
+    .mode-card:hover { border-color: var(--muted); background: var(--tag-bg); }
+    .mode-card.active {
+      border-color: var(--accent2);
+      background: var(--bg2);
+      box-shadow: inset 0 0 0 1px var(--accent2);
+    }
+    .mode-card .m-name {
+      font-family: 'DM Mono', monospace; font-size: 0.8rem;
+      font-weight: 400; color: var(--text);
+      margin-bottom: 0.2rem;
+      display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem;
+    }
+    .mode-card.active .m-name { color: var(--accent2); }
+    .mode-card .m-check {
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      color: var(--accent2); opacity: 0;
+    }
+    .mode-card.active .m-check { opacity: 1; }
+    .mode-card .m-desc {
+      font-size: 0.75rem; color: var(--muted); line-height: 1.4;
+      margin-bottom: 0.4rem;
+    }
+    .mode-card .m-ex {
+      font-family: 'DM Mono', monospace; font-size: 0.65rem;
+      color: var(--muted); letter-spacing: 0.02em;
+      padding: 0.35rem 0.45rem;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      line-height: 1.4;
+    }
+    .mode-card .m-ex .arrow { color: var(--accent2); }
+    .mode-card .m-ex .front { color: var(--text); }
   </style>
 </head>
 <body>
@@ -205,25 +259,15 @@
     <!-- Step 3: options -->
     <div class="section">
       <p class="section-label">3 · Options</p>
-      <div class="grid-2">
-        <label class="field">
-          <span class="lbl">Mode</span>
-          <select id="mode">
-            <option value="standard">standard — Q / A (any subject)</option>
-            <option value="fill-blank">fill-blank — bio / science sentences</option>
-            <option value="vocab">vocab — term → definition</option>
-            <option value="define">define — definition → term (reverse, harder)</option>
-            <option value="language">language — Spanish / Chinese ↔ English</option>
-            <option value="formula">formula — concept → equation (math / chem / physics)</option>
-            <option value="dates">dates — historical event → year (US / world history)</option>
-            <option value="quote">quote — passage → source &amp; meaning (English lit)</option>
-          </select>
-        </label>
-        <label class="field">
-          <span class="lbl">How many cards (max)</span>
-          <input type="text" id="count" value="30" inputmode="numeric">
-        </label>
+      <div class="field">
+        <span class="lbl">Mode · pick the card style</span>
+        <input type="hidden" id="mode" value="standard">
+        <div class="mode-grid" id="mode-grid"></div>
       </div>
+      <label class="field">
+        <span class="lbl">How many cards (max)</span>
+        <input type="text" id="count" value="30" inputmode="numeric">
+      </label>
       <label class="field">
         <span class="lbl">Title (optional)</span>
         <input type="text" id="title-in" placeholder="e.g. Bio Ch.4 — Cells">
@@ -256,6 +300,56 @@
       localStorage.setItem('theme', theme);
     }
     setTheme(localStorage.getItem('theme') || 'light');
+
+    // ── Mode picker ──
+    const MODES = [
+      { id: 'standard',   name: 'Standard',    desc: 'Plain question → answer. Works for any subject.',
+        ex: { front: 'What organelle makes ATP?', back: 'Mitochondrion' } },
+      { id: 'fill-blank', name: 'Fill in blank', desc: 'Sentence with the key word hidden. Best for bio, anatomy, earth sci.',
+        ex: { front: 'The powerhouse of the cell is the ___', back: 'mitochondrion' } },
+      { id: 'vocab',      name: 'Vocab',       desc: 'Term on front, definition on back. SAT, AP vocab, glossaries.',
+        ex: { front: 'ephemeral', back: 'lasting for a very short time' } },
+      { id: 'define',     name: 'Reverse vocab', desc: 'Definition on front, term on back. Harder — forces recall.',
+        ex: { front: 'lasting for a very short time', back: 'ephemeral' } },
+      { id: 'language',   name: 'Language',    desc: 'Foreign word → English translation. Spanish, French, Chinese…',
+        ex: { front: 'la biblioteca', back: 'the library' } },
+      { id: 'formula',    name: 'Formula',     desc: 'Concept on front, equation on back. Algebra, chem, physics.',
+        ex: { front: "Newton's second law", back: 'F = m · a' } },
+      { id: 'dates',      name: 'Dates',       desc: 'Event → year or date range. US & world history.',
+        ex: { front: 'American Civil War', back: '1861–1865' } },
+      { id: 'quote',      name: 'Quote',       desc: 'Passage → speaker, work, and significance. English lit.',
+        ex: { front: '"All animals are equal…"', back: 'Animal Farm — pigs rewriting the rules' } },
+    ];
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      })[c]);
+    }
+
+    (function buildModePicker() {
+      const grid = document.getElementById('mode-grid');
+      const hidden = document.getElementById('mode');
+      const saved = localStorage.getItem('flashGenMode') || 'standard';
+      hidden.value = MODES.some(m => m.id === saved) ? saved : 'standard';
+      for (const m of MODES) {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'mode-card' + (m.id === hidden.value ? ' active' : '');
+        card.dataset.id = m.id;
+        card.innerHTML = `
+          <div class="m-name">${escapeHtml(m.name)}<span class="m-check">✓</span></div>
+          <div class="m-desc">${escapeHtml(m.desc)}</div>
+          <div class="m-ex"><span class="front">${escapeHtml(m.ex.front)}</span> <span class="arrow">→</span> ${escapeHtml(m.ex.back)}</div>
+        `;
+        card.onclick = () => {
+          hidden.value = m.id;
+          localStorage.setItem('flashGenMode', m.id);
+          grid.querySelectorAll('.mode-card').forEach(c => c.classList.toggle('active', c.dataset.id === m.id));
+        };
+        grid.appendChild(card);
+      }
+    })();
 
     // ── API key persistence ──
     const keyIn = document.getElementById('api-key');
@@ -371,6 +465,54 @@ ${text}
 """`;
     }
 
+    // Recover a usable deck from JSON that was cut off mid-array.
+    // Strategy: find the cards array, walk forward keeping only complete {…} entries.
+    function salvageDeck(text, title, mode) {
+      const cardsIdx = text.indexOf('"cards"');
+      if (cardsIdx < 0) return null;
+      const arrStart = text.indexOf('[', cardsIdx);
+      if (arrStart < 0) return null;
+
+      const cards = [];
+      let i = arrStart + 1;
+      while (i < text.length) {
+        // Skip whitespace and commas between objects.
+        while (i < text.length && /[\s,]/.test(text[i])) i++;
+        if (text[i] !== '{') break;
+
+        // Walk a balanced object, respecting strings and escapes.
+        const objStart = i;
+        let depth = 0, inStr = false, esc = false;
+        let end = -1;
+        for (; i < text.length; i++) {
+          const ch = text[i];
+          if (esc) { esc = false; continue; }
+          if (inStr) {
+            if (ch === '\\') esc = true;
+            else if (ch === '"') inStr = false;
+            continue;
+          }
+          if (ch === '"') { inStr = true; continue; }
+          if (ch === '{') depth++;
+          else if (ch === '}') {
+            depth--;
+            if (depth === 0) { end = i + 1; i = end; break; }
+          }
+        }
+        if (end < 0) break; // truncated mid-object — stop
+
+        try {
+          const card = JSON.parse(text.slice(objStart, end));
+          if (card && card.front != null && card.back != null) {
+            cards.push({ front: String(card.front), back: String(card.back) });
+          }
+        } catch { /* skip malformed */ }
+      }
+
+      if (!cards.length) return null;
+      return { title: title || 'Generated deck', mode, cards };
+    }
+
     async function run() {
       const key = keyIn.value.trim();
       const text = (loadedText || document.getElementById('text-in').value).trim();
@@ -402,7 +544,7 @@ ${text}
             contents: [{ role: 'user', parts: [{ text: buildPrompt(trimmed, mode, count, title, focus) }] }],
             generationConfig: {
               responseMimeType: 'application/json',
-              maxOutputTokens: 8192,
+              maxOutputTokens: 32768,
               temperature: 0.4,
             },
           }),
@@ -412,11 +554,21 @@ ${text}
           throw new Error(`API ${res.status}: ${errBody.slice(0, 200)}`);
         }
         const data = await res.json();
+        const finish = data.candidates?.[0]?.finishReason || '';
         const raw = (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
         // Strip code fences just in case.
         const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/```$/, '').trim();
-        // Validate
-        const parsed = JSON.parse(cleaned);
+
+        let parsed, truncated = false;
+        try {
+          parsed = JSON.parse(cleaned);
+        } catch (parseErr) {
+          // Salvage partial JSON when Gemini hit the token cap mid-array.
+          const salvaged = salvageDeck(cleaned, title, mode);
+          if (!salvaged) throw parseErr;
+          parsed = salvaged;
+          truncated = true;
+        }
         if (!parsed.cards || !Array.isArray(parsed.cards) || !parsed.cards.length) {
           throw new Error('Response had no cards.');
         }
@@ -427,7 +579,11 @@ ${text}
         const open = document.getElementById('open-btn');
         open.style.display = '';
         open.href = '/tools/flashcards.html#deck=' + encodeURIComponent(btoa(unescape(encodeURIComponent(pretty))));
-        setStatus(`Generated ${parsed.cards.length} cards.`, 'ok');
+        const hitCap = truncated || finish === 'MAX_TOKENS';
+        const note = hitCap
+          ? ` (output was cut off — kept ${parsed.cards.length} complete cards. Try a smaller "How many cards" or shorter source.)`
+          : '';
+        setStatus(`Generated ${parsed.cards.length} cards.${note}`, hitCap ? 'err' : 'ok');
       } catch (e) {
         setStatus('Error: ' + e.message, 'err');
       } finally {
