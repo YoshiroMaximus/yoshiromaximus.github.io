@@ -1,14 +1,32 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "snek",
+  "main": "src/worker.js",
   "compatibility_date": "2026-04-29",
   "observability": {
     "enabled": true
   },
   "assets": {
-    "directory": "."
+    "directory": ".",
+    "binding": "ASSETS"
   },
   "compatibility_flags": [
     "nodejs_compat"
-  ]
+  ],
+  "r2_buckets": [
+    {
+      "binding": "R2",
+      "bucket_name": "sn4k"
+    }
+  ],
+  "unsafe": {
+    "bindings": [
+      {
+        "name": "RATE_LIMITER",
+        "type": "ratelimit",
+        "namespace_id": "2001",
+        "simple": { "limit": 10, "period": 60 }
+      }
+    ]
+  }
 }

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flashcards admin — Yoshiro</title>
+  <link rel="icon" type="image/x-icon" href="/favistuff/favicon.ico">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #f5f4f0; --bg2: #eeecea; --text: #1a1a1a;
+      --muted: #888; --line: #d8d6d0; --tag-bg: #e8e6e2;
+      --accent2: #7a9490; --skip: #b07a7a;
+    }
+    body.dark {
+      --bg: #111110; --bg2: #1a1917; --text: #e8e6e2;
+      --muted: #666; --line: #2a2926; --tag-bg: #1e1d1b;
+      --skip: #c08a8a;
+    }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+    .theme-toggle {
+      position: fixed; top: 1.5rem; right: 1.5rem;
+      display: flex; gap: 0.1rem; z-index: 300;
+    }
+    .theme-btn {
+      font-family: 'DM Mono', monospace; font-size: 1rem;
+      color: var(--line); background: none; border: none; cursor: pointer;
+      padding: 0.15rem 0.3rem; line-height: 1; transition: color 0.2s ease;
+    }
+    .theme-btn:hover { color: var(--muted); }
+    .theme-btn.active { color: var(--text); }
+    .back-link {
+      position: fixed; top: 1.5rem; left: 1.5rem;
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      color: var(--line); text-decoration: none; letter-spacing: 0.06em;
+      transition: color 0.2s ease; z-index: 300;
+    }
+    .back-link:hover { color: var(--muted); }
+
+    .page {
+      max-width: 720px; margin: 0 auto;
+      padding: 5rem 2rem 3rem;
+      opacity: 0; animation: fadeUp 0.6s ease 0.1s forwards;
+    }
+    .header-label {
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2rem; font-weight: 500;
+      letter-spacing: -0.02em; margin-bottom: 1.5rem;
+    }
+    .pass-row {
+      display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+    }
+    input[type="password"] {
+      flex: 1; min-width: 200px;
+      background: var(--bg2); color: var(--text);
+      border: 1px solid var(--line); border-radius: 2px;
+      padding: 0.55rem 0.8rem;
+      font-family: 'DM Mono', monospace; font-size: 0.8rem;
+    }
+    input[type="password"]:focus { outline: none; border-color: var(--muted); }
+    .btn {
+      font-family: 'DM Mono', monospace; font-size: 0.75rem;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      background: var(--bg2); color: var(--text);
+      border: 1px solid var(--line); padding: 0.55rem 1rem;
+      cursor: pointer; border-radius: 2px;
+    }
+    .btn:hover { background: var(--tag-bg); border-color: var(--muted); }
+    .btn.danger { color: var(--skip); border-color: var(--skip); }
+    .btn.danger:hover { background: var(--skip); color: var(--bg); }
+    .btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+    .row {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 0.75rem;
+      padding: 0.7rem 0.9rem;
+      background: var(--bg2);
+      border: 1px solid var(--line); border-radius: 2px;
+      margin-bottom: 0.4rem;
+    }
+    .row .meta {
+      font-family: 'DM Mono', monospace; font-size: 0.65rem;
+      color: var(--muted); letter-spacing: 0.06em;
+    }
+    .row .title { font-size: 0.9rem; }
+    .status {
+      font-family: 'DM Mono', monospace; font-size: 0.75rem;
+      color: var(--muted); margin-top: 1rem;
+    }
+    .status.err { color: var(--skip); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="theme-toggle">
+    <button class="theme-btn" id="btn-light" onclick="setTheme('light')">+</button>
+    <button class="theme-btn" id="btn-dark" onclick="setTheme('dark')">−</button>
+  </div>
+  <a class="back-link" href="/tools/flashcards.html">← flashcards</a>
+
+  <div class="page">
+    <p class="header-label">Yoshiro · admin</p>
+    <h1>Flashcards library</h1>
+    <div class="pass-row">
+      <input type="password" id="pass" placeholder="admin password" autocomplete="current-password">
+      <button class="btn primary" onclick="load()">Load</button>
+    </div>
+    <div id="list"></div>
+    <p class="status" id="status"></p>
+  </div>
+
+  <script>
+    function setTheme(t) {
+      document.body.classList.toggle('dark', t === 'dark');
+      document.getElementById('btn-light').classList.toggle('active', t === 'light');
+      document.getElementById('btn-dark').classList.toggle('active', t === 'dark');
+      localStorage.setItem('theme', t);
+    }
+    setTheme(localStorage.getItem('theme') || 'light');
+
+    function pass() { return document.getElementById('pass').value; }
+    function setStatus(msg, err) {
+      const el = document.getElementById('status');
+      el.textContent = msg || '';
+      el.className = 'status' + (err ? ' err' : '');
+    }
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      })[c]);
+    }
+
+    async function load() {
+      setStatus('Loading…');
+      try {
+        const r = await fetch('/api/decks');
+        if (!r.ok) throw new Error('Could not load.');
+        const { decks } = await r.json();
+        render(decks);
+        setStatus(`${decks.length} deck(s).`);
+      } catch (e) { setStatus(e.message, true); }
+    }
+
+    function render(decks) {
+      const list = document.getElementById('list');
+      list.innerHTML = '';
+      for (const d of decks) {
+        const row = document.createElement('div');
+        row.className = 'row';
+        const submitter = d.submitter ? ` · by ${escapeHtml(d.submitter)}` : '';
+        const date = d.createdAt ? new Date(d.createdAt).toISOString().slice(0, 10) : '';
+        row.innerHTML = `
+          <div style="min-width:0;flex:1">
+            <div class="title">${escapeHtml(d.title)}</div>
+            <div class="meta">${d.cardCount} cards · ${escapeHtml(d.mode)} · ${date}${submitter} · ${escapeHtml(d.id)}</div>
+          </div>
+          <button class="btn danger">Delete</button>
+        `;
+        row.querySelector('button').onclick = () => del(d.id, d.title, row);
+        list.appendChild(row);
+      }
+    }
+
+    async function del(id, title, row) {
+      if (!confirm(`Delete "${title}"?`)) return;
+      try {
+        const r = await fetch('/api/decks/' + encodeURIComponent(id), {
+          method: 'DELETE',
+          headers: { 'x-admin-pass': pass() },
+        });
+        if (!r.ok) {
+          const data = await r.json().catch(() => ({}));
+          throw new Error(data.error || `Delete failed (${r.status}).`);
+        }
+        row.remove();
+        setStatus(`Deleted "${title}".`);
+      } catch (e) { setStatus(e.message, true); }
+    }
+  </script>
+</body>
+</html>

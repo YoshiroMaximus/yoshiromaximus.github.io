@@ -344,6 +344,85 @@
     .stat-val.know { color: var(--know); }
     .stat-val.skip { color: var(--skip); }
 
+    /* ── Library ── */
+    .library {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--line);
+    }
+    .library-head {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 1rem;
+    }
+    .lib-refresh {
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      color: var(--muted); background: none; border: none;
+      cursor: pointer; letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .lib-refresh:hover { color: var(--text); }
+    .library-list { display: flex; flex-direction: column; gap: 0.4rem; }
+    .lib-card {
+      display: flex; justify-content: space-between; align-items: baseline;
+      gap: 0.75rem;
+      padding: 0.7rem 0.9rem;
+      background: var(--bg2);
+      border: 1px solid var(--line); border-radius: 2px;
+      cursor: pointer;
+      transition: border 0.15s ease, background 0.15s ease;
+    }
+    .lib-card:hover { border-color: var(--muted); background: var(--tag-bg); }
+    .lib-card .lib-title {
+      font-size: 0.9rem; font-weight: 400;
+      flex: 1; min-width: 0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .lib-card .lib-meta {
+      font-family: 'DM Mono', monospace; font-size: 0.65rem;
+      color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .lib-card .lib-mode { color: var(--accent2); }
+
+    /* ── Share modal ── */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: none; align-items: center; justify-content: center;
+      z-index: 500;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1.5rem;
+      width: min(440px, 92vw);
+      display: flex; flex-direction: column; gap: 1rem;
+    }
+    .modal h3 {
+      font-size: 1rem; font-weight: 500; margin: 0;
+    }
+    .modal-row { display: flex; flex-direction: column; gap: 0.4rem; }
+    .modal-row label {
+      font-family: 'DM Mono', monospace; font-size: 0.65rem;
+      color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .modal input[type="text"] {
+      background: var(--bg2); color: var(--text);
+      border: 1px solid var(--line); border-radius: 2px;
+      padding: 0.5rem 0.7rem;
+      font-family: 'DM Mono', monospace; font-size: 0.8rem;
+      transition: border 0.15s ease;
+    }
+    .modal input[type="text"]:focus { outline: none; border-color: var(--muted); }
+    .modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+    .modal-status {
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      color: var(--muted); min-height: 1em;
+    }
+    .modal-status.ok { color: var(--know); }
+    .modal-status.no { color: var(--skip); }
+
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(16px); }
       to { opacity: 1; transform: translateY(0); }
@@ -393,6 +472,17 @@ DNA is replicated during the ___ phase || S
         <strong>Modes:</strong> <code>standard</code> Q/A · <code>fill-blank</code> hides answer with a blank · <code>vocab</code> word→definition
       </p>
       <p class="err" id="err"></p>
+
+      <!-- Library -->
+      <div class="library">
+        <div class="library-head">
+          <span class="header-label" style="margin:0">Public library</span>
+          <button class="lib-refresh" onclick="loadLibrary()" title="Refresh">refresh</button>
+        </div>
+        <div id="library-list" class="library-list">
+          <p class="hint" id="library-empty">Loading…</p>
+        </div>
+      </div>
     </div>
 
     <!-- Deck -->
@@ -401,6 +491,7 @@ DNA is replicated during the ___ phase || S
         <span><span id="deck-title">Deck</span> · <span class="mode" id="deck-mode">standard</span></span>
         <span>
           <span id="deck-pos">0 / 0</span> ·
+          <button onclick="openShare()" title="Share to public library">share</button> ·
           <button onclick="reset()">restart</button> ·
           <button onclick="newDeck()" title="Exit deck (Esc)">exit ×</button>
         </span>
@@ -425,6 +516,23 @@ DNA is replicated during the ___ phase || S
         <button class="btn" onclick="restartSkipped()" id="btn-skipped">Restart review only</button>
         <button class="btn" onclick="reset()">Restart all</button>
         <button class="btn" onclick="newDeck()">New deck</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share modal -->
+  <div class="modal-backdrop" id="share-modal" onclick="if(event.target===this)closeShare()">
+    <div class="modal">
+      <h3>Share deck to public library</h3>
+      <div class="modal-row">
+        <label>Your name (optional)</label>
+        <input type="text" id="share-submitter" maxlength="60" placeholder="anonymous">
+      </div>
+      <p class="hint">Anyone visiting this page will be able to load your deck. Don't include anything private.</p>
+      <p class="modal-status" id="share-status"></p>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeShare()">Cancel</button>
+        <button class="btn primary" onclick="submitToLibrary()" id="share-submit-btn">Publish</button>
       </div>
     </div>
   </div>
@@ -833,6 +941,86 @@ DNA is replicated during the ___ phase || S
       else if (e.key === ' ' || e.key.toLowerCase() === 'f') { e.preventDefault(); action('flip'); }
       else if (e.key === 'Escape') newDeck();
     });
+
+    // ── Public library ──
+    async function loadLibrary() {
+      const list = document.getElementById('library-list');
+      const empty = document.getElementById('library-empty');
+      list.innerHTML = '<p class="hint">Loading…</p>';
+      try {
+        const r = await fetch('/api/decks');
+        if (!r.ok) throw new Error('Could not load library.');
+        const { decks } = await r.json();
+        if (!decks.length) {
+          list.innerHTML = '<p class="hint">No shared decks yet. Be the first — load a deck and click <em>share</em>.</p>';
+          return;
+        }
+        list.innerHTML = '';
+        for (const d of decks) {
+          const el = document.createElement('div');
+          el.className = 'lib-card';
+          el.onclick = () => loadLibraryDeck(d.id);
+          const submitter = d.submitter ? ` · by ${escapeHtml(d.submitter)}` : '';
+          el.innerHTML = `
+            <span class="lib-title">${escapeHtml(d.title)}</span>
+            <span class="lib-meta">${d.cardCount} cards · <span class="lib-mode">${escapeHtml(d.mode)}</span>${submitter}</span>
+          `;
+          list.appendChild(el);
+        }
+      } catch (e) {
+        list.innerHTML = `<p class="hint">Library unavailable: ${escapeHtml(e.message)}</p>`;
+      }
+    }
+
+    async function loadLibraryDeck(id) {
+      try {
+        const r = await fetch('/api/decks/' + encodeURIComponent(id));
+        if (!r.ok) throw new Error('Could not load deck.');
+        const d = await r.json();
+        startDeck({ title: d.title, mode: d.mode, cards: d.cards });
+      } catch (e) { showErr(e.message); }
+    }
+
+    // ── Share to library ──
+    function openShare() {
+      if (!deck) return;
+      document.getElementById('share-status').textContent = '';
+      document.getElementById('share-status').className = 'modal-status';
+      document.getElementById('share-submit-btn').disabled = false;
+      document.getElementById('share-modal').classList.add('show');
+    }
+    function closeShare() {
+      document.getElementById('share-modal').classList.remove('show');
+    }
+    async function submitToLibrary() {
+      if (!deck) return;
+      const btn = document.getElementById('share-submit-btn');
+      const status = document.getElementById('share-status');
+      const submitter = document.getElementById('share-submitter').value.trim();
+      btn.disabled = true;
+      status.className = 'modal-status';
+      status.textContent = 'Publishing…';
+      try {
+        const r = await fetch('/api/decks', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            title: deck.title, mode: deck.mode, cards: deck.cards, submitter,
+          }),
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'Submission failed.');
+        status.className = 'modal-status ok';
+        status.textContent = 'Published ✓';
+        setTimeout(() => { closeShare(); loadLibrary(); }, 900);
+      } catch (e) {
+        status.className = 'modal-status no';
+        status.textContent = e.message;
+        btn.disabled = false;
+      }
+    }
+
+    loadLibrary();
 
     function finish() {
       document.getElementById('deck').classList.add('hidden');
