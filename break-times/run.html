@@ -32,35 +32,117 @@
       font-family: 'DM Mono', monospace; font-size: 1.1rem;
       color: var(--muted); cursor: pointer; padding: 4px; z-index: 100;
     }
+    #audio-ctrl { position: fixed; top: 1.5rem; right: 3.5rem; z-index: 100; }
     #mute {
-      position: fixed; top: 1.5rem; right: 3.5rem;
       background: none; border: none;
-      font-family: 'DM Mono', monospace; font-size: 0.85rem;
-      color: var(--muted); cursor: pointer; padding: 4px; z-index: 100;
+      font-family: 'DM Mono', monospace; font-size: 1.1rem; line-height: 1;
+      color: var(--muted); cursor: pointer; padding: 4px;
     }
     #mute:hover { color: var(--text); }
+    #vol-panel {
+      position: absolute; top: 100%; right: 0;
+      padding: 10px 10px 8px; background: var(--bg);
+      border: 1px solid var(--line); border-radius: 4px;
+      display: flex; flex-direction: column; gap: 6px;
+      opacity: 0; pointer-events: none; transition: opacity 0.12s;
+      min-width: 170px;
+    }
+    #vol-row { display: flex; align-items: center; gap: 8px; }
+    #track-select {
+      appearance: none; -webkit-appearance: none;
+      background: var(--bg); border: 1px solid var(--line); color: var(--text);
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      padding: 3px 6px; border-radius: 3px; cursor: pointer; width: 100%;
+    }
+    #track-select:hover { border-color: var(--text); }
+    #music-hint {
+      position: absolute; top: 100%; right: 0; margin-top: 4px;
+      padding: 5px 9px; background: var(--bg);
+      border: 1px solid var(--line); border-radius: 3px;
+      font-family: 'DM Mono', monospace; font-size: 0.65rem;
+      color: var(--muted); white-space: nowrap; pointer-events: none;
+      animation: hintPulse 1.8s ease-in-out infinite;
+    }
+    #audio-ctrl:hover #music-hint { display: none; }
+    @keyframes hintPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+    #audio-ctrl:hover #vol-panel, #audio-ctrl:focus-within #vol-panel { opacity: 1; pointer-events: auto; }
+    #vol { appearance: none; -webkit-appearance: none; width: 90px; height: 3px; background: var(--line); outline: none; border-radius: 2px; }
+    #vol::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 11px; height: 11px; border-radius: 50%; background: var(--text); cursor: pointer; border: none; }
+    #vol::-moz-range-thumb { width: 11px; height: 11px; border-radius: 50%; background: var(--text); cursor: pointer; border: none; }
+    #vol-label { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); min-width: 24px; text-align: right; }
   </style>
 </head>
 <body>
   <a href="../break.html" id="back">← break</a>
   <button id="theme" onclick="toggleTheme()">+</button>
-  <button id="mute" onclick="toggleMute()" title="mute / unmute music">♪</button>
+  <div id="audio-ctrl">
+    <button id="mute" onclick="toggleMute()" title="click: mute · hover: volume">♪</button>
+    <div id="music-hint">click ♪ for music</div>
+    <div id="vol-panel">
+      <select id="track-select"></select>
+      <div id="vol-row">
+        <input id="vol" type="range" min="0" max="100" value="30">
+        <span id="vol-label">30</span>
+      </div>
+    </div>
+  </div>
   <audio id="bgm" src="/audio/zeldatwilightprincess.mp3" loop preload="auto"></audio>
   <canvas id="c"></canvas>
   <script>
+  const TRACKS = [
+    { id: 'twilight',  name: 'Zelda · Twilight Princess', src: '/audio/zeldatwilightprincess.mp3' },
+    { id: 'pikmin',    name: "Pikmin · Today's Results",  src: '/audio/pikmintodaysresults.mp3' },
+    { id: 'balatro',   name: 'Balatro · Main',             src: '/audio/balatro-main.mp3' },
+    { id: 'balayoshi', name: 'Bala-Yoshi',                 src: '/audio/balayoshi.mp3' },
+  ];
   const bgm = document.getElementById('bgm');
-  bgm.volume = 0.4;
-  let muted = localStorage.getItem('run_muted') === '1';
+  const volSlider = document.getElementById('vol');
+  const volLabel  = document.getElementById('vol-label');
+  const trackSelect = document.getElementById('track-select');
+  TRACKS.forEach(t => { const o = document.createElement('option'); o.value = t.id; o.textContent = t.name; trackSelect.appendChild(o); });
+  trackSelect.addEventListener('change', e => { setTrack(e.target.value); dismissHint(); });
+  let muted = localStorage.getItem('run_muted') !== '0';
+  let hintSeen = localStorage.getItem('run_music_hint') === '1';
+  let volume = Math.max(0, Math.min(1, parseFloat(localStorage.getItem('run_vol'))));
+  if (!isFinite(volume)) volume = 0.3;
+  let currentTrack = localStorage.getItem('run_track') || TRACKS[0].id;
+
+  function applyVolume() { bgm.volume = volume; volSlider.value = Math.round(volume * 100); volLabel.textContent = Math.round(volume * 100); }
+  function dismissHint() {
+    if (hintSeen) return;
+    hintSeen = true; localStorage.setItem('run_music_hint', '1');
+    const h = document.getElementById('music-hint'); if (h) h.remove();
+  }
+  if (hintSeen) dismissHint();
   function updateMuteBtn() { document.getElementById('mute').textContent = muted ? '♪̸' : '♪'; }
+  function setTrack(id) {
+    const t = TRACKS.find(x => x.id === id) || TRACKS[0];
+    currentTrack = t.id; localStorage.setItem('run_track', t.id);
+    trackSelect.value = t.id;
+    if (bgm.src.endsWith(t.src.replace(/^\//, ''))) return;
+    const wasPlaying = !bgm.paused;
+    bgm.src = t.src;
+    if (wasPlaying && !muted) bgm.play().catch(() => {});
+  }
   function toggleMute() {
     muted = !muted;
     localStorage.setItem('run_muted', muted ? '1' : '0');
     updateMuteBtn();
+    dismissHint();
     if (muted) bgm.pause(); else bgm.play().catch(() => {});
   }
   function startBgm() { if (!muted) bgm.play().catch(() => {}); }
+  volSlider.addEventListener('input', e => {
+    volume = (+e.target.value) / 100;
+    localStorage.setItem('run_vol', volume);
+    applyVolume();
+    dismissHint();
+    if (muted && volume > 0) { muted = false; localStorage.setItem('run_muted', '0'); updateMuteBtn(); bgm.play().catch(() => {}); }
+  });
   document.addEventListener('pointerdown', startBgm, { once: true });
   document.addEventListener('keydown', startBgm, { once: true });
+  setTrack(currentTrack);
+  applyVolume();
   updateMuteBtn();
 
   function getTheme() { return localStorage.getItem('theme') || 'light'; }
