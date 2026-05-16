@@ -48,6 +48,7 @@ async function gambitLeaderboard(request, env, url) {
   if (!env.DB) return json({ error: 'Leaderboard not configured' }, 503);
   const mode = url.searchParams.get('mode') || 'all';
   const diff = url.searchParams.get('diff') || 'all';
+  const orderCol = url.searchParams.get('sort') === 'recent' ? 'id' : 'score';
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 100);
 
   const conditions = [];
@@ -56,7 +57,7 @@ async function gambitLeaderboard(request, env, url) {
   if (diff !== 'all') { conditions.push('difficulty = ?'); bindings.push(diff); }
   let q = 'SELECT id, name, score, difficulty, mode, depth, gold, gambits, won, created_at FROM gambit_scores';
   if (conditions.length) q += ' WHERE ' + conditions.join(' AND ');
-  q += ' ORDER BY score DESC LIMIT ?';
+  q += ` ORDER BY ${orderCol} DESC LIMIT ?`;
   bindings.push(limit);
 
   const { results } = await env.DB.prepare(q).bind(...bindings).all();

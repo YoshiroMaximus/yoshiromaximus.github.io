@@ -74,7 +74,7 @@ canvas{display:block;cursor:default;touch-action:none;}
     <div id="sub-error" style="font-size:9px;color:#b04040;min-height:14px;margin-bottom:10px;"></div>
     <div style="display:flex;gap:10px;justify-content:center;">
       <button id="sub-submit" style="flex:1;padding:9px;background:transparent;border:1px solid var(--text);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;">submit</button>
-      <button id="sub-cancel" style="flex:1;padding:9px;background:transparent;border:1px solid var(--line);color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;">skip</button>
+      <button id="sub-cancel" style="flex:1;padding:9px;background:transparent;border:1px solid var(--line);color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;">post anon</button>
     </div>
     <div id="sub-status" style="font-size:10px;color:var(--muted);min-height:18px;margin-top:10px;"></div>
   </div>
@@ -1911,8 +1911,8 @@ const subError=document.getElementById('sub-error');
 const subStatus=document.getElementById('sub-status');
 const subSubmit=document.getElementById('sub-submit');
 
-subSubmit.addEventListener('click',doSubmitScore);
-document.getElementById('sub-cancel').addEventListener('click',()=>{submitOverlay.style.display='none'; startRun();});
+subSubmit.addEventListener('click',()=>doSubmitScore());
+document.getElementById('sub-cancel').addEventListener('click',()=>doSubmitScore('anon'));
 nameInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault(); doSubmitScore();}});
 
 function openSubmitOverlay(won){
@@ -1926,8 +1926,8 @@ function openSubmitOverlay(won){
   setTimeout(()=>nameInput.focus(),50);
 }
 
-async function doSubmitScore(){
-  const name=nameInput.value.trim();
+async function doSubmitScore(overrideName){
+  const name=overrideName||nameInput.value.trim();
   if(!name){subError.textContent='enter a name'; return;}
   subError.textContent='';
   subStatus.textContent='submitting…';
@@ -1942,7 +1942,7 @@ async function doSubmitScore(){
     });
     const data=await r.json();
     if(!r.ok){subError.textContent=data.error||'submit failed'; subStatus.textContent=''; subSubmit.disabled=false; return;}
-    localStorage.setItem('gambit_last_name',name);
+    if(!overrideName) localStorage.setItem('gambit_last_name',name);
     submitOverlay.style.display='none';
     startRun();
   }catch(e){
