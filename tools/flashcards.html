@@ -423,6 +423,41 @@
     .modal-status.ok { color: var(--know); }
     .modal-status.no { color: var(--skip); }
 
+    .share-link-row {
+      display: none;
+      flex-direction: column; gap: 0.5rem;
+      padding: 0.7rem;
+      background: var(--bg2);
+      border: 1px solid var(--line); border-radius: 2px;
+    }
+    .share-link-row.show { display: flex; }
+    .share-link-row .lbl {
+      font-family: 'DM Mono', monospace; font-size: 0.6rem;
+      color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .share-link-row .link-inner {
+      display: flex; gap: 0.4rem;
+    }
+    .share-link-row input {
+      flex: 1; min-width: 0;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--line); border-radius: 2px;
+      padding: 0.45rem 0.6rem;
+      font-family: 'DM Mono', monospace; font-size: 0.72rem;
+    }
+    .share-link-row input:focus { outline: none; border-color: var(--muted); }
+    .share-link-row .btn { padding: 0.45rem 0.7rem; font-size: 0.65rem; }
+
+    .lib-card .lib-link {
+      font-family: 'DM Mono', monospace; font-size: 0.6rem;
+      color: var(--muted); background: none; border: none;
+      cursor: pointer; padding: 0.2rem 0.4rem;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .lib-card .lib-link:hover { color: var(--accent2); }
+    .lib-card .lib-link.copied { color: var(--know); }
+
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(16px); }
       to { opacity: 1; transform: translateY(0); }
@@ -530,8 +565,15 @@ DNA is replicated during the ___ phase || S
       </div>
       <p class="hint">Anyone visiting this page will be able to load your deck. Don't include anything private.</p>
       <p class="modal-status" id="share-status"></p>
+      <div class="share-link-row" id="share-link-row">
+        <span class="lbl">Share link</span>
+        <div class="link-inner">
+          <input type="text" id="share-link" readonly onclick="this.select()">
+          <button class="btn" id="share-copy-btn" onclick="copyShareLink()">Copy</button>
+        </div>
+      </div>
       <div class="modal-actions">
-        <button class="btn" onclick="closeShare()">Cancel</button>
+        <button class="btn" onclick="closeShare()" id="share-cancel-btn">Cancel</button>
         <button class="btn primary" onclick="submitToLibrary()" id="share-submit-btn">Publish</button>
       </div>
     </div>
@@ -559,6 +601,15 @@ DNA is replicated during the ___ phase || S
           catch (e) { document.getElementById('paste-in').value = json; }
         }, 0);
       } catch (e) { /* ignore */ }
+    })();
+
+    // ── Shared library link (#lib=<id>) ──
+    (function tryLibLink() {
+      const m = location.hash.match(/lib=([^&]+)/);
+      if (!m) return;
+      const id = decodeURIComponent(m[1]);
+      history.replaceState(null, '', location.pathname);
+      setTimeout(() => loadLibraryDeck(id), 0);
     })();
 
     // ── State ──
@@ -959,12 +1010,20 @@ DNA is replicated during the ___ phase || S
         for (const d of decks) {
           const el = document.createElement('div');
           el.className = 'lib-card';
-          el.onclick = () => loadLibraryDeck(d.id);
+          el.onclick = (e) => {
+            if (e.target.closest('.lib-link')) return;
+            loadLibraryDeck(d.id);
+          };
           const submitter = d.submitter ? ` · by ${escapeHtml(d.submitter)}` : '';
           el.innerHTML = `
             <span class="lib-title">${escapeHtml(d.title)}</span>
             <span class="lib-meta">${d.cardCount} cards · <span class="lib-mode">${escapeHtml(d.mode)}</span>${submitter}</span>
+            <button class="lib-link" title="Copy share link">link</button>
           `;
+          el.querySelector('.lib-link').onclick = (e) => {
+            e.stopPropagation();
+            copyDeckLink(d.id, e.currentTarget);
+          };
           list.appendChild(el);
         }
       } catch (e) {
@@ -982,16 +1041,65 @@ DNA is replicated during the ___ phase || S
     }
 
     // ── Share to library ──
+    function deckShareUrl(id) {
+      return `${location.origin}/tools/flashcards.html#lib=${encodeURIComponent(id)}`;
+    }
+
     function openShare() {
       if (!deck) return;
-      document.getElementById('share-status').textContent = '';
-      document.getElementById('share-status').className = 'modal-status';
+      const status = document.getElementById('share-status');
+      status.textContent = '';
+      status.className = 'modal-status';
       document.getElementById('share-submit-btn').disabled = false;
+      document.getElementById('share-submit-btn').style.display = '';
+      document.getElementById('share-cancel-btn').textContent = 'Cancel';
+      document.getElementById('share-link-row').classList.remove('show');
       document.getElementById('share-modal').classList.add('show');
     }
     function closeShare() {
       document.getElementById('share-modal').classList.remove('show');
     }
+
+    function showShareLink(id, title) {
+      const row = document.getElementById('share-link-row');
+      const input = document.getElementById('share-link');
+      input.value = deckShareUrl(id);
+      row.classList.add('show');
+      document.getElementById('share-submit-btn').style.display = 'none';
+      document.getElementById('share-cancel-btn').textContent = 'Done';
+      const btn = document.getElementById('share-copy-btn');
+      btn.textContent = 'Copy'; btn.disabled = false;
+    }
+
+    async function copyShareLink() {
+      const input = document.getElementById('share-link');
+      const btn = document.getElementById('share-copy-btn');
+      try {
+        await navigator.clipboard.writeText(input.value);
+        btn.textContent = 'Copied ✓';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+      } catch {
+        input.select(); document.execCommand('copy');
+        btn.textContent = 'Copied ✓';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+      }
+    }
+
+    async function copyDeckLink(id, btnEl) {
+      const url = deckShareUrl(id);
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = url; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      const orig = btnEl.textContent;
+      btnEl.textContent = 'copied';
+      btnEl.classList.add('copied');
+      setTimeout(() => { btnEl.textContent = orig; btnEl.classList.remove('copied'); }, 1500);
+    }
+
     async function submitToLibrary() {
       if (!deck) return;
       const btn = document.getElementById('share-submit-btn');
@@ -1009,10 +1117,17 @@ DNA is replicated during the ___ phase || S
           }),
         });
         const data = await r.json();
+        if (r.status === 409 && data.duplicate && data.id) {
+          status.className = 'modal-status';
+          status.textContent = `Already in the library as "${data.title}". Share link below.`;
+          showShareLink(data.id, data.title);
+          return;
+        }
         if (!r.ok) throw new Error(data.error || 'Submission failed.');
         status.className = 'modal-status ok';
         status.textContent = 'Published ✓';
-        setTimeout(() => { closeShare(); loadLibrary(); }, 900);
+        showShareLink(data.id, data.title);
+        loadLibrary();
       } catch (e) {
         status.className = 'modal-status no';
         status.textContent = e.message;
