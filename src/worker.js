@@ -38,7 +38,7 @@ async function handleNotes(request, env, url) {
 
   try {
     if (request.method === 'POST' && sub === 'login')  return notesLogin(request, env);
-    if (request.method === 'POST' && sub === 'logout') return notesLogout();
+    if (request.method === 'POST' && sub === 'logout') return notesLogout(request);
     if (request.method === 'GET'  && sub === 'me')     return notesMe(request, env);
 
     if (!isAuthed(request, env)) return json({ error: 'Unauthorized' }, 401);
@@ -84,15 +84,21 @@ async function notesLogin(request, env) {
   if (!safeEq(user, env.NOTES_USER) || !safeEq(pass, env.NOTES_PASSWORD)) {
     return json({ error: 'Wrong username or password.' }, 401);
   }
-  const cookie = `notes_auth=${encodeURIComponent(pass)}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=2592000`;
+  const cookie = buildCookie('notes_auth', pass, 2592000, request);
   return new Response(JSON.stringify({ ok: true, user }), {
     status: 200,
     headers: { 'content-type': 'application/json', 'set-cookie': cookie },
   });
 }
 
-function notesLogout() {
-  const cookie = `notes_auth=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`;
+function buildCookie(name, value, maxAge, request) {
+  const url = new URL(request.url);
+  const secure = url.protocol === 'https:' ? ' Secure;' : '';
+  return `${name}=${encodeURIComponent(value)}; HttpOnly;${secure} SameSite=Lax; Path=/; Max-Age=${maxAge}`;
+}
+
+function notesLogout(request) {
+  const cookie = buildCookie('notes_auth', '', 0, request);
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
     headers: { 'content-type': 'application/json', 'set-cookie': cookie },

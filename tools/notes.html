@@ -363,9 +363,16 @@
           }),
         });
         $('login-pass').value = '';
-        showApp();
+        // verify the cookie actually stuck
+        const me = await api('/api/notes/me');
+        if (!me.authed) {
+          err.textContent = 'Login succeeded but session cookie was blocked by the browser. Are you on https?';
+          return;
+        }
+        await showApp();
       } catch (ex) {
-        err.textContent = ex.message;
+        err.textContent = ex.message || 'Login failed.';
+        console.error('login error', ex);
       } finally {
         btn.disabled = false;
       }
