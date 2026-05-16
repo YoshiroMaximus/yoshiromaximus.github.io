@@ -53,16 +53,24 @@
   }
   applyTheme(getTheme());
 
-  function cssVar(v) { return getComputedStyle(document.body).getPropertyValue(v).trim(); }
-
   const canvas = document.getElementById('c');
   const ctx    = canvas.getContext('2d');
   let W, H, GY;
 
   let C = {};
   function cacheColors() {
-    C.bg = cssVar('--bg'); C.text = cssVar('--text');
-    C.muted = cssVar('--muted'); C.line = cssVar('--line');
+    const s = getComputedStyle(document.body);
+    C.bg    = s.getPropertyValue('--bg').trim();
+    C.text  = s.getPropertyValue('--text').trim();
+    C.muted = s.getPropertyValue('--muted').trim();
+    C.line  = s.getPropertyValue('--line').trim();
+  }
+
+  function hit(a, x, y) { return x >= a.x && x <= a.x + a.w && y >= a.y && y <= a.y + a.h; }
+  function cycleDiff(dir) {
+    const i = DIFF_NAMES.indexOf(difficulty);
+    difficulty = DIFF_NAMES[(i + dir + DIFF_NAMES.length) % DIFF_NAMES.length];
+    saveAll();
   }
 
   // ── Persistent data ────────────────────────────────────────────────────
@@ -122,7 +130,11 @@
     cacheColors();
     generateBg();
   }
-  window.addEventListener('resize', resize);
+  let resizeRaf = 0;
+  window.addEventListener('resize', () => {
+    if (resizeRaf) return;
+    resizeRaf = requestAnimationFrame(() => { resizeRaf = 0; resize(); });
+  });
 
   // ── Constants ─────────────────────────────────────────────────────────
   const PS           = 24;
@@ -238,18 +250,8 @@
       if (e.code === 'Escape' || e.code === 'Backspace')    { e.preventDefault(); closeShop(); }
       return;
     }
-    if (e.code === 'ArrowLeft' && state === 'idle') {
-      e.preventDefault();
-      const i = DIFF_NAMES.indexOf(difficulty);
-      difficulty = DIFF_NAMES[(i - 1 + DIFF_NAMES.length) % DIFF_NAMES.length];
-      saveAll(); return;
-    }
-    if (e.code === 'ArrowRight' && state === 'idle') {
-      e.preventDefault();
-      const i = DIFF_NAMES.indexOf(difficulty);
-      difficulty = DIFF_NAMES[(i + 1) % DIFF_NAMES.length];
-      saveAll(); return;
-    }
+    if (e.code === 'ArrowLeft' && state === 'idle')  { e.preventDefault(); cycleDiff(-1); return; }
+    if (e.code === 'ArrowRight' && state === 'idle') { e.preventDefault(); cycleDiff( 1); return; }
     if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); onAction(); }
     if (e.code === 'KeyG') doBoost();
     if (e.code === 'KeyU' && state !== 'run' && state !== 'paused') openShop();
@@ -259,12 +261,7 @@
   canvas.addEventListener('pointerdown', e => {
     e.preventDefault();
     const cx = e.clientX, cy = e.clientY;
-    for (const a of hitAreas) {
-      if (cx >= a.x && cx <= a.x + a.w && cy >= a.y && cy <= a.y + a.h) {
-        a.action();
-        return;
-      }
-    }
+    for (const a of hitAreas) { if (hit(a, cx, cy)) { a.action(); return; } }
     onAction();
   });
 
@@ -357,7 +354,6 @@
       if (obstacles[i].x + obstacles[i].w < -10) obstacles.splice(i, 1);
     }
 
-    // Coin pickup spawning — floating diamonds at jump-reachable heights
     pickupTimer -= dt;
     if (pickupTimer <= 0) {
       const py = GY - (40 + Math.random() * 110);
@@ -369,7 +365,6 @@
       const pk = pickups[i];
       pk.x -= eff * dt;
       if (pk.x + pk.r < -10) { pickups.splice(i, 1); continue; }
-      // Collect: simple circle-vs-AABB
       const closestX = Math.max(player.x, Math.min(pk.x, player.x + PS));
       const closestY = Math.max(player.y, Math.min(pk.y, player.y + PS));
       const dx = pk.x - closestX, dy = pk.y - closestY;
@@ -463,13 +458,9 @@
       const sel    = shopSel === i;
       const rowY   = listY + i * rowH;
 
-      const hovered = mouseX >= cx - colW/2 && mouseX <= cx + colW/2
-                   && mouseY >= rowY - 14   && mouseY <= rowY + rowH - 16;
-
-      hitAreas.push({
-        x: cx - colW/2, y: rowY - 14, w: colW, h: rowH - 4,
-        action: () => { shopSel = i; buyUpgrade(i); }
-      });
+      const rowArea = { x: cx - colW/2, y: rowY - 14, w: colW, h: rowH - 4 };
+      const hovered = hit(rowArea, mouseX, mouseY);
+      hitAreas.push({ ...rowArea, action: () => { shopSel = i; buyUpgrade(i); } });
 
       // Row highlight
       if (sel || hovered) {
@@ -485,12 +476,11 @@
       ctx.fillStyle = (sel || hovered) ? text : 'transparent';
       ctx.fillText('→', cx - colW/2 + 4, rowY + 2);
 
-      // Name
-      ctx.fillStyle = maxed ? muted : (canBuy ? text : muted);
+      const nameColor = canBuy ? text : muted;
+      ctx.fillStyle = nameColor;
       ctx.font = '400 13px "DM Mono", monospace';
       ctx.fillText(def.name, cx - colW/2 + 22, rowY + 2);
 
-      // Level dots
       ctx.textAlign = 'center';
       ctx.font = '300 11px "DM Mono", monospace';
       ctx.fillStyle = muted;
@@ -498,18 +488,11 @@
       for (let d = 0; d < def.max; d++) dots += d < lvl ? '●' : '○';
       ctx.fillText(dots, cx, rowY + 2);
 
-      // Cost / status
       ctx.textAlign = 'right';
       ctx.font = '400 13px "DM Mono", monospace';
-      if (maxed) {
-        ctx.fillStyle = muted;
-        ctx.fillText('maxed', cx + colW/2 - 4, rowY + 2);
-      } else {
-        ctx.fillStyle = canBuy ? text : muted;
-        ctx.fillText(def.cost + ' c', cx + colW/2 - 4, rowY + 2);
-      }
+      ctx.fillStyle = nameColor;
+      ctx.fillText(maxed ? 'maxed' : def.cost + ' c', cx + colW/2 - 4, rowY + 2);
 
-      // Description
       ctx.textAlign = 'left';
       ctx.font = '300 10px "DM Mono", monospace';
       ctx.fillStyle = muted;
@@ -531,25 +514,31 @@
     hitAreas.push({ x: cx + colW/2 - 24, y: ty - 22, w: 32, h: 32, action: closeShop });
   }
 
-  // ── Draw ──────────────────────────────────────────────────────────────
+  let lastCursorState = null;
+  let nowMs = 0;
   function draw() {
-    document.body.classList.toggle('show-cursor', state !== 'run');
+    if (state !== lastCursorState) {
+      document.body.classList.toggle('show-cursor', state !== 'run');
+      lastCursorState = state;
+    }
     if (state === 'shop') { drawShop(); return; }
 
     hitAreas = [];
     const { bg, text, muted, line } = C;
-    const ox = shakeX * (Math.random()*2-1);
-    const oy = shakeY * (Math.random()*2-1);
+    let ox = 0, oy = 0;
+    if (shakeX || shakeY) {
+      ox = shakeX * (Math.random()*2-1);
+      oy = shakeY * (Math.random()*2-1);
+    }
 
     ctx.save();
     ctx.translate(ox, oy);
 
-    // Background
     ctx.fillStyle = bg;
     ctx.fillRect(-20, -20, W+40, H+40);
     if (boostActive) {
       ctx.fillStyle = text;
-      ctx.globalAlpha = 0.03 + 0.025 * Math.sin(Date.now() / 80);
+      ctx.globalAlpha = 0.03 + 0.025 * Math.sin(nowMs / 80);
       ctx.fillRect(-20, -20, W+40, H+40);
       ctx.globalAlpha = 1;
     }
@@ -593,42 +582,22 @@
       ctx.globalAlpha = 1;
     }
 
-    // Obstacles — blocks render as filled rects, spikes as triangles
+    const SPIKE_COUNT = { spike: 1, spike2: 2, spike3: 3 };
     ctx.fillStyle = text;
     for (const o of obstacles) {
-      if (o.type === 'spike') {
+      const n = SPIKE_COUNT[o.type];
+      if (!n) { ctx.fillRect(o.x, o.y, o.w, o.h); continue; }
+      const sw = o.w / n;
+      for (let k = 0; k < n; k++) {
         ctx.beginPath();
-        ctx.moveTo(o.x, o.y + o.h);
-        ctx.lineTo(o.x + o.w/2, o.y);
-        ctx.lineTo(o.x + o.w, o.y + o.h);
+        ctx.moveTo(o.x + k*sw,        o.y + o.h);
+        ctx.lineTo(o.x + k*sw + sw/2, o.y);
+        ctx.lineTo(o.x + k*sw + sw,   o.y + o.h);
         ctx.closePath();
         ctx.fill();
-      } else if (o.type === 'spike2') {
-        const sw = o.w / 2;
-        for (let k = 0; k < 2; k++) {
-          ctx.beginPath();
-          ctx.moveTo(o.x + k*sw, o.y + o.h);
-          ctx.lineTo(o.x + k*sw + sw/2, o.y);
-          ctx.lineTo(o.x + k*sw + sw, o.y + o.h);
-          ctx.closePath();
-          ctx.fill();
-        }
-      } else if (o.type === 'spike3') {
-        const sw = o.w / 3;
-        for (let k = 0; k < 3; k++) {
-          ctx.beginPath();
-          ctx.moveTo(o.x + k*sw, o.y + o.h);
-          ctx.lineTo(o.x + k*sw + sw/2, o.y);
-          ctx.lineTo(o.x + k*sw + sw, o.y + o.h);
-          ctx.closePath();
-          ctx.fill();
-        }
-      } else {
-        ctx.fillRect(o.x, o.y, o.w, o.h);
       }
     }
 
-    // Coin pickups — pulsing golden diamonds
     for (const pk of pickups) {
       const pulse = 1 + Math.sin(pickupPulse + pk.phase) * 0.12;
       const r = pk.r * pulse;
@@ -642,7 +611,6 @@
       ctx.restore();
     }
 
-    // Player — GD-style rotating cube
     if (state !== 'dead') {
       const pcx = player.x + PS / 2;
       const pcy = player.y + PS / 2;
@@ -651,7 +619,6 @@
       ctx.rotate(player.angle);
       ctx.fillStyle = text;
       ctx.fillRect(-PS/2, -PS/2, PS, PS);
-      // Shield tint
       if (shieldsLeft > 0) {
         ctx.fillStyle = muted;
         ctx.globalAlpha = 0.35;
@@ -769,14 +736,7 @@
       ctx.font = '300 11px "DM Mono", monospace';
       ctx.fillStyle = muted;
       ctx.fillText('←  ' + difficulty + '  →', W/2, diffY);
-      hitAreas.push({
-        x: W/2 - 80, y: diffY - 14, w: 160, h: 24,
-        action: () => {
-          const i = DIFF_NAMES.indexOf(difficulty);
-          difficulty = DIFF_NAMES[(i + 1) % DIFF_NAMES.length];
-          saveAll();
-        }
-      });
+      hitAreas.push({ x: W/2 - 80, y: diffY - 14, w: 160, h: 24, action: () => cycleDiff(1) });
 
       // Upgrades link
       const uY = midY + 74;
@@ -835,6 +795,7 @@
   function loop(t) {
     const dt = Math.min((t - lastT) / 1000, 0.05);
     lastT = t;
+    nowMs = t;
     update(dt);
     draw();
     requestAnimationFrame(loop);
