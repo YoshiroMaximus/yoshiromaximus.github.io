@@ -1071,33 +1071,25 @@ DNA is replicated during the ___ phase || S
       btn.textContent = 'Copy'; btn.disabled = false;
     }
 
-    async function copyShareLink() {
-      const input = document.getElementById('share-link');
-      const btn = document.getElementById('share-copy-btn');
+    async function copyText(text, btnEl, doneLabel = 'Copied ✓') {
       try {
-        await navigator.clipboard.writeText(input.value);
-        btn.textContent = 'Copied ✓';
-        setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
-      } catch {
-        input.select(); document.execCommand('copy');
-        btn.textContent = 'Copied ✓';
-        setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
-      }
-    }
-
-    async function copyDeckLink(id, btnEl) {
-      const url = deckShareUrl(id);
-      try {
-        await navigator.clipboard.writeText(url);
+        await navigator.clipboard.writeText(text);
       } catch {
         const ta = document.createElement('textarea');
-        ta.value = url; document.body.appendChild(ta);
+        ta.value = text; document.body.appendChild(ta);
         ta.select(); document.execCommand('copy'); ta.remove();
       }
       const orig = btnEl.textContent;
-      btnEl.textContent = 'copied';
+      btnEl.textContent = doneLabel;
       btnEl.classList.add('copied');
       setTimeout(() => { btnEl.textContent = orig; btnEl.classList.remove('copied'); }, 1500);
+    }
+
+    function copyShareLink() {
+      copyText(document.getElementById('share-link').value, document.getElementById('share-copy-btn'), 'Copied ✓');
+    }
+    function copyDeckLink(id, btnEl) {
+      copyText(deckShareUrl(id), btnEl, 'copied');
     }
 
     async function submitToLibrary() {

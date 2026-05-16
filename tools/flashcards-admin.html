@@ -252,8 +252,8 @@
             headers: { 'content-type': 'application/json', 'x-admin-pass': pass() },
             body: JSON.stringify(body),
           });
-          const data = await r.json();
-          if (!r.ok) throw new Error(data.error || 'Save failed.');
+          const data = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(data.error || `Save failed (${r.status}).`);
           setStatus(`Saved "${data.title}".`);
           load();
         } catch (e) { setStatus(e.message, true); }

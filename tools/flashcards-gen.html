@@ -87,8 +87,8 @@
 
     .row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
 
-    label.field { display: block; margin-bottom: 0.75rem; }
-    label.field .lbl {
+    .field { display: block; margin-bottom: 0.75rem; }
+    .field .lbl {
       display: block;
       font-family: 'DM Mono', monospace; font-size: 0.65rem;
       letter-spacing: 0.08em; text-transform: uppercase;
@@ -259,7 +259,7 @@
     <!-- Step 3: options -->
     <div class="section">
       <p class="section-label">3 · Options</p>
-      <div class="field">
+      <div class="field" style="margin-bottom: 1.75rem">
         <span class="lbl">Mode · pick the card style</span>
         <input type="hidden" id="mode" value="standard">
         <div class="mode-grid" id="mode-grid"></div>
@@ -465,8 +465,7 @@ ${text}
 """`;
     }
 
-    // Recover a usable deck from JSON that was cut off mid-array.
-    // Strategy: find the cards array, walk forward keeping only complete {…} entries.
+    // Recover a usable deck from JSON cut off mid-array (Gemini hit max tokens).
     function salvageDeck(text, title, mode) {
       const cardsIdx = text.indexOf('"cards"');
       if (cardsIdx < 0) return null;
@@ -476,11 +475,9 @@ ${text}
       const cards = [];
       let i = arrStart + 1;
       while (i < text.length) {
-        // Skip whitespace and commas between objects.
         while (i < text.length && /[\s,]/.test(text[i])) i++;
         if (text[i] !== '{') break;
 
-        // Walk a balanced object, respecting strings and escapes.
         const objStart = i;
         let depth = 0, inStr = false, esc = false;
         let end = -1;
@@ -499,14 +496,14 @@ ${text}
             if (depth === 0) { end = i + 1; i = end; break; }
           }
         }
-        if (end < 0) break; // truncated mid-object — stop
+        if (end < 0) break;
 
         try {
           const card = JSON.parse(text.slice(objStart, end));
           if (card && card.front != null && card.back != null) {
             cards.push({ front: String(card.front), back: String(card.back) });
           }
-        } catch { /* skip malformed */ }
+        } catch {}
       }
 
       if (!cards.length) return null;
