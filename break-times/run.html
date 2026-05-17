@@ -2,7 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="run">
+  <meta name="theme-color" content="#f5f4f0" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)">
   <title>run</title>
   <link rel="icon" type="image/x-icon" href="/favistuff/favicon.ico">
   <link rel="icon" type="image/png" sizes="16x16" href="/favistuff/favicon-16x16.png">
@@ -20,23 +26,24 @@
     canvas { display: block; cursor: none; touch-action: none; }
     body.show-cursor canvas { cursor: default; }
     #back {
-      position: fixed; top: 1.5rem; left: 1.5rem;
+      position: fixed; top: max(1.5rem, env(safe-area-inset-top)); left: max(1.5rem, env(safe-area-inset-left));
       font-family: 'DM Mono', monospace; font-size: 0.7rem;
       color: var(--line); text-decoration: none;
-      letter-spacing: 0.06em; z-index: 100;
+      letter-spacing: 0.06em; z-index: 100; padding: 8px; margin: -8px;
     }
     #back:hover { color: var(--muted); }
     #theme {
-      position: fixed; top: 1.5rem; right: 1.5rem;
+      position: fixed; top: max(1.5rem, env(safe-area-inset-top)); right: max(1.5rem, env(safe-area-inset-right));
       background: none; border: none;
-      font-family: 'DM Mono', monospace; font-size: 1.1rem;
-      color: var(--muted); cursor: pointer; padding: 4px; z-index: 100;
+      font-family: 'DM Mono', monospace; font-size: 1.1rem; line-height: 1;
+      color: var(--muted); cursor: pointer; padding: 8px; z-index: 100;
     }
-    #audio-ctrl { position: fixed; top: 1.5rem; right: 3.5rem; z-index: 100; }
+    #audio-ctrl { position: fixed; top: max(1.5rem, env(safe-area-inset-top)); right: calc(max(1.5rem, env(safe-area-inset-right)) + 2rem); z-index: 100; }
+    @media (hover:none) { #music-hint { display: none; } }
     #mute {
       background: none; border: none;
       font-family: 'DM Mono', monospace; font-size: 1.1rem; line-height: 1;
-      color: var(--muted); cursor: pointer; padding: 4px;
+      color: var(--muted); cursor: pointer; padding: 8px;
     }
     #mute:hover { color: var(--text); }
     #vol-panel {
@@ -88,6 +95,21 @@
   </div>
   <audio id="bgm" src="/audio/zeldatwilightprincess.mp3" loop preload="auto"></audio>
   <canvas id="c"></canvas>
+  <div id="submit-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;align-items:center;justify-content:center;">
+    <div id="submit-box" style="background:var(--bg);border:1px solid var(--text);padding:28px 32px;width:min(320px,90vw);font-family:'DM Mono',monospace;text-align:center;">
+      <div style="font-size:13px;color:var(--text);margin-bottom:6px;">submit score</div>
+      <div id="sub-score" style="font-size:18px;color:#c8a020;margin-bottom:4px;font-weight:500;"></div>
+      <div id="sub-meta" style="font-size:10px;color:var(--muted);margin-bottom:20px;"></div>
+      <input id="name-input" type="text" maxlength="30" placeholder="your name"
+        style="width:100%;box-sizing:border-box;background:transparent;border:none;border-bottom:1px solid var(--text);color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:6px 2px;text-align:center;outline:none;margin-bottom:16px;">
+      <div id="sub-error" style="font-size:9px;color:#b04040;min-height:14px;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button id="sub-submit" style="flex:1;padding:9px;background:transparent;border:1px solid var(--text);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;">submit</button>
+        <button id="sub-cancel" style="flex:1;padding:9px;background:transparent;border:1px solid var(--line);color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;">post anon</button>
+      </div>
+      <div id="sub-status" style="font-size:10px;color:var(--muted);min-height:18px;margin-top:10px;"></div>
+    </div>
+  </div>
   <script>
   const TRACKS = [
     { id: 'twilight',  name: 'Zelda · Twilight Princess', src: '/audio/zeldatwilightprincess.mp3' },
@@ -164,7 +186,7 @@
 
   const canvas = document.getElementById('c');
   const ctx    = canvas.getContext('2d');
-  let W, H, GY;
+  let W, H, GY, isMobile = false;
 
   let C = {};
   function cacheColors() {
@@ -186,6 +208,25 @@
   let coins      = +localStorage.getItem('run_coins') || 0;
   let difficulty = localStorage.getItem('run_diff') || 'normal';
   let upgrades   = JSON.parse(localStorage.getItem('run_upgrades') || '{}');
+  let mode       = localStorage.getItem('run_mode') || 'normal';
+  let hiDaily    = JSON.parse(localStorage.getItem('run_hi_daily') || '{}');
+  let rngState   = 0;
+
+  function todayStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function setRunSeed(s) {
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+    rngState = h || 1;
+  }
+  function rand() {
+    if (mode !== 'daily') return Math.random();
+    rngState = (Math.imul(rngState, 1664525) + 1013904223) | 0;
+    return ((rngState >>> 0) / 4294967296);
+  }
+  function todayDailyHi() { return hiDaily[todayStr()] || 0; }
 
   const DIFF_NAMES = ['easy', 'normal', 'hard'];
   const DIFF = {
@@ -195,11 +236,15 @@
   };
 
   const UPGRADE_DEFS = [
-    { id: 'triple_jump', name: 'triple jump',  desc: '3rd jump per run',      cost: 500, max: 1 },
-    { id: 'boost_dur',   name: 'boost  +2s',   desc: 'longer boost window',   cost: 250, max: 5 },
-    { id: 'boost_cd',    name: 'cd  −2s',      desc: 'faster boost cooldown', cost: 300, max: 4 },
-    { id: 'shield',      name: 'shield',        desc: '1 free hit per run',    cost: 800, max: 3 },
-    { id: 'score_mult',  name: 'score  ×1.25', desc: 'score multiplier',      cost: 600, max: 4 },
+    { id: 'triple_jump', name: 'triple jump',  desc: '3rd jump per run',       cost: 500, max: 1 },
+    { id: 'boost_dur',   name: 'boost  +2s',   desc: 'longer boost window',    cost: 250, max: 5 },
+    { id: 'boost_cd',    name: 'cd  −2s',      desc: 'faster boost cooldown',  cost: 300, max: 4 },
+    { id: 'shield',      name: 'shield',        desc: '1 free hit per run',     cost: 800, max: 3 },
+    { id: 'score_mult',  name: 'score  ×1.25', desc: 'score multiplier',       cost: 600, max: 4 },
+    { id: 'magnet',      name: 'magnet',        desc: 'coins drift toward you', cost: 500, max: 3 },
+    { id: 'coin_value',  name: 'coin  +1',      desc: 'pickups worth more',     cost: 400, max: 3 },
+    { id: 'slim',        name: 'slim',          desc: 'smaller hitbox',         cost: 700, max: 2 },
+    { id: 'head_start',  name: 'head start',    desc: 'begin run with boost',   cost: 250, max: 3 },
   ];
 
   function upLvl(id) { return upgrades[id] || 0; }
@@ -207,6 +252,73 @@
     localStorage.setItem('run_coins', coins);
     localStorage.setItem('run_diff', difficulty);
     localStorage.setItem('run_upgrades', JSON.stringify(upgrades));
+  }
+
+  const SKINS = [
+    { id: 'default', name: 'default', cost: 0,    color: null },
+    { id: 'crimson', name: 'crimson', cost: 300,  color: '#c84040' },
+    { id: 'gold',    name: 'gold',    cost: 500,  color: '#c8a020' },
+    { id: 'cyan',    name: 'cyan',    cost: 300,  color: '#40a8a8' },
+    { id: 'forest',  name: 'forest',  cost: 300,  color: '#5a9a60' },
+    { id: 'violet',  name: 'violet',  cost: 500,  color: '#8a40a8' },
+    { id: 'void',    name: 'void',    cost: 800,  color: 'inverted' },
+    { id: 'prism',   name: 'prism',   cost: 1500, color: 'rainbow' },
+  ];
+
+  let skins = JSON.parse(localStorage.getItem('run_skins') || '{"owned":["default"],"equipped":"default"}');
+  function saveSkins() { localStorage.setItem('run_skins', JSON.stringify(skins)); }
+  function skinDef(id) { return SKINS.find(s => s.id === id) || SKINS[0]; }
+  function currentSkin() { return skinDef(skins.equipped); }
+  function buySkin(id) {
+    const s = skinDef(id);
+    if (skins.owned.includes(id)) return;
+    if (coins < s.cost) return;
+    coins -= s.cost;
+    skins.owned.push(id);
+    saveAll(); saveSkins();
+  }
+  function equipSkin(id) {
+    if (!skins.owned.includes(id)) return;
+    skins.equipped = id;
+    saveSkins();
+  }
+
+  function skinFill(skin, text) {
+    if (!skin.color) return text;
+    if (skin.color === 'inverted') return null;
+    if (skin.color === 'rainbow') return 'hsl(' + ((nowMs / 8) % 360) + ',60%,55%)';
+    return skin.color;
+  }
+  function drawPlayerBody(skin, text, bg, muted, shieldOn, size) {
+    const ps = size || PS;
+    const fill = skinFill(skin, text);
+    if (skin.color === 'inverted') {
+      ctx.fillStyle = bg;
+      ctx.fillRect(-ps/2, -ps/2, ps, ps);
+      ctx.strokeStyle = text; ctx.lineWidth = 1;
+      ctx.strokeRect(-ps/2 + 0.5, -ps/2 + 0.5, ps - 1, ps - 1);
+    } else {
+      ctx.fillStyle = fill;
+      ctx.fillRect(-ps/2, -ps/2, ps, ps);
+    }
+    if (shieldOn) {
+      ctx.fillStyle = muted;
+      ctx.globalAlpha = 0.35;
+      ctx.fillRect(-ps/2, -ps/2, ps, ps);
+      ctx.globalAlpha = 1;
+    }
+    const inset = ps * 0.26;
+    ctx.fillStyle = bg;
+    ctx.fillRect(-ps/2 + inset, -ps/2 + inset, ps - inset*2, ps - inset*2);
+    if (skin.color === 'inverted') {
+      ctx.fillStyle = text;
+    } else if (skin.color === 'rainbow') {
+      ctx.fillStyle = bg;
+    } else {
+      ctx.fillStyle = fill || text;
+    }
+    const dot = Math.max(2, Math.round(ps * 0.13));
+    ctx.fillRect(-dot/2, -dot/2, dot, dot);
   }
 
   // ── Background layer data ──────────────────────────────────────────────
@@ -236,6 +348,7 @@
     canvas.style.height = H + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     GY = Math.round(H * 0.78);
+    isMobile = W < 640;
     cacheColors();
     generateBg();
   }
@@ -272,6 +385,10 @@
   function effBOOST_CD()   { return Math.max(2, BOOST_CD_BASE - upLvl('boost_cd') * 2); }
   function effMaxJumps()   { return upLvl('triple_jump') ? 3 : 2; }
   function effScoreMult()  { return Math.pow(1.25, upLvl('score_mult')); }
+  function effMagnetR()    { return upLvl('magnet') * 50; }
+  function effCoinBonus()  { return upLvl('coin_value'); }
+  function effSlimInset()  { return upLvl('slim') * 2; }
+  function effHeadStart()  { return upLvl('head_start') * 1.5; }
 
   // ── State ─────────────────────────────────────────────────────────────
   let state, score, spd, tickOff;
@@ -291,6 +408,7 @@
 
   function init() {
     state = 'idle'; score = 0; coinsEarned = 0; coinsCollected = 0;
+    if (mode === 'daily') { difficulty = 'normal'; setRunSeed(todayStr()); }
     const diff = DIFF[difficulty];
     spd = diff.v0; tickOff = 0;
     spawnTimer = 1.0; spawnMode = 'gap'; clusterLeft = 0;
@@ -303,10 +421,17 @@
   }
 
   // ── Input ─────────────────────────────────────────────────────────────
+  function beginRun() {
+    state = 'run';
+    const hs = effHeadStart();
+    if (hs > 0) { boostActive = true; boostTimer = hs; boostCooldown = 0; }
+    doJump();
+  }
   function onAction() {
-    if (state === 'idle') { state = 'run'; doJump(); return; }
+    if (state === 'idle') { beginRun(); return; }
     if (state === 'dead') { init(); return; }
     if (state === 'shop') return;
+    if (state === 'skins') return;
     if (state === 'paused') { state = 'run'; return; }
     doJump();
   }
@@ -339,6 +464,14 @@
     init();
   }
 
+  function openSkins() {
+    state = 'skins';
+  }
+
+  function closeSkins() {
+    init();
+  }
+
   function buyUpgrade(idx) {
     const def = UPGRADE_DEFS[idx];
     const lvl = upLvl(def.id);
@@ -352,6 +485,7 @@
   canvas.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
 
   window.addEventListener('keydown', e => {
+    if (submitOverlay && submitOverlay.style.display === 'flex') return;
     if (state === 'shop') {
       if (e.code === 'ArrowUp')                              { e.preventDefault(); shopSel = (shopSel - 1 + UPGRADE_DEFS.length) % UPGRADE_DEFS.length; }
       if (e.code === 'ArrowDown')                            { e.preventDefault(); shopSel = (shopSel + 1) % UPGRADE_DEFS.length; }
@@ -359,8 +493,12 @@
       if (e.code === 'Escape' || e.code === 'Backspace')    { e.preventDefault(); closeShop(); }
       return;
     }
-    if (e.code === 'ArrowLeft' && state === 'idle')  { e.preventDefault(); cycleDiff(-1); return; }
-    if (e.code === 'ArrowRight' && state === 'idle') { e.preventDefault(); cycleDiff( 1); return; }
+    if (state === 'skins') {
+      if (e.code === 'Escape' || e.code === 'Backspace') { e.preventDefault(); closeSkins(); }
+      return;
+    }
+    if (e.code === 'ArrowLeft' && state === 'idle' && mode !== 'daily')  { e.preventDefault(); cycleDiff(-1); return; }
+    if (e.code === 'ArrowRight' && state === 'idle' && mode !== 'daily') { e.preventDefault(); cycleDiff( 1); return; }
     if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); onAction(); }
     if (e.code === 'KeyG') doBoost();
     if (e.code === 'KeyU' && state !== 'run' && state !== 'paused') openShop();
@@ -444,15 +582,15 @@
     if (spawnTimer <= 0) {
       if (spawnMode === 'gap') {
         const maxSize = Math.max(1, 2 + Math.min(4, Math.floor(score / 600)) + diff.clusterBonus);
-        clusterLeft = Math.max(1, 2 + Math.floor(Math.random() * (maxSize - 1)));
+        clusterLeft = Math.max(1, 2 + Math.floor(rand() * (maxSize - 1)));
         spawnMode = 'cluster';
       }
-      const [w, h, type] = OBS[Math.floor(Math.random() * OBS.length)];
+      const [w, h, type] = OBS[Math.floor(rand() * OBS.length)];
       obstacles.push({ x: W + 10, y: GY - h, w, h, type: type || 'block' });
       clusterLeft--;
       if (clusterLeft <= 0) {
         spawnMode = 'gap';
-        spawnTimer = (diff.gapA + Math.random() * diff.gapB) / spd;
+        spawnTimer = (diff.gapA + rand() * diff.gapB) / spd;
       } else {
         const gap = Math.max(diff.gapMin, 230 - score / 120);
         spawnTimer = gap / spd;
@@ -465,20 +603,32 @@
 
     pickupTimer -= dt;
     if (pickupTimer <= 0) {
-      const py = GY - (40 + Math.random() * 110);
+      const py = GY - (40 + rand() * 110);
       pickups.push({ x: W + 14, y: py, r: 8, vy: 0, phase: Math.random() * Math.PI * 2 });
-      pickupTimer = 1.6 + Math.random() * 1.4;
+      pickupTimer = 1.6 + rand() * 1.4;
     }
     pickupPulse += dt * 4;
+    const magnetR = effMagnetR();
+    const coinBonus = effCoinBonus();
     for (let i = pickups.length - 1; i >= 0; i--) {
       const pk = pickups[i];
       pk.x -= eff * dt;
       if (pk.x + pk.r < -10) { pickups.splice(i, 1); continue; }
+      if (magnetR > 0) {
+        const pcx = player.x + PS/2, pcy = player.y + PS/2;
+        const mdx = pcx - pk.x, mdy = pcy - pk.y;
+        const dist = Math.sqrt(mdx*mdx + mdy*mdy);
+        if (dist < magnetR && dist > 0) {
+          const force = (1 - dist/magnetR) * 600 * dt;
+          pk.x += (mdx/dist) * force;
+          pk.y += (mdy/dist) * force;
+        }
+      }
       const closestX = Math.max(player.x, Math.min(pk.x, player.x + PS));
       const closestY = Math.max(player.y, Math.min(pk.y, player.y + PS));
       const dx = pk.x - closestX, dy = pk.y - closestY;
       if (dx*dx + dy*dy <= pk.r*pk.r + 4) {
-        const earned = boostActive ? 2 : 1;
+        const earned = (boostActive ? 2 : 1) + coinBonus;
         coinsCollected += earned;
         spawnDust(pk.x, pk.y, 8);
         pickups.splice(i, 1);
@@ -495,7 +645,8 @@
     shakeX *= 0.74; shakeY *= 0.74;
 
     // Collision (inset hitbox)
-    const hx = player.x+4, hy = player.y+4, hw = PS-8, hh = PS-5;
+    const slimI = effSlimInset();
+    const hx = player.x+4+slimI, hy = player.y+4+slimI, hw = PS-8-slimI*2, hh = PS-5-slimI*2;
     for (let i = 0; i < obstacles.length; i++) {
       const o = obstacles[i];
       if (hx < o.x+o.w && hx+hw > o.x && hy < o.y+o.h && hy+hh > o.y) {
@@ -506,8 +657,16 @@
           shakeX = 6; shakeY = 5;
         } else {
           state = 'dead';
-          hiScore = Math.max(hiScore, Math.floor(score));
-          localStorage.setItem('run_hi', hiScore);
+          if (mode === 'daily') {
+            const today = todayStr();
+            if ((hiDaily[today] || 0) < Math.floor(score)) {
+              hiDaily[today] = Math.floor(score);
+              localStorage.setItem('run_hi_daily', JSON.stringify(hiDaily));
+            }
+          } else {
+            hiScore = Math.max(hiScore, Math.floor(score));
+            localStorage.setItem('run_hi', hiScore);
+          }
           const scoreCoins = Math.floor(Math.floor(score) / 40 * DIFF[difficulty].coinMult);
           coinsEarned = scoreCoins + coinsCollected;
           coins += coinsEarned;
@@ -536,8 +695,8 @@
 
     const cx  = W / 2;
     const ty  = H * 0.16;
-    const rowH = 54;
-    const listY = ty + 68;
+    const rowH = 44;
+    const listY = ty + 60;
     const colW  = Math.min(340, W * 0.8);
 
     // Title
@@ -612,7 +771,7 @@
     ctx.textAlign = 'center';
     ctx.font = '300 10px "DM Mono", monospace';
     ctx.fillStyle = muted;
-    ctx.fillText('↑↓ navigate  ·  enter buy  ·  esc / tap to close', cx, H - 26);
+    ctx.fillText(isMobile ? 'tap a row to buy  ·  tap here to close' : '↑↓ navigate  ·  enter buy  ·  esc / tap to close', cx, H - 26);
     hitAreas.push({ x: cx - 180, y: H - 44, w: 360, h: 32, action: closeShop });
 
     // Close button — top-right
@@ -623,6 +782,94 @@
     hitAreas.push({ x: cx + colW/2 - 24, y: ty - 22, w: 32, h: 32, action: closeShop });
   }
 
+  function drawSkins() {
+    hitAreas = [];
+    const { bg, text, muted, line } = C;
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    const cx = W / 2;
+    const ty = H * 0.14;
+    const colW = Math.min(440, W * 0.86);
+
+    ctx.textAlign = 'center';
+    ctx.font = '400 26px "DM Mono", monospace';
+    ctx.fillStyle = text;
+    ctx.fillText('skins', cx, ty);
+
+    ctx.font = '300 11px "DM Mono", monospace';
+    ctx.fillStyle = muted;
+    ctx.fillText(coins + '  coins', cx, ty + 22);
+
+    ctx.strokeStyle = line; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - colW/2, ty + 38);
+    ctx.lineTo(cx + colW/2, ty + 38);
+    ctx.stroke();
+
+    const cols = isMobile ? 2 : 3;
+    const cardW = Math.floor((colW - (cols - 1) * 12) / cols);
+    const cardH = 104;
+    const gridY = ty + 58;
+
+    for (let i = 0; i < SKINS.length; i++) {
+      const sk = SKINS[i];
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = cx - colW/2 + col * (cardW + 12);
+      const y = gridY + row * (cardH + 12);
+
+      const owned    = skins.owned.includes(sk.id);
+      const equipped = skins.equipped === sk.id;
+      const canBuy   = !owned && coins >= sk.cost;
+      const area     = { x, y, w: cardW, h: cardH };
+      const hov      = hit(area, mouseX, mouseY);
+
+      ctx.fillStyle = equipped ? line : (hov ? line : 'transparent');
+      if (equipped || hov) { ctx.globalAlpha = equipped ? 0.6 : 0.3; ctx.fillRect(x, y, cardW, cardH); ctx.globalAlpha = 1; }
+      ctx.strokeStyle = equipped ? text : line;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 0.5, y + 0.5, cardW - 1, cardH - 1);
+
+      ctx.save();
+      ctx.translate(x + cardW/2, y + 36);
+      drawPlayerBody(sk, text, bg, muted, false, 28);
+      ctx.restore();
+
+      ctx.font = '400 12px "DM Mono", monospace';
+      ctx.fillStyle = (owned || canBuy) ? text : muted;
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(sk.name, x + cardW/2, y + 70);
+
+      ctx.font = '300 10px "DM Mono", monospace';
+      let status, statusColor;
+      if (equipped)      { status = 'equipped';     statusColor = '#c8a020'; }
+      else if (owned)    { status = 'tap to equip'; statusColor = muted; }
+      else if (canBuy)   { status = sk.cost + ' c'; statusColor = text; }
+      else               { status = sk.cost + ' c'; statusColor = muted; }
+      ctx.fillStyle = statusColor;
+      ctx.fillText(status, x + cardW/2, y + 88);
+
+      hitAreas.push({ ...area, action: () => {
+        if (equipped) return;
+        if (owned) equipSkin(sk.id);
+        else buySkin(sk.id);
+      }});
+    }
+
+    ctx.textAlign = 'center';
+    ctx.font = '300 10px "DM Mono", monospace';
+    ctx.fillStyle = muted;
+    ctx.fillText(isMobile ? 'tap a skin to buy or equip  ·  tap here to close' : 'click a skin  ·  esc / tap to close', cx, H - 26);
+    hitAreas.push({ x: cx - 200, y: H - 44, w: 400, h: 32, action: closeSkins });
+
+    ctx.textAlign = 'right';
+    ctx.font = '400 16px "DM Mono", monospace';
+    ctx.fillStyle = text;
+    ctx.fillText('✕', cx + colW/2, ty);
+    hitAreas.push({ x: cx + colW/2 - 24, y: ty - 22, w: 32, h: 32, action: closeSkins });
+  }
+
   let lastCursorState = null;
   let nowMs = 0;
   function draw() {
@@ -630,7 +877,8 @@
       document.body.classList.toggle('show-cursor', state !== 'run');
       lastCursorState = state;
     }
-    if (state === 'shop') { drawShop(); return; }
+    if (state === 'shop')  { drawShop();  return; }
+    if (state === 'skins') { drawSkins(); return; }
 
     hitAreas = [];
     const { bg, text, muted, line } = C;
@@ -726,19 +974,7 @@
       ctx.save();
       ctx.translate(pcx, pcy);
       ctx.rotate(player.angle);
-      ctx.fillStyle = text;
-      ctx.fillRect(-PS/2, -PS/2, PS, PS);
-      if (shieldsLeft > 0) {
-        ctx.fillStyle = muted;
-        ctx.globalAlpha = 0.35;
-        ctx.fillRect(-PS/2, -PS/2, PS, PS);
-        ctx.globalAlpha = 1;
-      }
-      const inset = PS * 0.26;
-      ctx.fillStyle = bg;
-      ctx.fillRect(-PS/2 + inset, -PS/2 + inset, PS - inset*2, PS - inset*2);
-      ctx.fillStyle = text;
-      ctx.fillRect(-3, -3, 6, 6);
+      drawPlayerBody(currentSkin(), text, bg, muted, shieldsLeft > 0);
       ctx.restore();
     }
 
@@ -766,39 +1002,50 @@
     ctx.stroke();
 
     // ── HUD ───────────────────────────────────────────────────────────
-    ctx.textAlign = 'right';
-    ctx.font = '400 13px "DM Mono", monospace';
-    ctx.fillStyle = text;
-    ctx.fillText((boostActive ? '×10  ' : '') + String(Math.floor(score)).padStart(6, '0'), W - 22, 38);
-    ctx.font = '300 10px "DM Mono", monospace';
-    ctx.fillStyle = muted;
-    ctx.fillText('hi  ' + String(hiScore).padStart(6, '0'), W - 22, 56);
-
-    // Coins (top right, below hi score)
-    ctx.fillText('◆  ' + coins + (coinsCollected > 0 && state === 'run' ? '  +' + coinsCollected : ''), W - 22, 72);
-
-    // Boost indicator — bottom-left (tappable while running)
-    ctx.textAlign = 'left';
-    ctx.font = '400 11px "DM Mono", monospace';
-    if (boostActive) {
+    const hudVisible = state === 'run' || state === 'paused';
+    const hudR = W - 22;
+    const hudT = 70;
+    if (hudVisible) {
+      ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';
+      ctx.font = '400 13px "DM Mono", monospace';
       ctx.fillStyle = text;
-      ctx.fillText('[ G ]  ×10  ' + boostTimer.toFixed(1) + 's', 22, H - 38);
-    } else if (boostCooldown > 0) {
+      ctx.fillText((boostActive ? '×10  ' : '') + String(Math.floor(score)).padStart(6, '0'), hudR, hudT);
+      ctx.font = '300 10px "DM Mono", monospace';
       ctx.fillStyle = muted;
-      ctx.fillText('[ G ]  ' + boostCooldown.toFixed(1) + 's', 22, H - 38);
-    } else {
-      ctx.fillStyle = text;
-      ctx.fillText('[ G ]  ready', 22, H - 38);
+      ctx.fillText('hi  ' + String(hiScore).padStart(6, '0'), hudR, hudT + 18);
+      ctx.fillText('◆  ' + coins + (coinsCollected > 0 && state === 'run' ? '  +' + coinsCollected : ''), hudR, hudT + 34);
     }
+
+    // Boost indicator — bottom-left button (tappable while running)
     if (state === 'run') {
-      hitAreas.push({ x: 12, y: H - 60, w: 180, h: 48, action: doBoost });
+      const bbW = 96, bbH = 32;
+      const bbX = 22, bbY = H - 32 - bbH;
+      const bbReady = !boostActive && boostCooldown <= 0;
+      const bbHov = hit({ x: bbX, y: bbY, w: bbW, h: bbH }, mouseX, mouseY);
+      ctx.fillStyle = boostActive ? text : (bbHov && bbReady ? line : 'transparent');
+      if (boostActive) ctx.fillRect(bbX, bbY, bbW, bbH);
+      else if (bbHov && bbReady) { ctx.globalAlpha = 0.4; ctx.fillRect(bbX, bbY, bbW, bbH); ctx.globalAlpha = 1; }
+      ctx.strokeStyle = boostActive ? text : (bbReady ? text : line);
+      ctx.lineWidth = 1;
+      ctx.strokeRect(bbX + 0.5, bbY + 0.5, bbW - 1, bbH - 1);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = '400 11px "DM Mono", monospace';
+      ctx.fillStyle = boostActive ? bg : (bbReady ? text : muted);
+      const boostLabel = boostActive
+        ? '×10  ' + boostTimer.toFixed(1) + 's'
+        : boostCooldown > 0
+          ? boostCooldown.toFixed(1) + 's'
+          : (isMobile ? 'boost' : '[G]  boost');
+      ctx.fillText(boostLabel, bbX + bbW/2, bbY + bbH/2);
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      hitAreas.push({ x: bbX - 6, y: bbY - 6, w: bbW + 12, h: bbH + 12, action: doBoost });
     }
 
     // Pause button — top-right, below coins
     if (state === 'run' || state === 'paused') {
       const pSize = 36;
       const pX = W - 22 - pSize;
-      const pY = 92;
+      const pY = hudT + 50;
       ctx.strokeStyle = line; ctx.lineWidth = 1;
       ctx.strokeRect(pX + 0.5, pY + 0.5, pSize, pSize);
       ctx.fillStyle = text;
@@ -818,12 +1065,13 @@
 
     // Shield indicator
     const maxShields = upLvl('shield');
-    if (maxShields > 0) {
+    if (maxShields > 0 && state === 'run') {
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
       ctx.font = '300 11px "DM Mono", monospace';
       ctx.fillStyle = muted;
       let sdots = '';
       for (let i = 0; i < maxShields; i++) sdots += i < shieldsLeft ? '●' : '○';
-      ctx.fillText('shield  ' + sdots, 22, H - 22);
+      ctx.fillText('shield  ' + sdots, 132, H - 50);
     }
 
     // ── Overlays ──────────────────────────────────────────────────────
@@ -831,28 +1079,147 @@
     ctx.textAlign = 'center';
 
     if (state === 'idle') {
-      ctx.font = '400 32px "DM Mono", monospace';
+      ctx.font = '400 56px "DM Mono", monospace';
       ctx.fillStyle = text;
-      ctx.fillText('run', W/2, midY - 18);
+      ctx.fillText('run', W/2, midY - 90);
 
       ctx.font = '300 11px "DM Mono", monospace';
       ctx.fillStyle = muted;
-      ctx.fillText('space  ·  click  ·  tap', W/2, midY + 10);
-      ctx.fillText('double jump available', W/2, midY + 28);
+      ctx.fillText('endless  ·  double jump  ·  upgrades', W/2, midY - 64);
 
-      // Difficulty selector (tap cycles)
-      const diffY = midY + 54;
-      ctx.font = '300 11px "DM Mono", monospace';
-      ctx.fillStyle = muted;
-      ctx.fillText('←  ' + difficulty + '  →', W/2, diffY);
-      hitAreas.push({ x: W/2 - 80, y: diffY - 14, w: 160, h: 24, action: () => cycleDiff(1) });
+      const dailyHi = todayDailyHi();
+      if (mode === 'daily') {
+        ctx.font = '300 10px "DM Mono", monospace';
+        ctx.fillStyle = '#c8a020';
+        const lbl = dailyHi > 0 ? "today's best  " + String(dailyHi).padStart(6, '0') : "today's best  —";
+        ctx.fillText(lbl, W/2, midY - 44);
+      } else if (hiScore > 0) {
+        ctx.font = '300 10px "DM Mono", monospace';
+        ctx.fillStyle = '#c8a020';
+        ctx.fillText('best  ' + String(hiScore).padStart(6, '0'), W/2, midY - 44);
+      }
 
-      // Upgrades link
-      const uY = midY + 74;
       ctx.font = '300 10px "DM Mono", monospace';
       ctx.fillStyle = muted;
-      ctx.fillText('[ U ]  upgrades', W/2, uY);
-      hitAreas.push({ x: W/2 - 60, y: uY - 12, w: 120, h: 18, action: openShop });
+      ctx.fillText('mode', W/2, midY - 18);
+      const MODES = ['normal', 'daily'];
+      const mBtnW = Math.min(100, (W - 60) / 2 - 8), mBtnH = 26, mGap = 8;
+      const mTotal = MODES.length * mBtnW + (MODES.length - 1) * mGap;
+      let mx = W/2 - mTotal/2;
+      const my = midY - 8;
+      MODES.forEach(m => {
+        const sel = m === mode;
+        const area = { x: mx, y: my, w: mBtnW, h: mBtnH };
+        const hov = hit(area, mouseX, mouseY);
+        ctx.fillStyle = sel ? line : (hov ? line : 'transparent');
+        if (sel || hov) { ctx.globalAlpha = sel ? 0.7 : 0.35; ctx.fillRect(mx, my, mBtnW, mBtnH); ctx.globalAlpha = 1; }
+        ctx.strokeStyle = sel ? text : line; ctx.lineWidth = 1;
+        ctx.strokeRect(mx + 0.5, my + 0.5, mBtnW - 1, mBtnH - 1);
+        ctx.font = '400 11px "DM Mono", monospace';
+        ctx.fillStyle = sel ? text : muted;
+        ctx.textBaseline = 'middle';
+        ctx.fillText(m, mx + mBtnW/2, my + mBtnH/2);
+        ctx.textBaseline = 'alphabetic';
+        hitAreas.push({ ...area, action: () => {
+          mode = m;
+          localStorage.setItem('run_mode', mode);
+          if (mode === 'daily') { difficulty = 'normal'; saveAll(); }
+        } });
+        mx += mBtnW + mGap;
+      });
+
+      let sbY;
+      if (mode === 'daily') {
+        ctx.font = '300 10px "DM Mono", monospace';
+        ctx.fillStyle = muted;
+        ctx.fillText('today  ·  ' + todayStr(), W/2, midY + 36);
+        sbY = midY + 56;
+      } else {
+        ctx.font = '300 10px "DM Mono", monospace';
+        ctx.fillStyle = muted;
+        ctx.fillText('difficulty', W/2, midY + 40);
+        const dBtnW = Math.min(90, (W - 60) / 3 - 8), dBtnH = 26, dGap = 8;
+        const dTotal = DIFF_NAMES.length * dBtnW + (DIFF_NAMES.length - 1) * dGap;
+        let dx = W/2 - dTotal/2;
+        const dy = midY + 50;
+        DIFF_NAMES.forEach(d => {
+          const sel = d === difficulty;
+          const area = { x: dx, y: dy, w: dBtnW, h: dBtnH };
+          const hov = hit(area, mouseX, mouseY);
+          ctx.fillStyle = sel ? line : (hov ? line : 'transparent');
+          if (sel || hov) { ctx.globalAlpha = sel ? 0.7 : 0.35; ctx.fillRect(dx, dy, dBtnW, dBtnH); ctx.globalAlpha = 1; }
+          ctx.strokeStyle = sel ? text : line; ctx.lineWidth = 1;
+          ctx.strokeRect(dx + 0.5, dy + 0.5, dBtnW - 1, dBtnH - 1);
+          ctx.font = '400 11px "DM Mono", monospace';
+          ctx.fillStyle = sel ? text : muted;
+          ctx.textBaseline = 'middle';
+          ctx.fillText(d, dx + dBtnW/2, dy + dBtnH/2);
+          ctx.textBaseline = 'alphabetic';
+          hitAreas.push({ ...area, action: () => { difficulty = d; saveAll(); } });
+          dx += dBtnW + dGap;
+        });
+        sbY = midY + 94;
+      }
+
+      const sbW = 180, sbH = 36;
+      const sbX = W/2 - sbW/2;
+      const sbHov = hit({ x: sbX, y: sbY, w: sbW, h: sbH }, mouseX, mouseY);
+      ctx.fillStyle = sbHov ? text : 'transparent';
+      ctx.fillRect(sbX, sbY, sbW, sbH);
+      ctx.strokeStyle = text; ctx.lineWidth = 1;
+      ctx.strokeRect(sbX + 0.5, sbY + 0.5, sbW - 1, sbH - 1);
+      ctx.font = '500 13px "DM Mono", monospace';
+      ctx.fillStyle = sbHov ? bg : text;
+      ctx.textBaseline = 'middle';
+      ctx.fillText('begin run', W/2, sbY + sbH/2);
+      ctx.textBaseline = 'alphabetic';
+      hitAreas.push({ x: sbX, y: sbY, w: sbW, h: sbH, action: onAction });
+
+      ctx.font = '300 10px "DM Mono", monospace';
+      ctx.fillStyle = muted;
+      ctx.fillText(isMobile ? 'tap to jump  ·  double-tap for double jump' : 'space · click · tap to jump', W/2, sbY + sbH + 22);
+
+      const uH = 28;
+      const uGap = 10;
+      const totalW = Math.min(300, W - 60);
+      const uW = (totalW - uGap) / 2;
+      const uY = sbY + sbH + 48;
+      const uX1 = W/2 - totalW/2;
+      const uX2 = uX1 + uW + uGap;
+
+      const u1Hov = hit({ x: uX1, y: uY, w: uW, h: uH }, mouseX, mouseY);
+      ctx.fillStyle = u1Hov ? line : 'transparent';
+      if (u1Hov) { ctx.globalAlpha = 0.4; ctx.fillRect(uX1, uY, uW, uH); ctx.globalAlpha = 1; }
+      ctx.strokeStyle = line; ctx.lineWidth = 1;
+      ctx.strokeRect(uX1 + 0.5, uY + 0.5, uW - 1, uH - 1);
+      ctx.font = '400 11px "DM Mono", monospace';
+      ctx.fillStyle = muted;
+      ctx.textBaseline = 'middle';
+      ctx.fillText('upgrades  ◆ ' + coins, uX1 + uW/2, uY + uH/2);
+      ctx.textBaseline = 'alphabetic';
+      hitAreas.push({ x: uX1, y: uY, w: uW, h: uH, action: openShop });
+
+      const u2Hov = hit({ x: uX2, y: uY, w: uW, h: uH }, mouseX, mouseY);
+      ctx.fillStyle = u2Hov ? line : 'transparent';
+      if (u2Hov) { ctx.globalAlpha = 0.4; ctx.fillRect(uX2, uY, uW, uH); ctx.globalAlpha = 1; }
+      ctx.strokeStyle = line; ctx.lineWidth = 1;
+      ctx.strokeRect(uX2 + 0.5, uY + 0.5, uW - 1, uH - 1);
+      ctx.font = '400 11px "DM Mono", monospace';
+      ctx.fillStyle = muted;
+      ctx.textBaseline = 'middle';
+      ctx.fillText('skins', uX2 + uW/2, uY + uH/2);
+      ctx.textBaseline = 'alphabetic';
+      hitAreas.push({ x: uX2, y: uY, w: uW, h: uH, action: openSkins });
+
+      const lbW = 160, lbH = 26;
+      const lbX = W/2 - lbW/2, lbY = uY + uH + 14;
+      const lbHov = hit({ x: lbX, y: lbY, w: lbW, h: lbH }, mouseX, mouseY);
+      ctx.font = '300 10px "DM Mono", monospace';
+      ctx.fillStyle = lbHov ? text : muted;
+      ctx.textBaseline = 'middle';
+      ctx.fillText('leaderboard →', W/2, lbY + lbH/2);
+      ctx.textBaseline = 'alphabetic';
+      hitAreas.push({ x: lbX, y: lbY, w: lbW, h: lbH, action: () => window.location.href = '/break-times/run-leaderboard.html' });
 
     } else if (state === 'paused') {
       ctx.fillStyle = bg;
@@ -864,37 +1231,79 @@
       ctx.fillText('paused', W/2, midY - 8);
       ctx.font = '300 11px "DM Mono", monospace';
       ctx.fillStyle = muted;
-      ctx.fillText('P  ·  click  ·  tap  to resume', W/2, midY + 20);
+      ctx.fillText(isMobile ? 'tap to resume' : 'P  ·  click  ·  tap to resume', W/2, midY + 20);
       hitAreas.push({ x: 0, y: 0, w: W, h: H, action: togglePause });
 
     } else if (state === 'dead') {
-      ctx.font = '400 32px "DM Mono", monospace';
+      const sf = Math.floor(score);
+      const bestRef = mode === 'daily' ? todayDailyHi() : hiScore;
+      const isNew = sf === bestRef && bestRef > 0;
+
+      ctx.font = '400 48px "DM Mono", monospace';
       ctx.fillStyle = text;
-      ctx.fillText('—', W/2, midY - 18);
+      ctx.fillText('—', W/2, midY - 56);
 
-      ctx.font = '300 11px "DM Mono", monospace';
-      ctx.fillStyle = muted;
-      const isNew = Math.floor(score) === hiScore && hiScore > 0;
-      ctx.fillText(String(Math.floor(score)) + (isNew ? '  ← best' : ''), W/2, midY + 10);
-      ctx.fillText('space  ·  click  ·  tap  to retry', W/2, midY + 28);
+      ctx.font = '400 22px "DM Mono", monospace';
+      ctx.fillStyle = isNew ? '#c8a020' : text;
+      ctx.fillText(String(sf).padStart(6, '0') + (isNew ? '  ★' : ''), W/2, midY - 22);
 
-      // Coins earned
-      if (coinsEarned > 0) {
-        ctx.fillStyle = text;
-        const breakdown = coinsCollected > 0
-          ? '+' + coinsEarned + '  coins  (' + (coinsEarned - coinsCollected) + ' score · ' + coinsCollected + ' picked up)'
-          : '+' + coinsEarned + '  coins';
-        ctx.fillText(breakdown, W/2, midY + 46);
-        ctx.fillStyle = muted;
-        ctx.fillText('total  ' + coins, W/2, midY + 62);
-      }
-
-      // Upgrades link
-      const uY = midY + 64 + (coinsEarned > 0 ? 30 : 0);
       ctx.font = '300 10px "DM Mono", monospace';
       ctx.fillStyle = muted;
-      ctx.fillText('[ U ]  upgrades', W/2, uY);
-      hitAreas.push({ x: W/2 - 60, y: uY - 12, w: 120, h: 18, action: openShop });
+      const bestLbl = mode === 'daily' ? "today's best  " : 'best  ';
+      ctx.fillText(isNew ? 'new best  ·  ' + bestLbl + String(bestRef).padStart(6, '0') : bestLbl + String(bestRef).padStart(6, '0'), W/2, midY - 2);
+
+      if (coinsEarned > 0) {
+        ctx.font = '400 12px "DM Mono", monospace';
+        ctx.fillStyle = '#c8a020';
+        ctx.fillText('+' + coinsEarned + '  ◆   ·   total  ' + coins, W/2, midY + 22);
+        if (coinsCollected > 0) {
+          ctx.font = '300 9px "DM Mono", monospace';
+          ctx.fillStyle = muted;
+          ctx.fillText((coinsEarned - coinsCollected) + ' from score  ·  ' + coinsCollected + ' picked up', W/2, midY + 38);
+        }
+      }
+
+      const rbW = 180, rbH = 36;
+      const rbX = W/2 - rbW/2, rbY = midY + 56;
+      const rbHov = hit({ x: rbX, y: rbY, w: rbW, h: rbH }, mouseX, mouseY);
+      ctx.fillStyle = rbHov ? text : 'transparent';
+      ctx.fillRect(rbX, rbY, rbW, rbH);
+      ctx.strokeStyle = text; ctx.lineWidth = 1;
+      ctx.strokeRect(rbX + 0.5, rbY + 0.5, rbW - 1, rbH - 1);
+      ctx.font = '500 13px "DM Mono", monospace';
+      ctx.fillStyle = rbHov ? bg : text;
+      ctx.textBaseline = 'middle';
+      ctx.fillText('retry', W/2, rbY + rbH/2);
+      ctx.textBaseline = 'alphabetic';
+      hitAreas.push({ x: rbX, y: rbY, w: rbW, h: rbH, action: () => { init(); beginRun(); } });
+
+      const ssW = 180, ssH = 32;
+      const ssX = W/2 - ssW/2, ssY = midY + 56 + 40;
+      const ssHov = hit({ x: ssX, y: ssY, w: ssW, h: ssH }, mouseX, mouseY);
+      ctx.fillStyle = ssHov ? line : 'transparent';
+      if (ssHov) { ctx.globalAlpha = 0.4; ctx.fillRect(ssX, ssY, ssW, ssH); ctx.globalAlpha = 1; }
+      ctx.strokeStyle = text; ctx.lineWidth = 1;
+      ctx.strokeRect(ssX + 0.5, ssY + 0.5, ssW - 1, ssH - 1);
+      ctx.font = '400 12px "DM Mono", monospace';
+      ctx.fillStyle = text;
+      ctx.textBaseline = 'middle';
+      ctx.fillText('submit score', W/2, ssY + ssH/2);
+      ctx.textBaseline = 'alphabetic';
+      hitAreas.push({ x: ssX, y: ssY, w: ssW, h: ssH, action: () => openSubmitOverlay() });
+
+      const uW = 140, uH = 28;
+      const uX = W/2 - uW/2, uY = midY + 56 + 80;
+      const uHov = hit({ x: uX, y: uY, w: uW, h: uH }, mouseX, mouseY);
+      ctx.fillStyle = uHov ? line : 'transparent';
+      if (uHov) { ctx.globalAlpha = 0.4; ctx.fillRect(uX, uY, uW, uH); ctx.globalAlpha = 1; }
+      ctx.strokeStyle = line; ctx.lineWidth = 1;
+      ctx.strokeRect(uX + 0.5, uY + 0.5, uW - 1, uH - 1);
+      ctx.font = '400 11px "DM Mono", monospace';
+      ctx.fillStyle = muted;
+      ctx.textBaseline = 'middle';
+      ctx.fillText('upgrades  ◆ ' + coins, W/2, uY + uH/2);
+      ctx.textBaseline = 'alphabetic';
+      hitAreas.push({ x: uX, y: uY, w: uW, h: uH, action: openShop });
     }
 
     ctx.restore();
@@ -908,6 +1317,63 @@
     update(dt);
     draw();
     requestAnimationFrame(loop);
+  }
+
+  let submitSnap = null;
+  const submitOverlay = document.getElementById('submit-overlay');
+  const nameInput     = document.getElementById('name-input');
+  const subScore      = document.getElementById('sub-score');
+  const subMeta       = document.getElementById('sub-meta');
+  const subError      = document.getElementById('sub-error');
+  const subStatus     = document.getElementById('sub-status');
+  const subSubmit     = document.getElementById('sub-submit');
+
+  subSubmit.addEventListener('click', () => doSubmitScore());
+  document.getElementById('sub-cancel').addEventListener('click', () => doSubmitScore('anon'));
+  nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doSubmitScore(); } });
+
+  function openSubmitOverlay() {
+    const isDaily = mode === 'daily';
+    submitSnap = {
+      score: Math.floor(score),
+      difficulty,
+      mode,
+      seed: isDaily ? todayStr() : '',
+      coins: coinsEarned,
+    };
+    subScore.textContent = submitSnap.score.toLocaleString() + ' pts';
+    subMeta.textContent = `${submitSnap.difficulty}  ·  ${submitSnap.mode}` + (isDaily ? '  ·  ' + submitSnap.seed : '') + `  ·  ◆ ${submitSnap.coins}`;
+    subError.textContent = '';
+    subStatus.textContent = '';
+    nameInput.value = localStorage.getItem('run_last_name') || '';
+    submitOverlay.style.display = 'flex';
+    setTimeout(() => nameInput.focus(), 50);
+  }
+
+  async function doSubmitScore(overrideName) {
+    const name = overrideName || nameInput.value.trim();
+    if (!name) { subError.textContent = 'enter a name'; return; }
+    subError.textContent = '';
+    subStatus.textContent = 'submitting…';
+    subSubmit.disabled = true;
+    try {
+      const s = submitSnap;
+      const r = await fetch('/api/run/score', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name, score: s.score, difficulty: s.difficulty, mode: s.mode, seed: s.seed, coins: s.coins }),
+      });
+      const data = await r.json();
+      if (!r.ok) { subError.textContent = data.error || 'submit failed'; subStatus.textContent = ''; subSubmit.disabled = false; return; }
+      if (!overrideName) localStorage.setItem('run_last_name', name);
+      submitOverlay.style.display = 'none';
+      subSubmit.disabled = false;
+    } catch (e) {
+      console.error('submit failed:', e);
+      subError.textContent = 'network error';
+      subStatus.textContent = '';
+      subSubmit.disabled = false;
+    }
   }
 
   resize();

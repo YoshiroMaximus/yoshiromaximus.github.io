@@ -21,6 +21,9 @@ export default {
     if (url.pathname.startsWith('/api/gambit')) {
       return handleGambit(request, env, url);
     }
+    if (url.pathname.startsWith('/api/run')) {
+      return handleRun(request, env, url);
+    }
     return env.ASSETS.fetch(request);
   },
 };
@@ -103,6 +106,82 @@ async function gambitSubmit(request, env) {
   const result = await env.DB.prepare(
     'INSERT INTO gambit_scores (name, score, difficulty, mode, depth, gold, gambits, won) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(name, score, difficulty, mode, depth, gold, gambits, won).run();
+
+  return json({ ok: true, id: result.meta?.last_row_id }, 201);
+}
+
+// ─────────────── Run Leaderboard API ───────────────
+
+const RUN_VALID_DIFFS = ['easy', 'normal', 'hard'];
+const RUN_VALID_MODES = ['normal', 'daily'];
+
+async function handleRun(request, env, url) {
+  const parts = url.pathname.split('/').filter(Boolean);
+  const sub = parts[2];
+  try {
+    if (request.method === 'GET'  && sub === 'leaderboard') return runLeaderboard(request, env, url);
+    if (request.method === 'POST' && sub === 'score')       return runSubmit(request, env);
+    return json({ error: 'Not found' }, 404);
+  } catch (e) {
+    return json({ error: e.message || 'Server error' }, 500);
+  }
+}
+
+async function runLeaderboard(request, env, url) {
+  if (!env.DB) return json({ error: 'Leaderboard not configured' }, 503);
+  const mode = url.searchParams.get('mode') || 'all';
+  const diff = url.searchParams.get('diff') || 'all';
+  const seed = url.searchParams.get('seed');
+  const orderCol = url.searchParams.get('sort') === 'recent' ? 'id' : 'score';
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 100);
+
+  const conditions = [];
+  const bindings = [];
+  if (mode !== 'all') { conditions.push('mode = ?'); bindings.push(mode); }
+  if (diff !== 'all') { conditions.push('difficulty = ?'); bindings.push(diff); }
+  if (seed) { conditions.push('seed = ?'); bindings.push(seed); }
+  let q = 'SELECT id, name, score, difficulty, mode, seed, coins, created_at FROM run_scores';
+  if (conditions.length) q += ' WHERE ' + conditions.join(' AND ');
+  q += ` ORDER BY ${orderCol} DESC LIMIT ?`;
+  bindings.push(limit);
+
+  const { results } = await env.DB.prepare(q).bind(...bindings).all();
+  return json({ scores: results || [] });
+}
+
+async function runSubmit(request, env) {
+  if (!env.DB) return json({ error: 'Leaderboard not configured' }, 503);
+  const ip = request.headers.get('cf-connecting-ip') || 'anon';
+  if (env.RATE_LIMITER) {
+    const { success } = await env.RATE_LIMITER.limit({ key: 'run:' + ip });
+    if (!success) return json({ error: 'Too many submissions — wait a minute.' }, 429);
+  }
+
+  let body;
+  try { body = await request.json(); } catch { return json({ error: 'Invalid JSON.' }, 400); }
+
+  const name = String(body.name || '').trim().slice(0, GAMBIT_MAX_NAME);
+  if (!name) return json({ error: 'Name is required.' }, 400);
+  if (!/^[A-Za-z0-9 _\-\.!?']+$/.test(name)) return json({ error: 'Name contains invalid characters.' }, 400);
+
+  const score = parseInt(body.score, 10);
+  if (!Number.isFinite(score) || score < 0 || score > 99999999) return json({ error: 'Invalid score.' }, 400);
+
+  const difficulty = body.difficulty;
+  if (!RUN_VALID_DIFFS.includes(difficulty)) return json({ error: 'Invalid difficulty.' }, 400);
+
+  const mode = body.mode || 'normal';
+  if (!RUN_VALID_MODES.includes(mode)) return json({ error: 'Invalid mode.' }, 400);
+
+  const seed = String(body.seed || '').slice(0, 20);
+  if (mode === 'daily' && !/^\d{4}-\d{2}-\d{2}$/.test(seed)) return json({ error: 'Invalid daily seed.' }, 400);
+
+  const coins = parseInt(body.coins, 10);
+  if (!Number.isFinite(coins) || coins < 0 || coins > 999999) return json({ error: 'Invalid coins.' }, 400);
+
+  const result = await env.DB.prepare(
+    'INSERT INTO run_scores (name, score, difficulty, mode, seed, coins) VALUES (?, ?, ?, ?, ?, ?)'
+  ).bind(name, score, difficulty, mode, seed, coins).run();
 
   return json({ ok: true, id: result.meta?.last_row_id }, 201);
 }
