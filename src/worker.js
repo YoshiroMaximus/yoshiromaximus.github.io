@@ -83,7 +83,7 @@ async function gambitSubmit(request, env) {
   if (!/^[A-Za-z0-9 _\-\.!?']+$/.test(name)) return json({ error: 'Name contains invalid characters.' }, 400);
 
   const score = parseInt(body.score, 10);
-  if (!Number.isFinite(score) || score < 0 || score > 999999999) return json({ error: 'Invalid score.' }, 400);
+  if (!Number.isFinite(score) || score < 0) return json({ error: 'Invalid score.' }, 400);
 
   const difficulty = body.difficulty;
   if (!GAMBIT_VALID_DIFFS.includes(difficulty)) return json({ error: 'Invalid difficulty.' }, 400);
