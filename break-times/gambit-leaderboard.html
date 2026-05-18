@@ -66,7 +66,7 @@ tbody td.muted{color:var(--muted);}
 .refresh:hover{color:var(--text);border-color:var(--muted);}
 .header-row{display:flex;align-items:baseline;gap:16px;margin-bottom:28px;}
 .count{font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);}
-.section-divider{margin:64px 0 28px;border:none;border-top:1px solid var(--line);}
+.section-divider{margin:16px 0 16px;border:none;border-top:1px solid var(--line);}
 .feed-heading{font-family:'DM Mono',monospace;font-weight:400;font-size:1rem;color:var(--text);}
 .feed{font-family:'DM Mono',monospace;font-size:0.7rem;display:flex;flex-direction:column;gap:0;}
 .feed-row{display:flex;align-items:baseline;gap:10px;padding:9px 4px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
@@ -246,7 +246,7 @@ async function load(){
   const params=new URLSearchParams();
   if(activeMode!=='all') params.set('mode',activeMode);
   if(activeDiff!=='all') params.set('diff',activeDiff);
-  params.set('limit','100');
+  params.set('limit','10');
   try{
     const r=await fetch('/api/gambit/leaderboard?'+params);
     if(!r.ok){ const d=await r.json().catch(()=>({error:'server error'})); throw new Error(d.error||'server error'); }
@@ -292,7 +292,7 @@ async function loadFeed(){
   feedEl.innerHTML='';
   feedCountEl.textContent='';
   try{
-    const r=await fetch('/api/gambit/leaderboard?sort=recent&limit=30');
+    const r=await fetch('/api/gambit/leaderboard?sort=recent&limit=10');
     if(!r.ok){ const d=await r.json().catch(()=>({error:'server error'})); throw new Error(d.error||'server error'); }
     const d=await r.json();
     renderFeed(d.scores||[]);
