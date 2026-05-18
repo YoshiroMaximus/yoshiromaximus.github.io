@@ -4,10 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GWHS Bell Schedule</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/animejs/dist/bundles/anime.umd.min.js"></script>
 <style>
   [data-theme="dark"] {
     --bg: #0a0a0a;
@@ -315,13 +312,9 @@ function renderMotive(sched){
   else if(rem<1800)m=MOTIVES[5];
   else if(rem<3600)m=MOTIVES[4];
   else{const cls=p.filter(x=>x.id.startsWith('p'));const done=cls.filter(x=>pt(x.e)<=n).length;m=done>=Math.floor(cls.length/2)?MOTIVES[3]:MOTIVES[1+Math.floor(done%2)];}
-  const wasHidden=el.style.display!=='flex';
   el.style.display='flex';
   document.getElementById('me').textContent=m.e;
   document.getElementById('mt').textContent=m.t;
-  if(wasHidden&&initDone){
-    animate('#motive',{opacity:[0,1],translateY:[-6,0],ease:'outCubic',duration:280});
-  }
 }
 
 function renderHero(sched){
@@ -391,11 +384,7 @@ function renderTabs(){
   if(activeTab===null)activeTab=days.includes(d)?d:1;
   el.innerHTML=days.map((x,i)=>`<button class="tab ${x===d?'today':''} ${x===activeTab?'active':''}" onclick="setTab(${x})">${names[i]}${x===d?' ★':''}</button>`).join('');
 }
-function setTab(d){
-  activeTab=d;renderTabs();renderTable(S[d]);
-  animate('.sched-card',{opacity:[0,1],translateY:[8,0],ease:'outCubic',duration:200});
-  animate('.sched-row',{opacity:[0,1],translateX:[-4,0],ease:'outCubic',duration:180,delay:stagger(20,{start:50})});
-}
+function setTab(d){activeTab=d;renderTabs();renderTable(S[d]);}
 
 function renderTable(sched){
   const el=document.getElementById('table');
@@ -430,9 +419,7 @@ function renderNickEditor(){
     </div>`).join('');
 }
 
-const { animate, stagger, createTimeline } = anime;
 let lastHeroState='';
-let initDone=false;
 function heroState(sched){
   if(!sched)return'no';
   const n=now(),p=sched.p;
@@ -448,13 +435,7 @@ function tick(){
   renderMotive(sched);
 
   const state=heroState(sched);
-  if(state!==lastHeroState){
-    lastHeroState=state;
-    renderHero(sched);
-    if(initDone){
-      animate('#hero > *',{opacity:[0,1],translateY:[10,0],scale:[0.98,1],ease:'outExpo',duration:360,delay:stagger(45)});
-    }
-  }
+  if(state!==lastHeroState){lastHeroState=state;renderHero(sched);}
   else {
     // fast-path update
     const n=now();
@@ -478,16 +459,6 @@ function tick(){
   if(activeTab===d)renderTable(sched);
 }
 
-function pageLoadAnimation(){
-  createTimeline({ defaults:{ ease:'outQuart', duration:300 } })
-    .add('#hero > *',     { opacity:[0,1], translateY:[16,0], scale:[0.97,1], delay:stagger(50) }, 80)
-    .add('.stat-card',    { opacity:[0,1], translateY:[14,0], delay:stagger(55) }, '+=20')
-    .add('.tab',          { opacity:[0,1], translateY:[10,0], delay:stagger(35), duration:240 }, '-=180')
-    .add('.sched-card',   { opacity:[0,1], translateY:[12,0] }, '+=10')
-    .add('.sched-row',    { opacity:[0,1], translateX:[-4,0], delay:stagger(18), duration:200 }, '-=200')
-    .add('.nick-section', { opacity:[0,1], translateY:[8,0], duration:240 }, '+=30');
-}
-
 function init(){
   applyTheme();
   renderNickEditor();
@@ -497,8 +468,6 @@ function init(){
   renderTable(S[activeTab!==null?activeTab:(d in S?d:1)]);
   updateClock();
   setInterval(tick,1000);
-  pageLoadAnimation();
-  initDone=true;
 }
 init();
 </script>
