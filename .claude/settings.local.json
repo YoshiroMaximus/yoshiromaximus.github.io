@@ -14,7 +14,9 @@
       "Bash(node --input-type=module)",
       "Bash(npx wrangler *)",
       "Bash(node --check /Users/nico/Documents/GitHub/yoshiromaximus.github.io/src/worker.js)",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Bash(git diff *)",
+      "Read(//tmp/**)"
     ]
   }
 }

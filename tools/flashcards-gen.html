@@ -361,6 +361,7 @@
     // ── File loading ──
     let loadedText = '';
     let loadedName = '';
+    let loadedImages = null; // set for scanned PDFs, used instead of text
 
     const drop = document.getElementById('drop');
     const fileIn = document.getElementById('file-in');
@@ -378,6 +379,7 @@
     async function handleFile(f) {
       setStatus(`Reading ${f.name}…`);
       loadedName = f.name;
+      loadedImages = null;
       try {
         const ext = f.name.split('.').pop().toLowerCase();
         if (ext === 'pdf') loadedText = await readPdf(f);
@@ -385,8 +387,9 @@
         else loadedText = await f.text();
         loadedText = loadedText.trim();
         document.getElementById('pick-main').textContent = f.name;
-        document.getElementById('pick-sub').textContent =
-          `${loadedText.length.toLocaleString()} chars extracted`;
+        document.getElementById('pick-sub').textContent = loadedImages
+          ? `${loadedImages.length} page${loadedImages.length === 1 ? '' : 's'} (scanned — using vision)`
+          : `${loadedText.length.toLocaleString()} chars extracted`;
         drop.classList.add('has-file');
         setStatus('Loaded.', 'ok');
         if (!document.getElementById('title-in').value) {
@@ -402,13 +405,38 @@
       pdfjsLib.GlobalWorkerOptions.workerSrc =
         'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
       const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+
+      // Try text extraction first
       const pages = [];
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const tc = await page.getTextContent();
         pages.push(tc.items.map(it => it.str).join(' '));
       }
-      return pages.join('\n\n');
+      const text = pages.join('\n\n').trim();
+      if (text.length >= 100) return text;
+
+      // Scanned PDF — render pages to images for Gemini vision
+      const MAX_PAGES = 20;
+      const pageCount = Math.min(pdf.numPages, MAX_PAGES);
+      setStatus(`Scanned PDF detected — rendering ${pageCount} page${pageCount === 1 ? '' : 's'}…`);
+      // Reuse a single canvas across pages — rendered bitmaps can be ~3MB each;
+      // freeing as we go matters on mobile Safari with 20-page PDFs.
+      const canvas = document.createElement('canvas');
+      const ctx2d = canvas.getContext('2d');
+      const images = [];
+      for (let i = 1; i <= pageCount; i++) {
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 1.5 });
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: ctx2d, viewport }).promise;
+        const b64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+        images.push({ mimeType: 'image/jpeg', data: b64 });
+      }
+      canvas.width = 0; canvas.height = 0;
+      loadedImages = images;
+      return '';
     }
 
     async function readDocx(file) {
@@ -424,7 +452,7 @@
       el.className = 'status' + (kind ? ' ' + kind : '');
     }
 
-    function buildPrompt(text, mode, count, title, focus) {
+    function buildPrompt(text, mode, count, title, focus, isVision = false) {
       const modeRules = {
         'standard':
           'Each "front" is a clear, specific question. Each "back" is a concise factual answer (one sentence or short phrase). Cover the most testable concepts.',
@@ -459,10 +487,7 @@ Return ONLY valid JSON, no prose, no markdown code fences. Shape:
 
 Keep cards atomic (one fact each). Skip headers, page numbers, table of contents, and references. Don't invent facts not in the source.
 
-SOURCE MATERIAL:
-"""
-${text}
-"""`;
+${isVision ? 'SOURCE MATERIAL: the attached page image(s) above.' : `SOURCE MATERIAL:\n"""\n${text}\n"""`}`;
     }
 
     // Recover a usable deck from JSON cut off mid-array (Gemini hit max tokens).
@@ -519,18 +544,25 @@ ${text}
       const focus = document.getElementById('focus-in').value.trim();
 
       if (!key) return setStatus('Enter your Gemini API key.', 'err');
-      if (!text) return setStatus('Load a file or paste text first.', 'err');
+      if (!text && !loadedImages) return setStatus('Load a file or paste text first.', 'err');
       localStorage.setItem('geminiKey', key);
-
-      // Truncate very long source to keep cost & latency sane.
-      const MAX_CHARS = 60000;
-      const trimmed = text.length > MAX_CHARS
-        ? text.slice(0, MAX_CHARS) + '\n[…truncated]'
-        : text;
 
       const btn = document.getElementById('run-btn');
       btn.disabled = true;
       setStatus('Calling Gemini…');
+
+      // Build parts: images for scanned PDFs, plain text otherwise
+      let parts;
+      if (loadedImages && loadedImages.length > 0) {
+        parts = [
+          ...loadedImages.map(img => ({ inlineData: img })),
+          { text: buildPrompt('', mode, count, title, focus, true) },
+        ];
+      } else {
+        const MAX_CHARS = 60000;
+        const trimmed = text.length > MAX_CHARS ? text.slice(0, MAX_CHARS) + '\n[…truncated]' : text;
+        parts = [{ text: buildPrompt(trimmed, mode, count, title, focus, false) }];
+      }
 
       try {
         const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(key);
@@ -538,7 +570,7 @@ ${text}
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: buildPrompt(trimmed, mode, count, title, focus) }] }],
+            contents: [{ role: 'user', parts }],
             generationConfig: {
               responseMimeType: 'application/json',
               maxOutputTokens: 32768,

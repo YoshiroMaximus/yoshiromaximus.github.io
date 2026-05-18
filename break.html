@@ -164,6 +164,43 @@
       vertical-align: 0.1em;
     }
 
+    .game-group { border-bottom: 1px solid var(--line); }
+    .game-group-row { display: flex; align-items: center; }
+    .game-link--inline {
+      border-bottom: none;
+      padding: 1.5rem 0;
+      width: auto;
+      flex-shrink: 0;
+    }
+    .game-alt-toggle {
+      flex: 1;
+      display: flex; align-items: center; gap: 0.5rem;
+      background: none; border: none; cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      padding: 1.5rem 0;
+      text-align: left;
+      transition: padding-left 0.2s ease;
+    }
+    .game-alt-toggle:hover { padding-left: 0.5rem; }
+    .game-alt-chevron {
+      font-size: 0.75rem; color: var(--muted);
+      transition: transform 0.18s ease;
+      line-height: 1;
+    }
+    .game-group.open .game-alt-chevron { transform: rotate(180deg); }
+    .game-alt-drawer {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.22s ease;
+    }
+    .game-group.open .game-alt-drawer { max-height: 140px; }
+    .game-link--alt {
+      border-bottom: none;
+      padding-top: 0;
+      padding-left: 1rem;
+    }
+    .game-link--alt .game-name { font-size: 0.82rem; color: var(--muted); }
+
     /* ── Disclaimer ── */
     .disclaimer {
       margin-top: 2.5rem;
@@ -206,10 +243,27 @@
         <span class="game-name">run<span class="star">★</span></span>
         <span class="game-arrow">→</span>
       </a>
-      <a class="game-link" href="/break-times/gambit.html" target="_blank" rel="noopener">
-        <span class="game-name">gambit rogue<span class="star">★</span></span>
-        <span class="game-arrow">→</span>
-      </a>
+      <div class="game-group">
+        <div class="game-group-row">
+          <button class="game-alt-toggle" onclick="this.closest('.game-group').classList.toggle('open')" aria-label="show alternative version">
+            <span class="game-name">gambit rogue<span class="star">★</span></span>
+            <span class="game-alt-chevron">▾</span>
+          </button>
+          <a class="game-link game-link--inline" href="/break-times/gambit.html" target="_blank" rel="noopener">
+            <span class="game-arrow">→</span>
+          </a>
+        </div>
+        <div class="game-alt-drawer">
+          <a class="game-link game-link--alt" href="/break-times/gambit.html" target="_blank" rel="noopener">
+            <span class="game-name">regular (recommended)</span>
+            <span class="game-arrow">→</span>
+          </a>
+          <a class="game-link game-link--alt" href="/break-times/gambit-8x8.html" target="_blank" rel="noopener">
+            <span class="game-name">8×8 — alternative version</span>
+            <span class="game-arrow">→</span>
+          </a>
+        </div>
+      </div>
       <a class="game-link" href="https://r2.sn4k.org/drift/index.html" target="_blank" rel="noopener">
         <span class="game-name">drift</span>
         <span class="game-arrow">→</span>
