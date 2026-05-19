@@ -17,7 +17,8 @@
       "Bash(node *)",
       "Bash(git diff *)",
       "Read(//tmp/**)",
-      "WebFetch(domain:developers.cloudflare.com)"
+      "WebFetch(domain:developers.cloudflare.com)",
+      "Bash(git checkout *)"
     ]
   }
 }
