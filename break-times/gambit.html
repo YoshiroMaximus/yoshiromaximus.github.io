@@ -215,12 +215,12 @@ const MAX_GAMBIT_LEVEL=3;
 const ROMAN=['','I','II','III'];
 const ALL_GAMBITS=[
   {id:'necromancer',   name:'Necromancer',    tiers:[
-    'Capture → 50% chance to spawn a pawn on your back rank.',
+    'Capture → 25% chance to spawn a pawn on your back rank.',
     'Every capture spawns a pawn on your back rank.',
     'Every capture spawns the captured piece type on your back rank.',
   ]},
   {id:'pawn_rush',     name:'Pawn Rush',      tiers:[
-    'Your pawns have a 50% chance to double-move from any row.',
+    'Your pawns can also double-move from row 2 (one past start).',
     'Your pawns always double-move from any row.',
     'Your pawns always double-move and may step sideways into empty squares.',
   ]},
@@ -235,9 +235,9 @@ const ALL_GAMBITS=[
     'Pawns promote at rank 3 and gain +30g on promotion.',
   ]},
   {id:'fortune',       name:'Fortune',        tiers:[
-    '1 gold tile spawns each battle. Stand on it for +8g.',
-    '2 gold tiles spawn each battle.',
-    '3 gold tiles spawn each battle.',
+    '1 gold tile spawns each battle. Stand on it for +5g.',
+    '2 gold tiles spawn each battle, worth +8g each.',
+    '3 gold tiles spawn each battle, worth +12g each.',
   ]},
   {id:'regicide',      name:'Regicide',       tiers:[
     'Your King moves and attacks as a Bishop.',
@@ -255,9 +255,9 @@ const ALL_GAMBITS=[
     'Any piece transforms into what it captures.',
   ]},
   {id:'hex',           name:'Hex',            tiers:[
-    'Once per battle: press H to remove any non-king enemy piece.',
-    'Twice per battle: press H to remove enemy pieces.',
-    'Three times per battle: press H to remove enemy pieces.',
+    'Once per battle: press H to remove any enemy pawn.',
+    'Twice per battle: press H to remove non-queen, non-king enemies.',
+    'Three times per battle: press H to remove any non-king enemy.',
   ]},
   {id:'chaos_theory',  name:'Chaos Theory',   tiers:[
     'Random events fire every 4 moves instead of 5.',
@@ -265,7 +265,7 @@ const ALL_GAMBITS=[
     'Random events fire every 2 moves.',
   ]},
   {id:'gamblers_mark', name:"Gambler's Mark", tiers:[
-    'Wager rewards are increased by 50%.',
+    'Wager rewards are increased by 25%.',
     'Wager rewards are doubled.',
     'Wager rewards are tripled.',
   ]},
@@ -300,6 +300,11 @@ function gLvl(id){return gambitLevels[id]||0;}
 function gambitLabel(id){return `${GAMBIT_BY_ID[id].name} ${ROMAN[gLvl(id)]}`;}
 function gambitTooltip(id){const g=GAMBIT_BY_ID[id],l=gLvl(id);return `${g.name} ${ROMAN[l]} — ${g.tiers[l-1]}`;}
 function pluralRetries(n){return `${n} retr${n===1?'y':'ies'}`;}
+function hexCanTarget(p){
+  if(!p||p.color!=='black'||p.type==='king') return false;
+  const L=gLvl('hex');
+  return L>=3||(L>=2&&p.type!=='queen')||(L>=1&&p.type==='pawn');
+}
 let roster={queen:0,rook:1,bishop:0,knight:0,pawns:3};
 let gameMode=localStorage.getItem('gambit_mode')||'campaign';
 function hiScoreKey(mode=gameMode){return mode==='infinite'?'gambit_hiscore_inf':'gambit_hiscore';}
@@ -457,11 +462,13 @@ function rawMoves(board,row,col){
   if(type==='pawn'){
     const nr=row+dir;
     const pr=gLvl('pawn_rush');
-    const rushDouble=color==='white'&&pr>=2; // L2+ always double
+    // White-only tiers: L1 allows double from row 2 also, L2+ from any row
+    const startRow=color==='white'?1:4;
+    const rushDouble=color==='white'&&(pr>=2||(pr>=1&&row===startRow+1));
     if(inBounds(nr,col)&&!board[nr][col]){
       moves.push([nr,col]);
       const r2=row+dir*2;
-      if((row===(color==='white'?1:4)||rushDouble)&&inBounds(r2,col)&&!board[r2][col]) moves.push([r2,col]);
+      if((row===startRow||rushDouble)&&inBounds(r2,col)&&!board[r2][col]) moves.push([r2,col]);
     }
     [-1,1].forEach(dc=>{if(inBounds(nr,col+dc)&&board[nr][col+dc]?.color===enemy) moves.push([nr,col+dc]);});
     // Pawn Rush L3: sideways step to empty squares (once per pawn per battle)
@@ -527,7 +534,7 @@ const EVENT_FLASH_DUR=4.5;
 function showEvent(title,sub){eventTitle=title; eventSub=sub; eventFlash=EVENT_FLASH_DUR; logEntry('event',title);}
 
 function triggerRandomEvent(){
-  const pool=['summon_pawn','enemy_blunder','earthquake','power_up','gold_drop','enemy_summon','mirror','swap_sides'];
+  const pool=['summon_pawn','enemy_blunder','earthquake','power_up','gold_drop','enemy_summon','mirror','upheaval','swap_sides'];
   const id=pool[Math.floor(Math.random()*pool.length)];
 
   if(id==='summon_pawn'){
@@ -579,6 +586,10 @@ function triggerRandomEvent(){
   } else if(id==='mirror'){
     for(let r=0;r<6;r++) for(let c=0;c<3;c++){const tmp=board[r][c]; board[r][c]=board[r][5-c]; board[r][5-c]=tmp;}
     showEvent('Mirror!','The board flips horizontally.');
+
+  } else if(id==='upheaval'){
+    for(let r=0;r<3;r++) for(let c=0;c<6;c++){const tmp=board[r][c]; board[r][c]=board[5-r][c]; board[5-r][c]=tmp;}
+    showEvent('Upheaval!','The board flips vertically.');
 
   } else if(id==='swap_sides'){
     // Swap one random white and one random black non-king piece
@@ -701,14 +712,13 @@ function doPlayerMove(fr,fc,tr,tc,isBonus=false){
   }
 
   const nec=gLvl('necromancer');
-  if(captured&&nec>0&&(nec>=2||Math.random()<0.5)){
+  if(captured&&nec>0&&(nec>=2||Math.random()<0.25)){
     const spawnType=(nec>=3&&captured.type!=='king')?captured.type:'pawn';
     for(let c=0;c<6;c++) if(!board[0][c]){board[0][c]={type:spawnType,color:'white',moved:false}; break;}
   }
 
-  // Fortune
   const gi=goldTiles.findIndex(([r,c])=>r===tr&&c===tc);
-  if(gi>=0){gold+=8; goldTiles.splice(gi,1);}
+  if(gi>=0){gold+=[0,5,8,12][gLvl('fortune')]; goldTiles.splice(gi,1);}
 
   selected=null; validMoves=[];
 
@@ -979,7 +989,7 @@ function drawBoard(){
         ctx.fillStyle='rgba(80,180,80,0.38)'; ctx.fillRect(px,py,SQ,SQ);
       }
       // Hex mode hover
-      if(hexMode&&board[r][c]?.color==='black'&&board[r][c]?.type!=='king'){
+      if(hexMode&&hexCanTarget(board[r][c])){
         ctx.fillStyle='rgba(180,60,60,0.28)'; ctx.fillRect(px,py,SQ,SQ);
       }
       // Check highlight
@@ -1497,7 +1507,7 @@ function drawWager(){
   ctx.fillText('wager?',W/2,H*0.5);
 
   const gmL=gLvl('gamblers_mark');
-  const markMult=[1,1.5,2,3][gmL];
+  const markMult=[1,1.25,2,3][gmL];
   const opts=[
     {label:'pass',  bet:0,                      winMult:0, retries:3},
     {label:'risky', bet:Math.floor(gold*0.25),  winMult:2, retries:2},
@@ -1956,8 +1966,7 @@ canvas.addEventListener('click',e=>{
     if(hexMode){
       if(cell){
         const [r,c]=cell;
-        const p=board[r][c];
-        if(p&&p.color==='black'&&p.type!=='king'){
+        if(hexCanTarget(board[r][c])){
           board[r][c]=null; hexUsesLeft=Math.max(0,hexUsesLeft-1); hexMode=false;
           showEvent('Hex!','An enemy piece is cursed away.');
         }
