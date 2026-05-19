@@ -24,6 +24,9 @@ export default {
     if (url.pathname.startsWith('/api/run')) {
       return handleRun(request, env, url);
     }
+    if (url.pathname.startsWith('/api/flashcards/generate')) {
+      return handleFlashcardsGenerate(request, env);
+    }
     return env.ASSETS.fetch(request);
   },
 };
@@ -184,6 +187,129 @@ async function runSubmit(request, env) {
   ).bind(name, score, difficulty, mode, seed, coins).run();
 
   return json({ ok: true, id: result.meta?.last_row_id }, 201);
+}
+
+// ─────────────── Flashcard Generation (Workers AI) ───────────────
+// Free-tier guards:
+//   1. Workers Free plan (no billing relationship — calls past 10k neurons/day fail, never charge).
+//   2. Per-IP rate limit via existing RATE_LIMITER (10/min).
+//   3. Input truncated to 12k chars (~3k tokens) before sending.
+//   4. Output capped at 2048 tokens.
+//   5. Global daily call counter in D1 — refuses past FLASHCARDS_DAILY_CAP/day with headroom.
+//
+// One-time setup:
+//   npx wrangler d1 execute gambit-leaderboard --remote \
+//     --command="CREATE TABLE IF NOT EXISTS ai_usage (date TEXT PRIMARY KEY, calls INTEGER NOT NULL DEFAULT 0);"
+
+const FLASHCARDS_MODEL = '@cf/google/gemma-4-26b-a4b-it';
+const FLASHCARDS_MAX_INPUT_CHARS = 12000;
+const FLASHCARDS_MAX_OUTPUT_TOKENS = 2048;
+const FLASHCARDS_DAILY_CAP = 100; // ~83 neurons per worst-case call × 100 = 8300, leaves 1700 neuron headroom
+
+async function handleFlashcardsGenerate(request, env) {
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'POST', 'access-control-allow-headers': 'content-type' } });
+  }
+  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  if (!env.AI) return json({ error: 'AI binding not configured.' }, 503);
+
+  const ip = request.headers.get('cf-connecting-ip') || 'anon';
+  if (env.RATE_LIMITER) {
+    const { success } = await env.RATE_LIMITER.limit({ key: 'flashgen:' + ip });
+    if (!success) return json({ error: 'Too many requests — wait a minute.' }, 429);
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  if (env.DB) {
+    try {
+      const row = await env.DB.prepare('SELECT calls FROM ai_usage WHERE date = ?').bind(today).first();
+      const callsToday = row?.calls || 0;
+      if (callsToday >= FLASHCARDS_DAILY_CAP) {
+        return json({ error: `Daily generation limit reached (${FLASHCARDS_DAILY_CAP}/day). Try again tomorrow.` }, 429);
+      }
+    } catch (e) {
+      // Table missing or other D1 hiccup — fail open but log. Worst case is one extra call.
+      console.warn('ai_usage check failed:', e.message);
+    }
+  }
+
+  let body;
+  try { body = await request.json(); } catch { return json({ error: 'Invalid JSON.' }, 400); }
+
+  const text = String(body.text || '').trim();
+  if (!text) return json({ error: 'No source text provided.' }, 400);
+  const mode = VALID_MODES.includes(body.mode) ? body.mode : 'standard';
+  const count = Math.min(Math.max(parseInt(body.count, 10) || 30, 1), 60);
+  const title = String(body.title || '').trim().slice(0, MAX_TITLE);
+  const focus = String(body.focus || '').trim().slice(0, 500);
+
+  const truncated = text.length > FLASHCARDS_MAX_INPUT_CHARS
+    ? text.slice(0, FLASHCARDS_MAX_INPUT_CHARS) + '\n[…truncated]'
+    : text;
+
+  const prompt = buildFlashcardsPrompt(truncated, mode, count, title, focus);
+
+  let aiResp;
+  try {
+    aiResp = await env.AI.run(FLASHCARDS_MODEL, {
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: FLASHCARDS_MAX_OUTPUT_TOKENS,
+      temperature: 0.4,
+    });
+  } catch (e) {
+    return json({ error: 'AI call failed: ' + (e.message || 'unknown') }, 502);
+  }
+
+  if (env.DB) {
+    // Fire-and-forget increment. Table is created out-of-band (see setup comment).
+    env.DB.prepare(
+      'INSERT INTO ai_usage (date, calls) VALUES (?, 1) ON CONFLICT(date) DO UPDATE SET calls = calls + 1'
+    ).bind(today).run().catch(() => {});
+  }
+
+  const raw = String(aiResp?.response || '').trim();
+  return json({ raw, truncated: text.length > FLASHCARDS_MAX_INPUT_CHARS });
+}
+
+function buildFlashcardsPrompt(text, mode, count, title, focus) {
+  const modeRules = {
+    'standard':
+      'Each "front" is a clear, specific question. Each "back" is a concise factual answer (one sentence or short phrase). Cover the most testable concepts.',
+    'fill-blank':
+      'Each "front" is a single declarative sentence from the source with the single most important term replaced by exactly "___" (three underscores). Each "back" is just the missing word or short phrase (no punctuation). Use only one blank per card. Pick sentences that test core concepts, not trivia, dates, or names of figures unless central.',
+    'vocab':
+      '"front" is a single vocabulary term (1–3 words). "back" is a clear one-sentence definition in plain English. Do not include the term inside its own definition.',
+    'define':
+      '"front" is a one-sentence definition or description (do NOT mention the term being defined). "back" is the single term it describes. Definition must be unambiguous (only one term could fit).',
+    'language':
+      '"front" is a foreign-language word or short phrase. "back" is the English translation. Include common verbs, nouns, and useful phrases. Skip cognates that are obvious.',
+    'formula':
+      '"front" is the name of a concept, law, or quantity. "back" is the formula or equation written in plain text (e.g., "F = m * a", "PV = nRT"). Include variable meanings only if essential.',
+    'dates':
+      '"front" is a historical event, treaty, war, movement, or turning point (one short phrase). "back" is the year or short date range (e.g., "1776", "1861–1865"). Focus on dates a student would be tested on.',
+    'quote':
+      '"front" is a short literary quote, line, or passage from the source (use real text only — do not invent). "back" is "Speaker / work — significance" in one line.',
+  };
+  const rule = modeRules[mode] || modeRules['standard'];
+  return `You are turning study material into flashcards.
+
+MODE: ${mode}
+RULES FOR THIS MODE: ${rule}
+MAX CARDS: ${count}
+${focus ? `FOCUS: ${focus}\n` : ''}
+Return ONLY valid JSON, no prose, no markdown code fences. Shape:
+{
+  "title": ${JSON.stringify(title || 'Generated deck')},
+  "mode": "${mode}",
+  "cards": [ { "front": "...", "back": "..." } ]
+}
+
+Keep cards atomic (one fact each). Skip headers, page numbers, table of contents, and references. Don't invent facts not in the source.
+
+SOURCE MATERIAL:
+"""
+${text}
+"""`;
 }
 
 // ─────────────── Notes API ───────────────

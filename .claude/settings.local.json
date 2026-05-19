@@ -16,7 +16,8 @@
       "Bash(node --check /Users/nico/Documents/GitHub/yoshiromaximus.github.io/src/worker.js)",
       "Bash(node *)",
       "Bash(git diff *)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "WebFetch(domain:developers.cloudflare.com)"
     ]
   }
 }

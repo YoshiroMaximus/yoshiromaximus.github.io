@@ -32,6 +32,9 @@
 			"database_id": "a0c9a032-45bc-4b83-87d4-afa599a9bc49"
 		}
 	],
+	"ai": {
+		"binding": "AI"
+	},
 	"unsafe": {
 		"bindings": [
 			{

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Flashcard Generator — Yoshiro</title>
   <link rel="icon" type="image/x-icon" href="/favistuff/favicon.ico">
-  <meta name="description" content="Turn a PDF or DOCX into a flashcard JSON file with Gemini.">
+  <meta name="description" content="Turn a PDF or DOCX into a flashcard JSON file.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
@@ -229,23 +229,11 @@
   <div class="page">
     <p class="header-label">Yoshiro</p>
     <h1>Flashcard Generator</h1>
-    <p class="tagline">Drop in a PDF, DOCX, or pasted text. Gemini turns it into a deck JSON you can study with.</p>
+    <p class="tagline">Drop in a PDF, DOCX, or pasted text. Turns it into a deck JSON you can study with.</p>
 
-    <!-- Step 1: API key -->
+    <!-- Step 1: source -->
     <div class="section">
-      <p class="section-label">1 · Gemini API key</p>
-      <label class="field">
-        <input type="password" id="api-key" placeholder="AIza…" autocomplete="off">
-      </label>
-      <p class="hint">
-        Stored only in your browser (<code>localStorage</code>). Never sent anywhere except generativelanguage.googleapis.com.
-        Get a free one at <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a>.
-      </p>
-    </div>
-
-    <!-- Step 2: source -->
-    <div class="section">
-      <p class="section-label">2 · Source material</p>
+      <p class="section-label">1 · Source material</p>
       <div class="file-pick" id="drop">
         <input type="file" id="file-in" accept=".pdf,.docx,.txt" style="display:none">
         <div class="pick-main" id="pick-main">Click or drop a .pdf / .docx / .txt</div>
@@ -256,9 +244,9 @@
       </label>
     </div>
 
-    <!-- Step 3: options -->
+    <!-- Step 2: options -->
     <div class="section">
-      <p class="section-label">3 · Options</p>
+      <p class="section-label">2 · Options</p>
       <div class="field" style="margin-bottom: 1.75rem">
         <span class="lbl">Mode · pick the card style</span>
         <input type="hidden" id="mode" value="standard">
@@ -278,7 +266,7 @@
       </label>
     </div>
 
-    <!-- Step 4: run -->
+    <!-- Step 3: run -->
     <div class="section">
       <div class="row">
         <button class="btn primary" id="run-btn" onclick="run()">Generate deck</button>
@@ -351,17 +339,9 @@
       }
     })();
 
-    // ── API key persistence ──
-    const keyIn = document.getElementById('api-key');
-    keyIn.value = localStorage.getItem('geminiKey') || '';
-    keyIn.addEventListener('change', () => {
-      localStorage.setItem('geminiKey', keyIn.value.trim());
-    });
-
     // ── File loading ──
     let loadedText = '';
     let loadedName = '';
-    let loadedImages = null; // set for scanned PDFs, used instead of text
 
     const drop = document.getElementById('drop');
     const fileIn = document.getElementById('file-in');
@@ -379,7 +359,6 @@
     async function handleFile(f) {
       setStatus(`Reading ${f.name}…`);
       loadedName = f.name;
-      loadedImages = null;
       try {
         const ext = f.name.split('.').pop().toLowerCase();
         if (ext === 'pdf') loadedText = await readPdf(f);
@@ -387,9 +366,7 @@
         else loadedText = await f.text();
         loadedText = loadedText.trim();
         document.getElementById('pick-main').textContent = f.name;
-        document.getElementById('pick-sub').textContent = loadedImages
-          ? `${loadedImages.length} page${loadedImages.length === 1 ? '' : 's'} (scanned — using vision)`
-          : `${loadedText.length.toLocaleString()} chars extracted`;
+        document.getElementById('pick-sub').textContent = `${loadedText.length.toLocaleString()} chars extracted`;
         drop.classList.add('has-file');
         setStatus('Loaded.', 'ok');
         if (!document.getElementById('title-in').value) {
@@ -415,28 +392,7 @@
       }
       const text = pages.join('\n\n').trim();
       if (text.length >= 100) return text;
-
-      // Scanned PDF — render pages to images for Gemini vision
-      const MAX_PAGES = 20;
-      const pageCount = Math.min(pdf.numPages, MAX_PAGES);
-      setStatus(`Scanned PDF detected — rendering ${pageCount} page${pageCount === 1 ? '' : 's'}…`);
-      // Reuse a single canvas across pages — rendered bitmaps can be ~3MB each;
-      // freeing as we go matters on mobile Safari with 20-page PDFs.
-      const canvas = document.createElement('canvas');
-      const ctx2d = canvas.getContext('2d');
-      const images = [];
-      for (let i = 1; i <= pageCount; i++) {
-        const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 1.5 });
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        await page.render({ canvasContext: ctx2d, viewport }).promise;
-        const b64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
-        images.push({ mimeType: 'image/jpeg', data: b64 });
-      }
-      canvas.width = 0; canvas.height = 0;
-      loadedImages = images;
-      return '';
+      throw new Error("Couldn't extract text — looks like a scanned PDF. Try OCR'ing it first or paste the text manually.");
     }
 
     async function readDocx(file) {
@@ -452,45 +408,7 @@
       el.className = 'status' + (kind ? ' ' + kind : '');
     }
 
-    function buildPrompt(text, mode, count, title, focus, isVision = false) {
-      const modeRules = {
-        'standard':
-          'Each "front" is a clear, specific question. Each "back" is a concise factual answer (one sentence or short phrase). Cover the most testable concepts.',
-        'fill-blank':
-          'Each "front" is a single declarative sentence from the source with the single most important term replaced by exactly "___" (three underscores). Each "back" is just the missing word or short phrase (no punctuation). Use only one blank per card. Pick sentences that test core concepts, not trivia, dates, or names of figures unless central. Great for biology, anatomy, earth science.',
-        'vocab':
-          '"front" is a single vocabulary term (1–3 words). "back" is a clear one-sentence definition in plain English. Good for SAT prep, English vocab lists, AP terms. Do not include the term inside its own definition.',
-        'define':
-          '"front" is a one-sentence definition or description (do NOT mention the term being defined). "back" is the single term it describes. This is the reverse of vocab — forces the student to produce the term. Definition must be unambiguous (only one term could fit).',
-        'language':
-          '"front" is a foreign-language word or short phrase (Spanish, French, Chinese, etc. — match the source). "back" is the English translation. Include common verbs, nouns, and useful phrases. If the source has conjugation tables, prefer the infinitive plus a useful conjugated form. Skip cognates that are obvious.',
-        'formula':
-          '"front" is the name of a concept, law, or quantity. "back" is the formula or equation written in plain text (e.g., "F = m * a", "PV = nRT", "a^2 + b^2 = c^2"). Include variable meanings only if essential. Good for algebra, geometry, chemistry, physics.',
-        'dates':
-          '"front" is a historical event, treaty, war, movement, or turning point (one short phrase). "back" is the year or short date range (e.g., "1776", "1861–1865"). Focus on dates a student would be tested on, not obscure ones.',
-        'quote':
-          '"front" is a short literary quote, line, or passage from the source (use real text only — do not invent). "back" is "Speaker / work — significance" in one line (e.g., "Atticus Finch / To Kill a Mockingbird — establishes moral compass"). Good for English literature units.',
-      };
-      const rule = modeRules[mode] || modeRules['standard'];
-      return `You are turning study material into flashcards.
-
-MODE: ${mode}
-RULES FOR THIS MODE: ${rule}
-MAX CARDS: ${count}
-${focus ? `FOCUS: ${focus}\n` : ''}
-Return ONLY valid JSON, no prose, no markdown code fences. Shape:
-{
-  "title": ${JSON.stringify(title || 'Generated deck')},
-  "mode": "${mode}",
-  "cards": [ { "front": "...", "back": "..." } ]
-}
-
-Keep cards atomic (one fact each). Skip headers, page numbers, table of contents, and references. Don't invent facts not in the source.
-
-${isVision ? 'SOURCE MATERIAL: the attached page image(s) above.' : `SOURCE MATERIAL:\n"""\n${text}\n"""`}`;
-    }
-
-    // Recover a usable deck from JSON cut off mid-array (Gemini hit max tokens).
+    // Recover a usable deck from JSON cut off mid-array (model hit max tokens).
     function salvageDeck(text, title, mode) {
       const cardsIdx = text.indexOf('"cards"');
       if (cardsIdx < 0) return null;
@@ -536,67 +454,39 @@ ${isVision ? 'SOURCE MATERIAL: the attached page image(s) above.' : `SOURCE MATE
     }
 
     async function run() {
-      const key = keyIn.value.trim();
       const text = (loadedText || document.getElementById('text-in').value).trim();
       const mode = document.getElementById('mode').value;
       const count = parseInt(document.getElementById('count').value, 10) || 30;
       const title = document.getElementById('title-in').value.trim();
       const focus = document.getElementById('focus-in').value.trim();
 
-      if (!key) return setStatus('Enter your Gemini API key.', 'err');
-      if (!text && !loadedImages) return setStatus('Load a file or paste text first.', 'err');
-      localStorage.setItem('geminiKey', key);
+      if (!text) return setStatus('Load a file or paste text first.', 'err');
 
       const btn = document.getElementById('run-btn');
       btn.disabled = true;
-      setStatus('Calling Gemini…');
-
-      // Build parts: images for scanned PDFs, plain text otherwise
-      let parts;
-      if (loadedImages && loadedImages.length > 0) {
-        parts = [
-          ...loadedImages.map(img => ({ inlineData: img })),
-          { text: buildPrompt('', mode, count, title, focus, true) },
-        ];
-      } else {
-        const MAX_CHARS = 60000;
-        const trimmed = text.length > MAX_CHARS ? text.slice(0, MAX_CHARS) + '\n[…truncated]' : text;
-        parts = [{ text: buildPrompt(trimmed, mode, count, title, focus, false) }];
-      }
+      setStatus('Generating…');
 
       try {
-        const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(key);
-        const res = await fetch(url, {
+        const res = await fetch('/api/flashcards/generate', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts }],
-            generationConfig: {
-              responseMimeType: 'application/json',
-              maxOutputTokens: 32768,
-              temperature: 0.4,
-            },
-          }),
+          body: JSON.stringify({ text, mode, count, title, focus }),
         });
+        const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          const errBody = await res.text();
-          throw new Error(`API ${res.status}: ${errBody.slice(0, 200)}`);
+          throw new Error(data.error || `API ${res.status}`);
         }
-        const data = await res.json();
-        const finish = data.candidates?.[0]?.finishReason || '';
-        const raw = (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
-        // Strip code fences just in case.
+        const raw = String(data.raw || '').trim();
         const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/```$/, '').trim();
 
-        let parsed, truncated = false;
+        let parsed, hitCap = false;
         try {
           parsed = JSON.parse(cleaned);
         } catch (parseErr) {
-          // Salvage partial JSON when Gemini hit the token cap mid-array.
           const salvaged = salvageDeck(cleaned, title, mode);
           if (!salvaged) throw parseErr;
           parsed = salvaged;
-          truncated = true;
+          hitCap = true;
         }
         if (!parsed.cards || !Array.isArray(parsed.cards) || !parsed.cards.length) {
           throw new Error('Response had no cards.');
@@ -608,10 +498,10 @@ ${isVision ? 'SOURCE MATERIAL: the attached page image(s) above.' : `SOURCE MATE
         const open = document.getElementById('open-btn');
         open.style.display = '';
         open.href = '/tools/flashcards.html#deck=' + encodeURIComponent(btoa(unescape(encodeURIComponent(pretty))));
-        const hitCap = truncated || finish === 'MAX_TOKENS';
-        const note = hitCap
-          ? ` (output was cut off — kept ${parsed.cards.length} complete cards. Try a smaller "How many cards" or shorter source.)`
-          : '';
+        const notes = [];
+        if (hitCap) notes.push(`output was cut off — kept ${parsed.cards.length} complete cards`);
+        if (data.truncated) notes.push('source was truncated to fit input limit');
+        const note = notes.length ? ` (${notes.join('; ')}.)` : '';
         setStatus(`Generated ${parsed.cards.length} cards.${note}`, hitCap ? 'err' : 'ok');
       } catch (e) {
         setStatus('Error: ' + e.message, 'err');
