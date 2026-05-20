@@ -5,6 +5,10 @@
 .env*
 !.env.example
 
+# macOS metadata
+.DS_Store
+**/.DS_Store
+
 # Large game assets hosted on R2 (bucket: sn4k)
 break-times/1.12-wasm.html
 break-times/amog.html
@@ -14,3 +18,6 @@ break-times/drift/
 break-times/karlson/
 break-times/ultrakill/
 break-times/webfishing/
+
+# Audio hosted on R2 (bucket: sn4k, path: audio/)
+audio/
