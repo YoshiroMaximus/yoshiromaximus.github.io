@@ -28,7 +28,9 @@
       "mcp__plugin_cloudflare_cloudflare-observability__query_worker_observability",
       "mcp__plugin_cloudflare_cloudflare-builds__set_active_account",
       "Bash(git rm *)",
-      "Bash(echo \"exit=$?\")"
+      "Bash(echo \"exit=$?\")",
+      "Bash(sed -i '' '861s|\\(\\(state.completedPomos % state.settings.longEvery === 0\\) ? state.settings.longBreakMins : state.settings.breakMins\\)|\\(isLongBreak\\(state\\) ? state.settings.longBreakMins : state.settings.breakMins\\)|' tools/pomodoro.html)",
+      "Bash(sed -n '861p' tools/pomodoro.html)"
     ]
   }
 }

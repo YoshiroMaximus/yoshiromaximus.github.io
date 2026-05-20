@@ -485,15 +485,13 @@
     const K_ASSIGNMENTS = 'assignments.items.v1';
 
     // ─────────────── Date helpers ───────────────
-    const todayKey = () => {
-      const d = new Date();
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    };
+    const dateKey = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const todayKey = () => dateKey(new Date());
     const last7Keys = () => {
       const out = [];
       for (let i = 6; i >= 0; i--) {
         const d = new Date(); d.setDate(d.getDate() - i);
-        out.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+        out.push(dateKey(d));
       }
       return out;
     };
@@ -506,6 +504,13 @@
       const h = Math.floor(mins/60), m = mins % 60;
       return m ? `${h}h ${m}m` : `${h}h`;
     };
+    const mmss = (mm, ss) => `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+    function pruneHistory(h) {
+      const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
+      const cutKey = dateKey(cutoff);
+      Object.keys(h).forEach(k => { if (k < cutKey) delete h[k]; });
+    }
+    const isLongBreak = (s) => s.completedPomos > 0 && (s.completedPomos % s.settings.longEvery) === 0;
 
     // ─────────────── State ───────────────
     const defaultState = () => ({
@@ -552,10 +557,7 @@
       if (!completed.length) return;
       const h = loadHistory();
       h[s.date] = (h[s.date] || []).concat(completed);
-      // prune anything older than 7 days
-      const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
-      const cutKey = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
-      Object.keys(h).forEach(k => { if (k < cutKey) delete h[k]; });
+      pruneHistory(h);
       saveHistory(h);
     }
 
@@ -730,12 +732,14 @@
         return cur ? cur.plannedMins * 60 * 1000 : 0;
       }
       if (state.phase === 'break' || state.phase === 'paused-break') {
-        const isLong = (state.completedPomos % state.settings.longEvery) === 0 && state.completedPomos > 0;
+        const isLong = isLongBreak(state);
         return (isLong ? state.settings.longBreakMins : state.settings.breakMins) * 60 * 1000;
       }
       return 0;
     }
 
+    let lastRenderedSec = -1;
+    let lastWarn = false;
     function renderClock() {
       let ms = 0, total = 0;
       if (state.phase === 'work' || state.phase === 'break') {
@@ -751,17 +755,21 @@
         ms = 0; total = 1;
       }
       const totalSec = Math.ceil(ms / 1000);
+      if (totalSec === lastRenderedSec) return;
+      lastRenderedSec = totalSec;
       const mm = Math.floor(totalSec / 60);
       const ss = totalSec % 60;
-      el.clock.textContent = `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
-      el.clock.classList.toggle('warn', state.phase === 'work' && ms < 60000 && ms > 0);
+      el.clock.textContent = mmss(mm, ss);
+      const warn = state.phase === 'work' && ms < 60000 && ms > 0;
+      if (warn !== lastWarn) { el.clock.classList.toggle('warn', warn); lastWarn = warn; }
       const pct = total > 0 ? (1 - ms / total) * 100 : 0;
       el.progress.style.width = `${Math.min(100, Math.max(0, pct))}%`;
       updateTitle(mm, ss);
     }
+    function invalidateClockCache() { lastRenderedSec = -1; lastWarn = false; }
 
     function updateClockDisplay() {
-      // phase & subject text + hero color
+      invalidateClockCache();
       el.hero.classList.remove('idle');
       el.hero.classList.remove('break');
       let phaseText = 'Ready', phaseClass = '';
@@ -775,7 +783,7 @@
       el.phase.className = 'phase ' + phaseClass;
       el.phase.innerHTML = phaseText;
       if (state.phase === 'break' || state.phase === 'paused-break') {
-        const isLong = (state.completedPomos % state.settings.longEvery) === 0 && state.completedPomos > 0;
+        const isLong = isLongBreak(state);
         el.subject.textContent = isLong ? 'long break' : 'short break';
       } else if (cur && state.queue.length) {
         el.subject.textContent = cur.name;
@@ -823,7 +831,7 @@
       refreshAll();
     }
     function startBreak() {
-      const isLong = (state.completedPomos % state.settings.longEvery) === 0 && state.completedPomos > 0;
+      const isLong = isLongBreak(state);
       const mins = isLong ? state.settings.longBreakMins : state.settings.breakMins;
       state.phase = 'break';
       state.endsAt = Date.now() + mins * 60 * 1000;
@@ -856,7 +864,7 @@
         startBreak();
       } else {
         state.phase = 'paused-break';
-        state.remainingMs = ((state.completedPomos % state.settings.longEvery === 0) ? state.settings.longBreakMins : state.settings.breakMins) * 60 * 1000;
+        state.remainingMs = (isLongBreak(state) ? state.settings.longBreakMins : state.settings.breakMins) * 60 * 1000;
         state.endsAt = 0;
         saveState();
         refreshAll();
@@ -888,10 +896,7 @@
       const k = todayKey();
       h[k] = h[k] || [];
       h[k].push({ name, mins });
-      // prune older than 7 days
-      const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
-      const cutKey = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
-      Object.keys(h).forEach(kk => { if (kk < cutKey) delete h[kk]; });
+      pruneHistory(h);
       saveHistory(h);
       renderStats();
     }
@@ -1105,26 +1110,27 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden) stopTitleFlash(); });
     function updateTitle(mm, ss) {
       if (document.hidden || titleFlashInterval) return;
+      let next;
       if (state.phase === 'work' || state.phase === 'break') {
         const tag = state.phase === 'work' ? '●' : '◐';
-        document.title = `${tag} ${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')} — ${baseTitle}`;
+        next = `${tag} ${mmss(mm, ss)} — ${baseTitle}`;
       } else {
-        document.title = baseTitle;
+        next = baseTitle;
       }
+      if (document.title !== next) document.title = next;
     }
 
     // ─────────────── Stats ───────────────
-    function todayBreakdown() {
-      const h = loadHistory();
-      const today = h[todayKey()] || [];
+    function breakdownFor(entries) {
       const map = new Map();
-      today.forEach(e => map.set(e.name, (map.get(e.name) || 0) + e.mins));
+      entries.forEach(e => map.set(e.name, (map.get(e.name) || 0) + e.mins));
       return [...map.entries()].sort((a,b) => b[1] - a[1]);
     }
     function renderStats() {
-      // today
-      const items = todayBreakdown();
-      el.todayDate.textContent = todayKey();
+      const h = loadHistory();
+      const tk = todayKey();
+      const items = breakdownFor(h[tk] || []);
+      el.todayDate.textContent = tk;
       el.todayStats.innerHTML = '';
       if (items.length === 0) {
         const empty = document.createElement('div');
@@ -1145,14 +1151,11 @@
         el.todayStats.appendChild(totalName); el.todayStats.appendChild(totalVal);
       }
 
-      // week
       const keys = last7Keys();
-      const h = loadHistory();
       const totals = keys.map(k => (h[k] || []).reduce((a,e) => a + e.mins, 0));
       const max = Math.max(60, ...totals);
       el.weekBars.innerHTML = '';
       el.weekLabels.innerHTML = '';
-      const tk = todayKey();
       let weekTotal = 0;
       keys.forEach((k, i) => {
         weekTotal += totals[i];

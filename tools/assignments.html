@@ -598,18 +598,20 @@
     const DAY_NAMES   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
     // ─────────────── Date helpers ───────────────
-    const todayKey = () => {
-      const d = new Date();
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    };
+    const DAY_MS = 86400000;
+    const dateKey = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const parseDateKey = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+    const todayKey = () => dateKey(new Date());
+    const dateKeyFromTs = (ts) => dateKey(new Date(ts));
+    function yesterdayKey() {
+      const d = new Date(); d.setDate(d.getDate() - 1);
+      return dateKey(d);
+    }
     function dayDiff(dateStr) {
-      // days from today (negative = past). Date-only comparison.
-      const [y, m, d] = dateStr.split('-').map(Number);
-      const target = new Date(y, m - 1, d);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      target.setHours(0, 0, 0, 0);
-      return Math.round((target - today) / (24 * 60 * 60 * 1000));
+      // Date-only comparison; negative = past.
+      const target = parseDateKey(dateStr); target.setHours(0, 0, 0, 0);
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      return Math.round((target - today) / DAY_MS);
     }
     function dueLabel(dateStr) {
       const diff = dayDiff(dateStr);
@@ -617,17 +619,7 @@
       if (diff === 0) return 'Due today';
       if (diff === 1) return 'Due tomorrow';
       if (diff < 7)   return `Due in ${diff} days`;
-      const [y, m, d] = dateStr.split('-').map(Number);
-      const dt = new Date(y, m - 1, d);
-      return `Due ${dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
-    }
-    function dateKeyFromTs(ts) {
-      const d = new Date(ts);
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    }
-    function yesterdayKey() {
-      const d = new Date(); d.setDate(d.getDate() - 1);
-      return dateKeyFromTs(d.getTime());
+      return `Due ${parseDateKey(dateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
     }
     function completionRelative(ts) {
       if (!ts) return 'Completed';
@@ -635,7 +627,7 @@
       if (dk === todayKey()) return 'Completed today';
       if (dk === yesterdayKey()) return 'Completed yesterday';
       const d = new Date(ts);
-      const diffDays = Math.round((Date.now() - ts) / 86400000);
+      const diffDays = Math.round((Date.now() - ts) / DAY_MS);
       if (diffDays < 7) return `Completed ${d.toLocaleDateString(undefined, { weekday: 'long' })}`;
       return `Completed ${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
     }
@@ -643,17 +635,15 @@
       if (key === 'earlier') return 'Earlier';
       if (key === todayKey()) return 'Today';
       if (key === yesterdayKey()) return 'Yesterday';
-      const [Y, M, D] = key.split('-').map(Number);
-      const dt = new Date(Y, M - 1, D);
-      const diffDays = Math.round((Date.now() - dt.getTime()) / 86400000);
+      const dt = parseDateKey(key);
+      const diffDays = Math.round((Date.now() - dt.getTime()) / DAY_MS);
       if (diffDays < 7) return dt.toLocaleDateString(undefined, { weekday: 'long' });
       return dt.toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
     }
 
     function nextOccurrence(rule, fromDateStr) {
       if (!rule) return null;
-      const [y, m, d] = fromDateStr.split('-').map(Number);
-      const cur = new Date(y, m - 1, d);
+      const cur = parseDateKey(fromDateStr);
       for (let i = 1; i <= 366; i++) {
         const next = new Date(cur);
         next.setDate(cur.getDate() + i);
@@ -662,7 +652,7 @@
         if (rule.kind === 'daily') match = true;
         else if (rule.kind === 'weekly' && rule.days && rule.days.length) match = rule.days.includes(dow);
         if (!match) continue;
-        const ds = `${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}-${String(next.getDate()).padStart(2,'0')}`;
+        const ds = dateKey(next);
         if (rule.until && ds > rule.until) return null;
         return ds;
       }
@@ -759,7 +749,6 @@
       classes.push({ id: crypto.randomUUID().slice(0,8), name: name.slice(0,40), color: selectedSwatch });
       save(K_CLASSES, classes);
       elClassName.value = '';
-      // rotate to next color for convenience
       const next = PALETTE[(PALETTE.indexOf(selectedSwatch) + 1) % PALETTE.length];
       selectedSwatch = next;
       renderAll();
@@ -790,7 +779,7 @@
         b.title = DAY_NAMES[i];
         b.addEventListener('click', () => {
           if (formRepeatDays.includes(i)) formRepeatDays = formRepeatDays.filter(x => x !== i);
-          else formRepeatDays = [...formRepeatDays, i].sort();
+          else formRepeatDays = [...formRepeatDays, i].sort((a, b) => a - b);
           renderDayPills();
         });
         elRepeatDays.appendChild(b);
@@ -801,8 +790,7 @@
       elRepeatDays.style.display = v === 'weekly' ? '' : 'none';
       elRepeatUntilWrap.style.display = v !== 'none' ? '' : 'none';
       if (v === 'weekly' && formRepeatDays.length === 0 && elAddDue.value) {
-        const [y, m, d] = elAddDue.value.split('-').map(Number);
-        if (y) formRepeatDays = [new Date(y, m - 1, d).getDay()];
+        formRepeatDays = [parseDateKey(elAddDue.value).getDay()];
         renderDayPills();
       }
     }
@@ -825,8 +813,10 @@
         elAddSubmit.disabled = false;
       }
     }
-    // default due date = today
     elAddDue.value = todayKey();
+    elAddDue.addEventListener('focus', () => {
+      if (!editingId && !elAddDue.value) elAddDue.value = todayKey();
+    });
 
     function resetForm() {
       editingId = null;
@@ -921,7 +911,6 @@
           c.addEventListener('click', () => { filter.status = key; save(K_FILTER, filter); renderAll(); });
           elFilters.appendChild(c);
         });
-      // divider via spacing
       if (classes.length) {
         const sep = document.createElement('span'); sep.style.width = '1px'; sep.style.alignSelf = 'stretch'; sep.style.background = 'var(--line)'; sep.style.margin = '0 .25rem';
         elFilters.appendChild(sep);
@@ -966,6 +955,7 @@
 
     function renderList() {
       const xs = filteredItems();
+      const classMap = new Map(classes.map(c => [c.id, c]));
       elList.innerHTML = '';
       if (xs.length === 0) {
         const e = document.createElement('div');
@@ -991,21 +981,19 @@
           header.className = 'group-header';
           header.textContent = completionGroupLabel(k);
           elList.appendChild(header);
-          groups.get(k).forEach(it => elList.appendChild(renderItem(it)));
+          groups.get(k).forEach(it => elList.appendChild(renderItem(it, classMap)));
         });
       } else {
-        xs.forEach(it => elList.appendChild(renderItem(it)));
+        xs.forEach(it => elList.appendChild(renderItem(it, classMap)));
       }
       elListMeta.textContent = xs.length ? `${xs.length} shown` : '';
     }
 
-    function renderItem(it) {
-      const cls = classes.find(c => c.id === it.classId);
+    function renderItem(it, classMap) {
+      const cls = classMap.get(it.classId);
       const u = urgencyClass(it);
       const row = document.createElement('div');
       row.className = 'item ' + u;
-      if (cls) row.style.setProperty('--class-color', cls.color);
-
       const check = document.createElement('button');
       check.className = 'item-check';
       check.title = it.status === 'done' ? 'Mark as not done' : 'Mark done';
@@ -1111,9 +1099,9 @@
       del.textContent = '×';
       del.title = 'Delete';
       del.addEventListener('click', () => {
-        const snapshot = JSON.parse(JSON.stringify(items));
+        const index = items.indexOf(it);
         const wasRecurring = !!it.recurrence && !it.spawnedChild;
-        items = items.filter(x => x.id !== it.id);
+        items.splice(index, 1);
         save(K_ITEMS, items);
         renderAll();
         const msg = wasRecurring
@@ -1122,7 +1110,7 @@
         showToast(msg, {
           duration: 5000,
           action: { label: 'Undo', onClick: () => {
-            items = snapshot;
+            items.splice(Math.min(index, items.length), 0, it);
             save(K_ITEMS, items);
             renderAll();
           }}
@@ -1146,11 +1134,14 @@
     const elStats = document.getElementById('stats-row');
     const elDashSub = document.getElementById('dash-sub');
     function renderStats() {
-      const open = items.filter(i => i.status !== 'done');
-      const overdue = open.filter(i => dayDiff(i.due) < 0).length;
-      const today = open.filter(i => dayDiff(i.due) === 0).length;
-      const week = open.filter(i => { const d = dayDiff(i.due); return d > 0 && d < 7; }).length;
-      const doneEver = items.filter(i => i.status === 'done').length;
+      let overdue = 0, today = 0, week = 0, doneEver = 0;
+      for (const i of items) {
+        if (i.status === 'done') { doneEver++; continue; }
+        const d = dayDiff(i.due);
+        if (d < 0) overdue++;
+        else if (d === 0) today++;
+        else if (d < 7) week++;
+      }
       elStats.innerHTML = '';
       [
         [overdue, 'Overdue', 'overdue'],
@@ -1168,10 +1159,8 @@
 
     // ─────────────── Pomodoro handoff ───────────────
     function sendToPomodoro(it) {
-      // load pomo state (or start a fresh one for today)
       const today = todayKey();
-      let pomo;
-      try { pomo = JSON.parse(localStorage.getItem(K_POMO) || 'null'); } catch { pomo = null; }
+      let pomo = load(K_POMO, null);
       if (!pomo || pomo.date !== today) {
         pomo = {
           date: today, queue: [], currentIdx: 0, phase: 'idle',
@@ -1188,9 +1177,8 @@
         plannedMins: mins,
         sourceAssignmentId: it.id
       });
-      localStorage.setItem(K_POMO, JSON.stringify(pomo));
+      save(K_POMO, pomo);
 
-      // mark as in progress
       if (it.status === 'todo') {
         it.status = 'doing';
         save(K_ITEMS, items);
