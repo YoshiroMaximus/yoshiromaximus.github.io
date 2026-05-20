@@ -18,7 +18,17 @@
       "Bash(git diff *)",
       "Read(//tmp/**)",
       "WebFetch(domain:developers.cloudflare.com)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "mcp__plugin_cloudflare_cloudflare-bindings__accounts_list",
+      "mcp__plugin_cloudflare_cloudflare-bindings__set_active_account",
+      "mcp__plugin_cloudflare_cloudflare-bindings__workers_list",
+      "mcp__plugin_cloudflare_cloudflare-bindings__r2_buckets_list",
+      "mcp__plugin_cloudflare_cloudflare-builds__workers_builds_set_active_worker",
+      "mcp__plugin_cloudflare_cloudflare-builds__workers_builds_list_builds",
+      "mcp__plugin_cloudflare_cloudflare-observability__query_worker_observability",
+      "mcp__plugin_cloudflare_cloudflare-builds__set_active_account",
+      "Bash(git rm *)",
+      "Bash(echo \"exit=$?\")"
     ]
   }
 }
