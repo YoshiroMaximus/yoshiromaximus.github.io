@@ -30,7 +30,9 @@
       "Bash(git rm *)",
       "Bash(echo \"exit=$?\")",
       "Bash(sed -i '' '861s|\\(\\(state.completedPomos % state.settings.longEvery === 0\\) ? state.settings.longBreakMins : state.settings.breakMins\\)|\\(isLongBreak\\(state\\) ? state.settings.longBreakMins : state.settings.breakMins\\)|' tools/pomodoro.html)",
-      "Bash(sed -n '861p' tools/pomodoro.html)"
+      "Bash(sed -n '861p' tools/pomodoro.html)",
+      "Read(//private/tmp/**)",
+      "Bash(unzip -o \"/Users/nico/Downloads/GWHS 25-26 Bell Schedule w_ Finals.docx\" -d gwhs_docx)"
     ]
   }
 }
