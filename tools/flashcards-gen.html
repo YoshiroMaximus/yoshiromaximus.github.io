@@ -565,7 +565,7 @@ ${isVision ? 'SOURCE MATERIAL: the attached page image(s) above.' : `SOURCE MATE
       }
 
       try {
-        const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(key);
+        const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=' + encodeURIComponent(key);
         const res = await fetch(url, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },

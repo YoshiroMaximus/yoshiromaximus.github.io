@@ -345,6 +345,50 @@
     .stat-val.skip { color: var(--skip); }
 
     /* ── Library ── */
+    /* ── Chapter / part picker ── */
+    .picker { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+    .picker.hidden { display: none; }
+    .picker-head {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 1.5rem;
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .picker-head button {
+      font-family: inherit; font-size: inherit; letter-spacing: inherit;
+      text-transform: inherit; color: var(--muted);
+      background: none; border: none; cursor: pointer; padding: 0;
+    }
+    .picker-head button:hover { color: var(--text); }
+    .picker-list { display: flex; flex-direction: column; gap: 0.4rem; }
+    .pick-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      gap: 0.75rem; padding: 0.7rem 0.9rem;
+      background: var(--bg2); border: 1px solid var(--line); border-radius: 2px;
+      cursor: pointer; transition: border 0.15s ease, background 0.15s ease;
+    }
+    .pick-row:hover { border-color: var(--muted); background: var(--tag-bg); }
+    .pick-row .pick-name { font-size: 0.9rem; }
+    .pick-row .pick-count {
+      font-family: 'DM Mono', monospace; font-size: 0.65rem;
+      color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .pick-row.all .pick-name { color: var(--accent2); }
+    .picker-split {
+      display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+      margin: 0.8rem 0 0.2rem;
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      color: var(--muted); letter-spacing: 0.04em;
+    }
+    .picker-split input {
+      width: 4rem; background: var(--bg2); color: var(--text);
+      border: 1px solid var(--line); border-radius: 2px;
+      padding: 0.3rem 0.4rem;
+      font-family: 'DM Mono', monospace; font-size: 0.75rem; text-align: center;
+    }
+    .picker-split input:focus { outline: none; border-color: var(--muted); }
+
     .library {
       margin-top: 2rem;
       padding-top: 1.5rem;
@@ -503,8 +547,9 @@ DNA is replicated during the ___ phase || S
       </div>
       <p class="hint">
         <strong>JSON:</strong> <code>{ "title": "...", "mode": "standard|fill-blank|vocab", "cards": [{"front":"...","back":"..."}] }</code><br>
-        <strong>Text:</strong> one card per line, <code>front || back</code>. Optional <code># title:</code> and <code># mode:</code> headers.<br>
-        <strong>Modes:</strong> <code>standard</code> Q/A · <code>fill-blank</code> hides answer with a blank · <code>vocab</code> word→definition
+        <strong>Text:</strong> one card per line, <code>front || back</code>. Optional <code># title:</code>, <code># mode:</code>, and <code># chapter:</code> headers (a chapter applies to the lines below it).<br>
+        <strong>Modes:</strong> <code>standard</code> Q/A · <code>fill-blank</code> hides answer with a blank · <code>vocab</code> word→definition<br>
+        <strong>Chapters:</strong> add <code>"chapter"</code> to cards (JSON) or use <code># chapter:</code> headers (text) to study by section. Big decks also auto-split into parts.
       </p>
       <p class="err" id="err"></p>
 
@@ -520,12 +565,22 @@ DNA is replicated during the ___ phase || S
       </div>
     </div>
 
+    <!-- Chapter / part picker -->
+    <div class="picker hidden" id="picker">
+      <div class="picker-head">
+        <span id="picker-title">Deck</span>
+        <button onclick="newDeck()" title="Exit deck (Esc)">exit ×</button>
+      </div>
+      <div class="picker-list" id="picker-list"></div>
+    </div>
+
     <!-- Deck -->
     <div class="deck-wrap hidden" id="deck">
       <div class="deck-bar">
         <span><span id="deck-title">Deck</span> · <span class="mode" id="deck-mode">standard</span></span>
         <span>
           <span id="deck-pos">0 / 0</span> ·
+          <span id="deck-chapters-wrap" style="display:none"><button id="deck-chapters-btn" onclick="backToPicker()" title="Pick a chapter / part">chapters</button> · </span>
           <button onclick="openShare()" title="Share to public library">share</button> ·
           <button onclick="reset()">restart</button> ·
           <button onclick="newDeck()" title="Exit deck (Esc)">exit ×</button>
@@ -550,6 +605,7 @@ DNA is replicated during the ___ phase || S
       <div class="loader-row" style="justify-content:center">
         <button class="btn" onclick="restartSkipped()" id="btn-skipped">Restart review only</button>
         <button class="btn" onclick="reset()">Restart all</button>
+        <button class="btn" onclick="backToPicker()" id="btn-chapters" style="display:none">Back to chapters</button>
         <button class="btn" onclick="newDeck()">New deck</button>
       </div>
     </div>
@@ -613,11 +669,14 @@ DNA is replicated during the ___ phase || S
     })();
 
     // ── State ──
-    let deck = null;     // { title, mode, cards: [{front, back}] }
+    let fullDeck = null; // the whole loaded deck, before chapter/part filtering
+    let deck = null;     // the subset currently being studied { title, mode, cards }
     let order = [];      // remaining card indexes
     let stats = { know: 0, skip: 0, skippedIdx: [] };
     let currentCardEl = null;
     let studyMode = 'swipe'; // 'swipe' | 'type'
+    let hasPicker = false;   // whether the loaded deck offers a chapter/part picker
+    let partSize = 50;       // auto-split size for decks with no chapters
 
     // ── Parsing ──
     function parseInput(raw) {
@@ -635,21 +694,26 @@ DNA is replicated during the ___ phase || S
             const front = c.front ?? c.q ?? c.question ?? c.term;
             const back  = c.back  ?? c.a ?? c.answer   ?? c.definition;
             if (front == null || back == null) throw new Error(`Card ${i+1} missing front/back.`);
-            return { front: String(front), back: String(back) };
+            const chapter = c.chapter ?? c.section ?? c.part ?? c.unit;
+            const card = { front: String(front), back: String(back) };
+            if (chapter != null && String(chapter).trim()) card.chapter = String(chapter).trim();
+            return card;
           }),
         };
       }
       // Plain text
-      let title = 'Deck', mode = 'standard';
+      let title = 'Deck', mode = 'standard', curChapter = null;
       const cards = [];
       for (const line of raw.split(/\r?\n/)) {
         const t = line.trim();
         if (!t) continue;
         if (t.startsWith('#')) {
-          const m = t.slice(1).trim().match(/^(title|mode)\s*:\s*(.+)$/i);
+          const m = t.slice(1).trim().match(/^(title|mode|chapter|section|part|unit)\s*:\s*(.+)$/i);
           if (m) {
-            if (m[1].toLowerCase() === 'title') title = m[2].trim();
-            else mode = normMode(m[2].trim());
+            const key = m[1].toLowerCase(), val = m[2].trim();
+            if (key === 'title') title = val;
+            else if (key === 'mode') mode = normMode(val);
+            else curChapter = val;
           }
           continue;
         }
@@ -657,7 +721,9 @@ DNA is replicated during the ___ phase || S
         if (!sep) throw new Error(`Line "${t.slice(0,40)}…" missing "||" separator.`);
         const [f, b] = t.split(sep);
         if (!f || !b) throw new Error(`Line "${t.slice(0,40)}…" missing front or back.`);
-        cards.push({ front: f.trim(), back: b.trim() });
+        const card = { front: f.trim(), back: b.trim() };
+        if (curChapter) card.chapter = curChapter;
+        cards.push(card);
       }
       if (!cards.length) throw new Error('No cards parsed from text.');
       return { title, mode, cards };
@@ -703,7 +769,98 @@ DNA is replicated during the ___ phase || S
       r.readAsText(f);
     });
 
+    // Entry point after a deck is loaded/parsed. Shows the chapter/part picker
+    // for big or chaptered decks, otherwise jumps straight into studying.
     function startDeck(d) {
+      showErr('');
+      fullDeck = d;
+      hasPicker = !!chaptersOf(d) || d.cards.length > 50;
+      if (hasPicker) showPicker();
+      else beginStudy(d);
+    }
+
+    // Group cards by their chapter field. Returns null if fewer than 2 chapters.
+    function chaptersOf(d) {
+      if (!d.cards.some(c => c.chapter)) return null;
+      const map = new Map();
+      d.cards.forEach((c, i) => {
+        const name = c.chapter || 'Other';
+        if (!map.has(name)) map.set(name, []);
+        map.get(name).push(i);
+      });
+      if (map.size < 2) return null;
+      return [...map.entries()].map(([name, cards]) => ({ name, cards }));
+    }
+
+    function subDeck(label, idxs) {
+      return {
+        title: fullDeck.title + ' · ' + label,
+        mode: fullDeck.mode,
+        cards: idxs.map(i => fullDeck.cards[i]),
+      };
+    }
+
+    function showPicker() {
+      document.body.classList.add('in-deck');
+      document.getElementById('loader').classList.add('hidden');
+      document.getElementById('done').classList.remove('show');
+      document.getElementById('deck').classList.add('hidden');
+      document.getElementById('picker').classList.remove('hidden');
+      renderPicker();
+    }
+    function backToPicker() {
+      if (!hasPicker) return newDeck();
+      showPicker();
+    }
+
+    function pickRow(name, count, onClick, isAll = false) {
+      const el = document.createElement('div');
+      el.className = 'pick-row' + (isAll ? ' all' : '');
+      el.innerHTML = `<span class="pick-name"></span><span class="pick-count">${count}</span>`;
+      el.querySelector('.pick-name').textContent = name;
+      el.onclick = onClick;
+      return el;
+    }
+
+    function renderPicker() {
+      const list = document.getElementById('picker-list');
+      document.getElementById('picker-title').textContent = fullDeck.title;
+      list.innerHTML = '';
+      const total = fullDeck.cards.length;
+
+      list.appendChild(pickRow('All cards', `${total} cards`, () => beginStudy(fullDeck), true));
+
+      const chapters = chaptersOf(fullDeck);
+      if (chapters) {
+        for (const ch of chapters) {
+          list.appendChild(pickRow(ch.name, `${ch.cards.length} cards`,
+            () => beginStudy(subDeck(ch.name, ch.cards.slice()))));
+        }
+        return;
+      }
+
+      // No chapters — offer an auto-split control + the resulting parts.
+      const ctl = document.createElement('div');
+      ctl.className = 'picker-split';
+      ctl.innerHTML = `<span>Split into parts of</span><input type="number" min="5" max="500" value="${partSize}" id="part-size"><span>cards</span>`;
+      list.appendChild(ctl);
+      const sizeIn = ctl.querySelector('#part-size');
+      sizeIn.addEventListener('change', () => {
+        partSize = Math.max(1, Math.min(500, parseInt(sizeIn.value, 10) || 50));
+        renderPicker();
+      });
+
+      for (let start = 0; start < total; start += partSize) {
+        const end = Math.min(start + partSize, total);
+        const n = Math.floor(start / partSize) + 1;
+        const idxs = [];
+        for (let i = start; i < end; i++) idxs.push(i);
+        list.appendChild(pickRow(`Part ${n}`, `cards ${start + 1}–${end}`,
+          () => beginStudy(subDeck(`Part ${n}`, idxs))));
+      }
+    }
+
+    function beginStudy(d) {
       showErr('');
       deck = d;
       const studyRadio = document.querySelector('input[name="study"]:checked');
@@ -712,8 +869,10 @@ DNA is replicated during the ___ phase || S
       order = deck.cards.map((_, i) => i);
       document.body.classList.add('in-deck');
       document.getElementById('loader').classList.add('hidden');
+      document.getElementById('picker').classList.add('hidden');
       document.getElementById('done').classList.remove('show');
       document.getElementById('deck').classList.remove('hidden');
+      document.getElementById('deck-chapters-wrap').style.display = hasPicker ? '' : 'none';
       document.getElementById('deck-title').textContent = deck.title;
       document.getElementById('deck-mode').textContent = deck.mode + (studyMode === 'type' ? ' · type' : '');
       renderTop();
@@ -722,6 +881,7 @@ DNA is replicated during the ___ phase || S
     function newDeck() {
       document.body.classList.remove('in-deck');
       document.getElementById('loader').classList.remove('hidden');
+      document.getElementById('picker').classList.add('hidden');
       document.getElementById('done').classList.remove('show');
       document.getElementById('deck').classList.add('hidden');
       document.getElementById('stage').innerHTML = '';
@@ -984,6 +1144,10 @@ DNA is replicated during the ___ phase || S
 
     // Keyboard
     document.addEventListener('keydown', (e) => {
+      if (!document.getElementById('picker').classList.contains('hidden')) {
+        if (e.key === 'Escape') newDeck();
+        return;
+      }
       if (document.getElementById('deck').classList.contains('hidden')) return;
       if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
       if (e.key === 'ArrowRight') action('know');
@@ -1094,7 +1258,8 @@ DNA is replicated during the ___ phase || S
     }
 
     async function submitToLibrary() {
-      if (!deck) return;
+      const share = fullDeck || deck; // share the whole deck, not the active chapter/part
+      if (!share) return;
       const btn = document.getElementById('share-submit-btn');
       const status = document.getElementById('share-status');
       const submitter = document.getElementById('share-submitter').value.trim();
@@ -1106,7 +1271,7 @@ DNA is replicated during the ___ phase || S
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
-            title: deck.title, mode: deck.mode, cards: deck.cards, submitter,
+            title: share.title, mode: share.mode, cards: share.cards, submitter,
           }),
         });
         const data = await r.json();
@@ -1136,6 +1301,7 @@ DNA is replicated during the ___ phase || S
       document.getElementById('stat-know').textContent = stats.know;
       document.getElementById('stat-skip').textContent = stats.skip;
       document.getElementById('btn-skipped').style.display = stats.skippedIdx.length ? '' : 'none';
+      document.getElementById('btn-chapters').style.display = hasPicker ? '' : 'none';
     }
   </script>
 </body>

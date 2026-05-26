@@ -655,7 +655,12 @@ function validateDeck(b) {
     if (f.length > MAX_FIELD || bk.length > MAX_FIELD) {
       return { error: `Card ${i + 1} field too long (max ${MAX_FIELD}).` };
     }
-    cards.push({ front: f, back: bk });
+    const card = { front: f, back: bk };
+    const chapter = c.chapter ?? c.section ?? c.part ?? c.unit;
+    if (chapter != null && String(chapter).trim()) {
+      card.chapter = String(chapter).trim().slice(0, MAX_TITLE);
+    }
+    cards.push(card);
   }
 
   const submitter = String(b.submitter || '').trim().slice(0, MAX_SUBMITTER);
