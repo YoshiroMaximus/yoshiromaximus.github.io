@@ -2,7 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Pomodoro">
+  <meta name="theme-color" content="#f5f4f0" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)">
   <title>Homework Pomodoro — Yoshiro</title>
   <link rel="icon" type="image/x-icon" href="/favistuff/favicon.ico">
   <link rel="icon" type="image/png" sizes="16x16" href="/favistuff/favicon-16x16.png">
@@ -51,7 +57,7 @@
 
     /* theme toggle (matches tools.html) */
     .theme-toggle {
-      position: fixed; top: 1.5rem; right: 1.5rem;
+      position: fixed; top: max(1.5rem, env(safe-area-inset-top)); right: max(1.5rem, env(safe-area-inset-right));
       display: flex; gap: .1rem; z-index: 300;
     }
     .theme-btn {
@@ -63,7 +69,7 @@
     .theme-btn.active { color: var(--text); }
 
     .back-link {
-      position: fixed; top: 1.5rem; left: 1.5rem;
+      position: fixed; top: max(1.5rem, env(safe-area-inset-top)); left: max(1.5rem, env(safe-area-inset-left));
       font-family: 'DM Mono', monospace; font-size: .7rem;
       color: var(--line); text-decoration: none; letter-spacing: .06em;
       transition: color .2s; z-index: 300;
@@ -347,7 +353,7 @@
 
     /* toast */
     .toast {
-      position: fixed; bottom: 2rem; left: 50%;
+      position: fixed; bottom: max(2rem, calc(env(safe-area-inset-bottom) + 1rem)); left: 50%;
       transform: translateX(-50%) translateY(120%);
       background: var(--text); color: var(--bg);
       padding: .7rem 1.2rem;

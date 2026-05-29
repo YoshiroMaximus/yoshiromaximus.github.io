@@ -2,7 +2,15 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bell">
+<meta name="theme-color" content="#f4f4f6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="/favistuff/apple-touch-icon.png">
+<link rel="manifest" href="/favistuff/site.webmanifest">
 <title>GWHS Bell Schedule</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -43,12 +51,18 @@
   }
 
   header{
-    background:var(--red);padding:0 18px;
+    background:var(--red);
+    padding:env(safe-area-inset-top) max(18px,env(safe-area-inset-right)) 0 max(18px,env(safe-area-inset-left));
     display:flex;align-items:center;justify-content:space-between;
-    height:52px;position:sticky;top:0;z-index:50;
+    height:calc(52px + env(safe-area-inset-top));position:sticky;top:0;z-index:50;
     box-shadow:0 2px 16px rgba(200,16,46,.35);
   }
   header h1{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;color:white;}
+  .back-link{
+    font-family:'DM Mono',monospace;font-size:12px;letter-spacing:1px;
+    color:rgba(255,255,255,.85);text-decoration:none;transition:color .2s;flex-shrink:0;
+  }
+  .back-link:hover{color:white;}
   .hright{display:flex;align-items:center;gap:10px;}
   #live-clock{font-family:'DM Mono',monospace;font-size:13px;color:rgba(255,255,255,.9);letter-spacing:2px;}
   .theme-btn{
@@ -199,7 +213,7 @@
   .nick-item input:focus{border-color:var(--red);}
   .nick-item input::placeholder{color:var(--muted);opacity:.5;}
 
-  footer{text-align:center;padding:26px;color:var(--muted);font-size:11px;letter-spacing:1px;border-top:1px solid var(--border);}
+  footer{text-align:center;padding:26px 26px max(26px,calc(26px + env(safe-area-inset-bottom)));color:var(--muted);font-size:11px;letter-spacing:1px;border-top:1px solid var(--border);}
 
   @media(max-width:600px){
     .cp{font-size:34px;}.ct{font-size:46px;}
@@ -213,6 +227,7 @@
 <body>
 
 <header>
+  <a class="back-link" href="/tools.html">← tools</a>
   <h1>GWHS · Bell Schedule</h1>
   <div class="hright">
     <div id="live-clock">--:--:-- --</div>

@@ -2,7 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Assignments">
+  <meta name="theme-color" content="#f5f4f0" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)">
   <title>Assignments — Yoshiro</title>
   <link rel="icon" type="image/x-icon" href="/favistuff/favicon.ico">
   <link rel="icon" type="image/png" sizes="16x16" href="/favistuff/favicon-16x16.png">
@@ -52,7 +58,7 @@
     }
 
     .theme-toggle {
-      position: fixed; top: 1.5rem; right: 1.5rem;
+      position: fixed; top: max(1.5rem, env(safe-area-inset-top)); right: max(1.5rem, env(safe-area-inset-right));
       display: flex; gap: .1rem; z-index: 300;
     }
     .theme-btn {
@@ -64,17 +70,17 @@
     .theme-btn.active { color: var(--text); }
 
     .back-link {
-      position: fixed; top: 1.5rem; left: 1.5rem;
+      position: fixed; top: max(1.5rem, env(safe-area-inset-top)); left: max(1.5rem, env(safe-area-inset-left));
       font-family: 'DM Mono', monospace; font-size: .7rem;
       color: var(--line); text-decoration: none; letter-spacing: .06em;
       transition: color .2s; z-index: 300;
     }
     .back-link:hover { color: var(--muted); }
 
-    .page { max-width: 760px; margin: 0 auto; padding: 0 2rem 4rem; }
+    .page { max-width: 760px; margin: 0 auto; padding: 0 max(2rem, env(safe-area-inset-right)) 4rem max(2rem, env(safe-area-inset-left)); }
 
     header {
-      padding: 5rem 0 2.75rem;
+      padding: max(5rem, calc(3rem + env(safe-area-inset-top))) 0 2.75rem;
       border-bottom: 1px solid var(--line);
       opacity: 0; animation: fadeUp .6s ease .1s forwards;
     }
@@ -406,7 +412,7 @@
 
     /* ── Sent-to-pomodoro flash ── */
     .toast {
-      position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(120%);
+      position: fixed; bottom: max(2rem, calc(1rem + env(safe-area-inset-bottom))); left: 50%; transform: translateX(-50%) translateY(120%);
       background: var(--text); color: var(--bg);
       padding: .7rem 1.2rem;
       border-radius: 4px;
@@ -431,8 +437,8 @@
     @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
 
     @media (max-width: 520px) {
-      .page { padding: 0 1.25rem 3rem; }
-      header { padding: 4rem 0 2rem; }
+      .page { padding: 0 1.25rem max(3rem, calc(1rem + env(safe-area-inset-bottom))); }
+      header { padding: max(4rem, calc(2rem + env(safe-area-inset-top))) 0 2rem; }
       section { padding: 2rem 0; }
       .item { grid-template-columns: auto 1fr; }
       .item-actions { grid-column: 2 / -1; justify-content: flex-end; }

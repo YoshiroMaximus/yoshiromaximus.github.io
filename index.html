@@ -2,7 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Yoshiro">
+  <meta name="theme-color" content="#f5f4f0" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)">
   <title>Yoshiro</title>
   <link rel="icon" type="image/x-icon" href="/favistuff/favicon.ico">
   <link rel="icon" type="image/png" sizes="16x16" href="/favistuff/favicon-16x16.png">
@@ -40,8 +46,8 @@
     /* ── Theme toggle ── */
     .theme-toggle {
       position: fixed;
-      top: 1.5rem;
-      right: 1.5rem;
+      top: max(1.5rem, env(safe-area-inset-top));
+      right: max(1.5rem, env(safe-area-inset-right));
       display: flex;
       align-items: center;
       gap: 0.1rem;
@@ -74,7 +80,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 2rem;
+      padding: max(2rem, env(safe-area-inset-top)) max(2rem, env(safe-area-inset-right)) max(2rem, env(safe-area-inset-bottom)) max(2rem, env(safe-area-inset-left));
     }
 
     .container {

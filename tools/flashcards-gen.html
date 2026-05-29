@@ -2,9 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FC Gen">
+  <meta name="theme-color" content="#f5f4f0" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)">
   <title>Flashcard Generator — Yoshiro</title>
   <link rel="icon" type="image/x-icon" href="/favistuff/favicon.ico">
+  <link rel="apple-touch-icon" href="/favistuff/apple-touch-icon.png">
+  <link rel="manifest" href="/favistuff/site.webmanifest">
   <meta name="description" content="Turn a PDF or DOCX into a flashcard JSON file with Gemini.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,7 +43,7 @@
     }
 
     .theme-toggle {
-      position: fixed; top: 1.5rem; right: 1.5rem;
+      position: fixed; top: max(1.5rem, env(safe-area-inset-top)); right: max(1.5rem, env(safe-area-inset-right));
       display: flex; gap: 0.1rem; z-index: 300;
     }
     .theme-btn {
@@ -48,7 +56,7 @@
     .theme-btn.active { color: var(--text); }
 
     .back-link {
-      position: fixed; top: 1.5rem; left: 1.5rem;
+      position: fixed; top: max(1.5rem, env(safe-area-inset-top)); left: max(1.5rem, env(safe-area-inset-left));
       font-family: 'DM Mono', monospace; font-size: 0.7rem;
       color: var(--line); text-decoration: none; letter-spacing: 0.06em;
       z-index: 300; transition: color 0.2s ease;
@@ -57,7 +65,7 @@
 
     .page {
       max-width: 640px; margin: 0 auto;
-      padding: 5rem 2rem 3rem;
+      padding: max(5rem, calc(env(safe-area-inset-top) + 3.5rem)) max(2rem, env(safe-area-inset-right)) calc(3rem + env(safe-area-inset-bottom)) max(2rem, env(safe-area-inset-left));
       opacity: 0; animation: fadeUp 0.6s ease 0.1s forwards;
     }
 

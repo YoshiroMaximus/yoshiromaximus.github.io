@@ -2,7 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Email Sig">
+<meta name="theme-color" content="#efecea">
+<link rel="apple-touch-icon" href="/favistuff/apple-touch-icon.png">
+<link rel="manifest" href="/favistuff/site.webmanifest">
 <title>GWHS Student Email Signature Builder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,8 +42,10 @@ body {
 .progress-bar { height: 3px; background: rgba(13,43,94,0.1); position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, var(--navy), var(--gold)); width: 0%; transition: width 0.4s cubic-bezier(.4,0,.2,1); border-radius: 0 2px 2px 0; }
 
-.header { background: var(--navy); height: 60px; display: flex; align-items: center; padding: 0 2rem; gap: 1rem; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 20px rgba(13,43,94,0.3); }
+.header { background: var(--navy); min-height: 60px; display: flex; align-items: center; padding: env(safe-area-inset-top) max(2rem, env(safe-area-inset-right)) 0 max(2rem, env(safe-area-inset-left)); gap: 1rem; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 20px rgba(13,43,94,0.3); }
 .header-logo { height: 36px; width: 36px; object-fit: contain; filter: brightness(0) invert(1); opacity: 0.9; }
+.header-back { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.6); text-decoration: none; letter-spacing: 0.03em; transition: color 0.15s; flex-shrink: 0; }
+.header-back:hover { color: #fff; }
 .header-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.2); }
 .header-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: #fff; letter-spacing: 0.03em; }
 .header-sub { font-size: 12px; color: rgba(255,255,255,0.45); margin-left: 2px; }
@@ -174,7 +183,7 @@ body {
 .step { display: flex; align-items: flex-start; gap: 10px; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
 .step-num { width: 20px; height: 20px; border-radius: 50%; background: var(--navy); color: #fff; font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
 
-.site-footer { text-align: center; padding: 1.5rem; font-size: 12px; color: #aaa; margin-top: 1rem; }
+.site-footer { text-align: center; padding: 1.5rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom)); font-size: 12px; color: #aaa; margin-top: 1rem; }
 </style>
 </head>
 <body>
@@ -182,6 +191,8 @@ body {
 <div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
 
 <header class="header">
+  <a class="header-back" href="/tools.html">← tools</a>
+  <div class="header-divider"></div>
   <img class="header-logo" src="https://www.sfusd.edu/sites/default/files/school-logos/School%20logo_0.jpg" alt="GWHS">
   <div class="header-divider"></div>
   <div>

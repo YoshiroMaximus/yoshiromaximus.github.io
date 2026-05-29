@@ -2,9 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Flashcards">
+  <meta name="theme-color" content="#f5f4f0" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)">
   <title>Flashcards — Yoshiro</title>
   <link rel="icon" type="image/x-icon" href="/favistuff/favicon.ico">
+  <link rel="apple-touch-icon" href="/favistuff/apple-touch-icon.png">
+  <link rel="manifest" href="/favistuff/site.webmanifest">
   <meta name="description" content="Tinder-style flashcards for studying. Load JSON or formatted text and swipe through.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -50,7 +58,7 @@
 
     /* ── Theme toggle / back link ── */
     .theme-toggle {
-      position: fixed; top: 1.5rem; right: 1.5rem;
+      position: fixed; top: max(1.5rem, env(safe-area-inset-top)); right: max(1.5rem, env(safe-area-inset-right));
       display: flex; gap: 0.1rem; z-index: 300;
     }
     .theme-btn {
@@ -63,7 +71,7 @@
     .theme-btn.active { color: var(--text); }
 
     .back-link {
-      position: fixed; top: 1.5rem; left: 1.5rem;
+      position: fixed; top: max(1.5rem, env(safe-area-inset-top)); left: max(1.5rem, env(safe-area-inset-left));
       font-family: 'DM Mono', monospace; font-size: 0.7rem;
       color: var(--line); text-decoration: none; letter-spacing: 0.06em;
       transition: color 0.2s ease; z-index: 300;
@@ -74,7 +82,7 @@
     .page {
       max-width: 640px;
       margin: 0 auto;
-      padding: 5rem 2rem 3rem;
+      padding: calc(env(safe-area-inset-top) + 5rem) max(2rem, env(safe-area-inset-right)) max(3rem, env(safe-area-inset-bottom)) max(2rem, env(safe-area-inset-left));
       min-height: 100vh;
       display: flex; flex-direction: column;
       opacity: 0;
@@ -83,7 +91,7 @@
     }
     body.in-deck .page {
       max-width: 880px;
-      padding: 3.5rem 2rem 2rem;
+      padding: calc(env(safe-area-inset-top) + 3.5rem) max(2rem, env(safe-area-inset-right)) max(2rem, env(safe-area-inset-bottom)) max(2rem, env(safe-area-inset-left));
     }
     body.in-deck .header-label,
     body.in-deck h1,
