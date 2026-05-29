@@ -156,10 +156,15 @@
 
     .deck-bar {
       display: flex; justify-content: space-between; align-items: baseline;
+      gap: 1rem;
       margin-bottom: 1.5rem;
       font-family: 'DM Mono', monospace; font-size: 0.7rem;
       color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase;
     }
+    .deck-bar > span:first-child {
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+    }
+    .deck-bar > span:last-child { flex-shrink: 0; white-space: nowrap; }
     .deck-bar .mode { color: var(--accent2); }
     .deck-bar button {
       font-family: inherit; font-size: inherit; letter-spacing: inherit;
@@ -375,19 +380,6 @@
       white-space: nowrap;
     }
     .pick-row.all .pick-name { color: var(--accent2); }
-    .picker-split {
-      display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
-      margin: 0.8rem 0 0.2rem;
-      font-family: 'DM Mono', monospace; font-size: 0.7rem;
-      color: var(--muted); letter-spacing: 0.04em;
-    }
-    .picker-split input {
-      width: 4rem; background: var(--bg2); color: var(--text);
-      border: 1px solid var(--line); border-radius: 2px;
-      padding: 0.3rem 0.4rem;
-      font-family: 'DM Mono', monospace; font-size: 0.75rem; text-align: center;
-    }
-    .picker-split input:focus { outline: none; border-color: var(--muted); }
 
     .library {
       margin-top: 2rem;
@@ -541,6 +533,7 @@ DNA is replicated during the ___ phase || S
       <div class="study-row">
         <label><input type="radio" name="study" value="swipe" checked> Swipe mode</label>
         <label><input type="radio" name="study" value="type"> Practice by typing (active recall)</label>
+        <label><input type="checkbox" id="shuffle-in"> Shuffle</label>
       </div>
       <div class="loader-row">
         <button class="btn primary" onclick="loadFromPaste()">Start deck</button>
@@ -549,7 +542,7 @@ DNA is replicated during the ___ phase || S
         <strong>JSON:</strong> <code>{ "title": "...", "mode": "standard|fill-blank|vocab", "cards": [{"front":"...","back":"..."}] }</code><br>
         <strong>Text:</strong> one card per line, <code>front || back</code>. Optional <code># title:</code>, <code># mode:</code>, and <code># chapter:</code> headers (a chapter applies to the lines below it).<br>
         <strong>Modes:</strong> <code>standard</code> Q/A · <code>fill-blank</code> hides answer with a blank · <code>vocab</code> word→definition<br>
-        <strong>Chapters:</strong> add <code>"chapter"</code> to cards (JSON) or use <code># chapter:</code> headers (text) to study by section. Big decks also auto-split into parts.
+        <strong>Chapters:</strong> add <code>"chapter"</code> to cards (JSON) or use <code># chapter:</code> headers (text) to study one section at a time. The generator can detect these for you.
       </p>
       <p class="err" id="err"></p>
 
@@ -645,6 +638,16 @@ DNA is replicated during the ___ phase || S
     }
     setTheme(localStorage.getItem('theme') || 'light');
 
+    // ── Shuffle preference ──
+    (function initShuffle() {
+      const el = document.getElementById('shuffle-in');
+      if (!el) return;
+      el.checked = localStorage.getItem('flashShuffle') === '1';
+      el.addEventListener('change', () => {
+        localStorage.setItem('flashShuffle', el.checked ? '1' : '0');
+      });
+    })();
+
     // ── Hash handoff (from generator) ──
     (function tryHashDeck() {
       const m = location.hash.match(/deck=([^&]+)/);
@@ -668,6 +671,24 @@ DNA is replicated during the ___ phase || S
       setTimeout(() => loadLibraryDeck(id), 0);
     })();
 
+    // ── Deck-by-URL link (#src=<url>&ch=<chapter>) — used by study-hub pages ──
+    (function tryHashSrc() {
+      const m = location.hash.match(/[#&]src=([^&]+)/);
+      if (!m) return;
+      const src = decodeURIComponent(m[1]);
+      const chMatch = location.hash.match(/[#&]ch=([^&]+)/);
+      const chapter = chMatch ? decodeURIComponent(chMatch[1]) : null;
+      history.replaceState(null, '', location.pathname);
+      (async () => {
+        showErr('Loading deck…');
+        try {
+          const r = await fetch(src);
+          if (!r.ok) throw new Error('Could not load deck.');
+          loadDeckThen(parseInput(await r.text()), chapter);
+        } catch (e) { showErr(e.message); }
+      })();
+    })();
+
     // ── State ──
     let fullDeck = null; // the whole loaded deck, before chapter/part filtering
     let deck = null;     // the subset currently being studied { title, mode, cards }
@@ -675,8 +696,7 @@ DNA is replicated during the ___ phase || S
     let stats = { know: 0, skip: 0, skippedIdx: [] };
     let currentCardEl = null;
     let studyMode = 'swipe'; // 'swipe' | 'type'
-    let hasPicker = false;   // whether the loaded deck offers a chapter/part picker
-    let partSize = 50;       // auto-split size for decks with no chapters
+    let hasPicker = false;   // whether the loaded deck is split into chapters
 
     // ── Parsing ──
     function parseInput(raw) {
@@ -772,9 +792,19 @@ DNA is replicated during the ___ phase || S
     // Entry point after a deck is loaded/parsed. Shows the chapter/part picker
     // for big or chaptered decks, otherwise jumps straight into studying.
     function startDeck(d) {
+      loadDeckThen(d, null);
+    }
+
+    // Load a deck and optionally jump straight into one chapter (used by deep
+    // links like #src=/decks/bio.json&ch=Ch.3...). Falls back to the picker.
+    function loadDeckThen(d, chapterName) {
       showErr('');
       fullDeck = d;
-      hasPicker = !!chaptersOf(d) || d.cards.length > 50;
+      hasPicker = !!chaptersOf(d);
+      if (chapterName) {
+        const ch = (chaptersOf(d) || []).find(c => c.name === chapterName);
+        if (ch) { beginStudy(subDeck(ch.name, ch.cards.slice())); return; }
+      }
       if (hasPicker) showPicker();
       else beginStudy(d);
     }
@@ -793,8 +823,10 @@ DNA is replicated during the ___ phase || S
     }
 
     function subDeck(label, idxs) {
+      // Title is just the chapter name — the full deck name is redundant in the
+      // bar (and the "chapters" button gets you back to the whole deck).
       return {
-        title: fullDeck.title + ' · ' + label,
+        title: label,
         mode: fullDeck.mode,
         cards: idxs.map(i => fullDeck.cards[i]),
       };
@@ -830,34 +862,21 @@ DNA is replicated during the ___ phase || S
 
       list.appendChild(pickRow('All cards', `${total} cards`, () => beginStudy(fullDeck), true));
 
-      const chapters = chaptersOf(fullDeck);
-      if (chapters) {
-        for (const ch of chapters) {
-          list.appendChild(pickRow(ch.name, `${ch.cards.length} cards`,
-            () => beginStudy(subDeck(ch.name, ch.cards.slice()))));
-        }
-        return;
+      for (const ch of chaptersOf(fullDeck) || []) {
+        list.appendChild(pickRow(ch.name, `${ch.cards.length} cards`,
+          () => beginStudy(subDeck(ch.name, ch.cards.slice()))));
       }
+    }
 
-      // No chapters — offer an auto-split control + the resulting parts.
-      const ctl = document.createElement('div');
-      ctl.className = 'picker-split';
-      ctl.innerHTML = `<span>Split into parts of</span><input type="number" min="5" max="500" value="${partSize}" id="part-size"><span>cards</span>`;
-      list.appendChild(ctl);
-      const sizeIn = ctl.querySelector('#part-size');
-      sizeIn.addEventListener('change', () => {
-        partSize = Math.max(1, Math.min(500, parseInt(sizeIn.value, 10) || 50));
-        renderPicker();
-      });
-
-      for (let start = 0; start < total; start += partSize) {
-        const end = Math.min(start + partSize, total);
-        const n = Math.floor(start / partSize) + 1;
-        const idxs = [];
-        for (let i = start; i < end; i++) idxs.push(i);
-        list.appendChild(pickRow(`Part ${n}`, `cards ${start + 1}–${end}`,
-          () => beginStudy(subDeck(`Part ${n}`, idxs))));
+    // Fisher–Yates, in place. Only shuffles when the toggle is on.
+    function maybeShuffle(arr) {
+      const el = document.getElementById('shuffle-in');
+      if (!el || !el.checked) return arr;
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
       }
+      return arr;
     }
 
     function beginStudy(d) {
@@ -866,7 +885,7 @@ DNA is replicated during the ___ phase || S
       const studyRadio = document.querySelector('input[name="study"]:checked');
       studyMode = studyRadio ? studyRadio.value : 'swipe';
       stats = { know: 0, skip: 0, skippedIdx: [] };
-      order = deck.cards.map((_, i) => i);
+      order = maybeShuffle(deck.cards.map((_, i) => i));
       document.body.classList.add('in-deck');
       document.getElementById('loader').classList.add('hidden');
       document.getElementById('picker').classList.add('hidden');
@@ -890,7 +909,7 @@ DNA is replicated during the ___ phase || S
     function reset() {
       if (!deck) return;
       stats = { know: 0, skip: 0, skippedIdx: [] };
-      order = deck.cards.map((_, i) => i);
+      order = maybeShuffle(deck.cards.map((_, i) => i));
       document.getElementById('done').classList.remove('show');
       document.getElementById('deck').classList.remove('hidden');
       renderTop();
@@ -898,7 +917,7 @@ DNA is replicated during the ___ phase || S
 
     function restartSkipped() {
       if (!deck || !stats.skippedIdx.length) return;
-      const idxs = stats.skippedIdx.slice();
+      const idxs = maybeShuffle(stats.skippedIdx.slice());
       stats = { know: 0, skip: 0, skippedIdx: [] };
       order = idxs;
       document.getElementById('done').classList.remove('show');

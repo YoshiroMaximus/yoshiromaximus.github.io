@@ -158,6 +158,14 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    .check-row {
+      display: flex; align-items: flex-start; gap: 0.5rem;
+      font-family: 'DM Mono', monospace; font-size: 0.72rem;
+      color: var(--muted); line-height: 1.5; cursor: pointer; user-select: none;
+    }
+    .check-row input { margin-top: 0.15rem; accent-color: var(--accent2); flex-shrink: 0; }
+    .check-row:hover { color: var(--text); }
+
     .grid-2 {
       display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
     }
@@ -276,6 +284,10 @@
         <span class="lbl">Focus (optional)</span>
         <input type="text" id="focus-in" placeholder="e.g. only mitochondria & energy, skip diagrams">
       </label>
+      <label class="check-row">
+        <input type="checkbox" id="chapters-in" checked>
+        <span>Detect chapters / sections &mdash; tag each card by the unit it came from, so the deck can be studied one chapter at a time</span>
+      </label>
     </div>
 
     <!-- Step 4: run -->
@@ -356,6 +368,13 @@
     keyIn.value = localStorage.getItem('geminiKey') || '';
     keyIn.addEventListener('change', () => {
       localStorage.setItem('geminiKey', keyIn.value.trim());
+    });
+
+    // ── Chapter detection preference ──
+    const chaptersIn = document.getElementById('chapters-in');
+    if (localStorage.getItem('flashGenChapters') === '0') chaptersIn.checked = false;
+    chaptersIn.addEventListener('change', () => {
+      localStorage.setItem('flashGenChapters', chaptersIn.checked ? '1' : '0');
     });
 
     // ── File loading ──
@@ -452,7 +471,7 @@
       el.className = 'status' + (kind ? ' ' + kind : '');
     }
 
-    function buildPrompt(text, mode, count, title, focus, isVision = false) {
+    function buildPrompt(text, mode, count, title, focus, isVision = false, chapters = false) {
       const modeRules = {
         'standard':
           'Each "front" is a clear, specific question. Each "back" is a concise factual answer (one sentence or short phrase). Cover the most testable concepts.',
@@ -472,17 +491,23 @@
           '"front" is a short literary quote, line, or passage from the source (use real text only — do not invent). "back" is "Speaker / work — significance" in one line (e.g., "Atticus Finch / To Kill a Mockingbird — establishes moral compass"). Good for English literature units.',
       };
       const rule = modeRules[mode] || modeRules['standard'];
+      const chapterRule = chapters
+        ? 'CHAPTERS: The source may be organized into chapters, units, sections, or distinct topics. Give every card a "chapter" field naming the section it came from — use the source\'s own heading text when there is one (e.g. "Chapter 3 — Cells", "Unit 2: Genetics", "The Cold War"). Keep chapter names consistent and in the order they appear. If the material genuinely has no sections, omit the "chapter" field on every card (do not invent chapters).\n'
+        : '';
+      const cardShape = chapters
+        ? '{ "front": "...", "back": "...", "chapter": "..." }'
+        : '{ "front": "...", "back": "..." }';
       return `You are turning study material into flashcards.
 
 MODE: ${mode}
 RULES FOR THIS MODE: ${rule}
 MAX CARDS: ${count}
-${focus ? `FOCUS: ${focus}\n` : ''}
+${focus ? `FOCUS: ${focus}\n` : ''}${chapterRule}
 Return ONLY valid JSON, no prose, no markdown code fences. Shape:
 {
   "title": ${JSON.stringify(title || 'Generated deck')},
   "mode": "${mode}",
-  "cards": [ { "front": "...", "back": "..." } ]
+  "cards": [ ${cardShape} ]
 }
 
 Keep cards atomic (one fact each). Skip headers, page numbers, table of contents, and references. Don't invent facts not in the source.
@@ -526,7 +551,9 @@ ${isVision ? 'SOURCE MATERIAL: the attached page image(s) above.' : `SOURCE MATE
         try {
           const card = JSON.parse(text.slice(objStart, end));
           if (card && card.front != null && card.back != null) {
-            cards.push({ front: String(card.front), back: String(card.back) });
+            const out = { front: String(card.front), back: String(card.back) };
+            if (card.chapter != null && String(card.chapter).trim()) out.chapter = String(card.chapter).trim();
+            cards.push(out);
           }
         } catch {}
       }
@@ -542,6 +569,7 @@ ${isVision ? 'SOURCE MATERIAL: the attached page image(s) above.' : `SOURCE MATE
       const count = parseInt(document.getElementById('count').value, 10) || 30;
       const title = document.getElementById('title-in').value.trim();
       const focus = document.getElementById('focus-in').value.trim();
+      const chapters = document.getElementById('chapters-in').checked;
 
       if (!key) return setStatus('Enter your Gemini API key.', 'err');
       if (!text && !loadedImages) return setStatus('Load a file or paste text first.', 'err');
@@ -556,12 +584,12 @@ ${isVision ? 'SOURCE MATERIAL: the attached page image(s) above.' : `SOURCE MATE
       if (loadedImages && loadedImages.length > 0) {
         parts = [
           ...loadedImages.map(img => ({ inlineData: img })),
-          { text: buildPrompt('', mode, count, title, focus, true) },
+          { text: buildPrompt('', mode, count, title, focus, true, chapters) },
         ];
       } else {
         const MAX_CHARS = 60000;
         const trimmed = text.length > MAX_CHARS ? text.slice(0, MAX_CHARS) + '\n[…truncated]' : text;
-        parts = [{ text: buildPrompt(trimmed, mode, count, title, focus, false) }];
+        parts = [{ text: buildPrompt(trimmed, mode, count, title, focus, false, chapters) }];
       }
 
       try {
