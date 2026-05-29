@@ -4,6 +4,7 @@
   "cards": [
     {
       "front": "What is a characteristic?",
+      "back": "A distinguishing feature, quality, or trait that helps identify or describe something.",
       "chapter": "Ch.1 — The Study of Life"
     },
     {
@@ -461,6 +462,7 @@
       "back": "Nitrogen fixation, assimilation, denitrification, decomposition, ammonification, nitrification, and run-off.",
       "chapter": "Ch.3 — Cycling of Matter & Flow of Energy"
     },
+    {
       "front": "What are the key nitrogen compounds in the nitrogen cycle?",
       "back": "Ammonia (NH3), ammonium (NH4+), nitrite (NO2-), and nitrate (NO3-).",
       "chapter": "Ch.3 — Cycling of Matter & Flow of Energy"
