@@ -2,6 +2,7 @@
 // R2 layout: flashcards/<id>.json — one object per deck.
 
 const PREFIX = 'flashcards/';
+const ENC = new TextEncoder();
 const MAX_BYTES = 200 * 1024;            // 200 KB deck cap
 const MAX_CARDS = 2000;
 const MAX_TITLE = 120;
@@ -40,7 +41,6 @@ async function handleGambit(request, env, url) {
   try {
     if (request.method === 'GET'  && sub === 'leaderboard') return gambitLeaderboard(request, env, url);
     if (request.method === 'POST' && sub === 'score')       return gambitSubmit(request, env);
-    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST', 'access-control-allow-headers': 'content-type' } });
     return json({ error: 'Not found' }, 404);
   } catch (e) {
     return json({ error: e.message || 'Server error' }, 500);
@@ -345,7 +345,7 @@ async function putNote(request, env, slug) {
   let body;
   try { body = await request.json(); } catch { return json({ error: 'Invalid JSON.' }, 400); }
   const content = String(body.content ?? '');
-  if (content.length > NOTE_MAX_BYTES) {
+  if (ENC.encode(content).byteLength > NOTE_MAX_BYTES) {
     return json({ error: `Note too large (limit ${Math.floor(NOTE_MAX_BYTES / 1024)} KB).` }, 413);
   }
   const title = String(body.title || safe).trim().slice(0, NOTE_MAX_TITLE) || safe;
@@ -512,7 +512,7 @@ async function submitDeck(request, env) {
   }
 
   const raw = await request.text();
-  if (raw.length > MAX_BYTES) {
+  if (ENC.encode(raw).byteLength > MAX_BYTES) {
     return json({ error: `Deck too large (limit ${Math.floor(MAX_BYTES / 1024)} KB).` }, 413);
   }
 
@@ -523,14 +523,19 @@ async function submitDeck(request, env) {
   if (deck.error) return json({ error: deck.error }, 400);
 
   const contentHash = await hashCards(deck.cards);
-  const existing = await findByHash(env, contentHash);
-  if (existing) {
-    return json({
-      error: 'This deck is already in the library.',
-      duplicate: true,
-      id: existing.id,
-      title: existing.title,
-    }, 409);
+  const index = await loadHashIndex(env);
+  const existingId = index[contentHash];
+  if (existingId) {
+    // Verify the indexed deck still exists — a stale entry must not block submission.
+    const dup = await env.R2.head(PREFIX + existingId + '.json');
+    if (dup) {
+      return json({
+        error: 'This deck is already in the library.',
+        duplicate: true,
+        id: existingId,
+        title: dup.customMetadata?.title || 'Untitled',
+      }, 409);
+    }
   }
 
   const id = makeId(deck.title);
@@ -549,6 +554,9 @@ async function submitDeck(request, env) {
     httpMetadata: { contentType: 'application/json' },
     customMetadata: deckMetadata(stored),
   });
+
+  index[contentHash] = id;
+  await saveHashIndex(env, index);
 
   return json({ id, title: deck.title, mode: deck.mode, cardCount: deck.cards.length, createdAt }, 201);
 }
@@ -574,14 +582,30 @@ async function hashCards(cards) {
   return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-async function findByHash(env, hash) {
-  for await (const obj of iterPrefix(env, PREFIX)) {
-    const m = obj.customMetadata || {};
-    if (m.contentHash === hash) {
-      return { id: keyToId(obj.key), title: m.title || 'Untitled' };
-    }
+// Dedup index: { contentHash: deckId }. Keyed outside PREFIX so it never
+// lists as a deck. Rebuilt from deck metadata if missing/corrupt. Concurrent
+// submits can lose an index entry (last write wins) — acceptable, the deck
+// itself is never lost, only future dup-detection for it.
+const HASH_INDEX_KEY = 'flashcards-index.json';
+
+async function loadHashIndex(env) {
+  const obj = await env.R2.get(HASH_INDEX_KEY);
+  if (obj) {
+    try { return await obj.json(); } catch { /* corrupt — rebuild */ }
   }
-  return null;
+  const idx = {};
+  for await (const o of iterPrefix(env, PREFIX)) {
+    const hash = o.customMetadata?.contentHash;
+    if (hash) idx[hash] = keyToId(o.key);
+  }
+  await saveHashIndex(env, idx);
+  return idx;
+}
+
+function saveHashIndex(env, idx) {
+  return env.R2.put(HASH_INDEX_KEY, JSON.stringify(idx), {
+    httpMetadata: { contentType: 'application/json' },
+  });
 }
 
 async function patchDeck(request, env, id) {
@@ -629,7 +653,17 @@ async function deleteDeck(request, env, id) {
   }
   const safe = sanitizeId(id);
   if (!safe) return json({ error: 'Bad id' }, 400);
-  await env.R2.delete(PREFIX + safe + '.json');
+  const key = PREFIX + safe + '.json';
+  const head = await env.R2.head(key);
+  await env.R2.delete(key);
+  const hash = head?.customMetadata?.contentHash;
+  if (hash) {
+    const index = await loadHashIndex(env);
+    if (index[hash] === safe) {
+      delete index[hash];
+      await saveHashIndex(env, index);
+    }
+  }
   return json({ ok: true });
 }
 

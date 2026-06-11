@@ -258,9 +258,14 @@
   </div>
 </div>
 
-<footer>GWHS · 2025–26 Academic Year · Live, updates every second</footer>
+<footer>GWHS · <span id="yrlbl"></span> Academic Year · Live, updates every second</footer>
 
 <script>
+// ── YEAR CONFIG ── update these once per school year (plus OVERRIDES/FINALS_DATES below)
+const YEAR_LABEL='2025–26';
+const LAST_DAY='2026-06-03';   // last day of school — after this the page shows the summer banner
+const NEXT_YEAR_NOTE='Schedules return when the 2026–27 calendar is posted.';
+
 // ── DATA ──
 const S = {
   1:{label:"Monday",   type:"Regular",    p:[
@@ -353,7 +358,8 @@ const OVERRIDES = {
 };
 const FINALS_DATES=['2026-05-28','2026-05-29','2026-06-01','2026-06-02','2026-06-03'];
 function todayISO(){const n=new Date();const m=String(n.getMonth()+1).padStart(2,'0'),d=String(n.getDate()).padStart(2,'0');return `${n.getFullYear()}-${m}-${d}`;}
-function todaySched(){return OVERRIDES[todayISO()] || S[dow()] || null;}
+function isSummer(){return todayISO()>LAST_DAY;}
+function todaySched(){if(isSummer())return null;return OVERRIDES[todayISO()] || S[dow()] || null;}
 
 const NKEYS=["p1","p2","p3","p4","p5","p6","p7","ln","nb","av","cp"];
 const NLBLS={p1:"1st Period",p2:"2nd Period",p3:"3rd Period",p4:"4th Period",p5:"5th Period",p6:"6th Period",p7:"7th Period",ln:"Lunch",nb:"Nutrition Brk",av:"Advisory",cp:"CPT"};
@@ -416,6 +422,7 @@ function renderMotive(sched){
 
 function renderHero(sched){
   const el=document.getElementById('hero');
+  if(isSummer()){el.innerHTML=`<div class="no-school"><h2>School's Out for Summer 🏖️</h2><p>The ${YEAR_LABEL} year is in the books. ${NEXT_YEAR_NOTE}</p></div>`;return;}
   if(!sched){el.innerHTML=`<div class="no-school"><h2>No School Today</h2><p>Enjoy the weekend! 🎉</p></div>`;return;}
   const p=sched.p,n=now(),start=ss(p),end=se(p);
   if(n<start){
@@ -490,6 +497,7 @@ function setTab(d){activeTab=d;renderTabs();renderFinals();renderTable(getSched(
 function renderFinals(){
   const el=document.getElementById('finals');
   const iso=todayISO();
+  if(iso>FINALS_DATES[FINALS_DATES.length-1]){el.innerHTML='';return;}
   const pills=FINALS_DATES.map(dt=>{
     const o=OVERRIDES[dt];
     const lbl=o.label.replace(/ · Finals| · Make-Up/,'').replace(' · ',' ');
@@ -510,7 +518,7 @@ function renderTable(sched){
   if(!sched){el.innerHTML='';return;}
   const p=sched.p,n=now();
   const tt=todayTab();
-  const today=(activeTab===tt);
+  const today=(activeTab===tt)&&!isSummer();
   const cur=today?getCur(p):null;
   const rows=p.map((x,i)=>{
     const isCur=cur&&cur.i===i,isPast=today&&pt(x.e)<=n&&!isCur;
@@ -542,6 +550,7 @@ function renderNickEditor(){
 
 let lastHeroState='';
 function heroState(sched){
+  if(isSummer())return'summer';
   if(!sched)return'no';
   const n=now(),p=sched.p;
   if(n<ss(p))return'before';
@@ -577,11 +586,12 @@ function tick(){
   }
 
   renderStats(sched);
-  if(activeTab===todayTab())renderTable(sched);
+  if(!isSummer()&&activeTab===todayTab())renderTable(sched);
 }
 
 function init(){
   applyTheme();
+  document.getElementById('yrlbl').textContent=YEAR_LABEL;
   renderNickEditor();
   const sched=todaySched();
   lastHeroState=heroState(sched);
