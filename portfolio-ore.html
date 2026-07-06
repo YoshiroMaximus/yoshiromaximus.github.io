@@ -569,25 +569,35 @@
     }
 
     // ── Worlds tab: featured world picker ──
-    // First row starts featured; clicking another row promotes it to the
-    // top slot and the previous one drops back into the compact list.
+    // A dedicated stage at the top shows the selected world enlarged.
+    // Clicking a row moves it to the stage; the previous one returns to
+    // its original spot in the list, so the list order never changes.
     (function worldPicker() {
       const tab = document.getElementById('tab-builds');
+      const rows = Array.from(tab.querySelectorAll('.world-row'));
+      rows.forEach((r, i) => { r.dataset.idx = i; });
+      const stage = document.createElement('div');
+      tab.prepend(stage);
       function featureWorld(row, scroll) {
-        const current = tab.querySelector('.world-row.featured');
+        const current = stage.querySelector('.world-row');
         if (current === row) return;
-        if (current) current.classList.remove('featured');
+        if (current) {
+          current.classList.remove('featured');
+          const idx = +current.dataset.idx;
+          const next = rows.find(r => +r.dataset.idx > idx && r.parentElement === tab);
+          tab.insertBefore(current, next || null);
+        }
         row.classList.add('featured');
-        tab.prepend(row);
-        if (scroll) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        stage.appendChild(row);
+        if (scroll) stage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
-      tab.querySelectorAll('.world-row').forEach(row => {
+      rows.forEach(row => {
         row.addEventListener('click', e => {
           if (e.target.closest('a, button')) return;   // don't hijack Join/Modrinth clicks
           featureWorld(row, true);
         });
       });
-      featureWorld(tab.querySelector('.world-row'), false);
+      featureWorld(rows[0], false);
     })();
 
     // ── Achievement toasts ──
