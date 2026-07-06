@@ -252,13 +252,23 @@
     /* ── Skills as hotbar-ish tag slots ── */
     .slot-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; }
     .slot {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
       background: var(--panel-2);
       border: 2px solid #1a1a1c;
       box-shadow: inset 0 2px 0 rgba(255,255,255,0.08), inset 0 -2px 0 rgba(0,0,0,0.35);
       font-family: 'Silkscreen', monospace;
       font-size: 0.65rem;
-      padding: 0.5rem 0.7rem;
+      padding: 0.4rem 0.7rem;
     }
+    .slot img {
+      width: 18px;
+      height: 18px;
+      image-rendering: pixelated;
+    }
+    /* animation-strip textures: crop to the first frame */
+    .slot img.strip { object-fit: cover; object-position: top; }
 
     /* ── Server rows (contact + open source) ── */
     .server-row {
@@ -354,19 +364,19 @@
       <div class="panel">
         <p class="panel-label">Inventory · Languages &amp; frameworks</p>
         <div class="slot-grid">
-          <span class="slot">html / css</span><span class="slot">javascript</span><span class="slot">python</span><span class="slot">swift (a little)</span>
+          <span class="slot"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAG1BMVEV8RTaplI2ihn3GaFGxYk2LbmebVkOPUD9zPzGgdN/HAAAAbklEQVR42k2OQRLEIAzDRCBO/v/iHaelszkgLrLNOcq99zlH4RepgpKGkqB7dVfRHV1AZqzIzIyHWNf4w4TRCcpHQAlwDg4KPv/5LNzvHRq+O0o+hmDPOr1w7O2/e9Dbvx8GSPrPoQH7l3x+DNYPOiAEBGQstBIAAAAASUVORK5CYII=" alt="">html / css</span><span class="slot"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAABACAMAAAAkowekAAAAY1BMVEXHfk/Sz9rOy9bNytXFws3XtJ3orWSzsLnPpoufnafOj2bJj2uIrWTOeneRj5nChz7zYFy7bTqsaWfIVFJ3dIBihz6bbDKmYDDNOjZObDKGQ0FvSSukLiuiLiyCJSNUPCRANCAEA8JZAAAAqElEQVR42uWSsRLCIBBEiTHuBTSKRk9FDf//ld5BUlDR6Yxes7yt3uxg5CxbU2bHtkySl50zMVEXp5iSTWIKTbsOpI3x7IRXAHppHBttlJ/AEBx7I01skG+IwnJTiz3uOGCcskdskW+Ms0fogZtwWDxcGKDsFg9tRuXsQdqIqTIlD2H2PhlmD3ZFfnSPU2WPC3Z4VPY4/9AeL9T3uFb22P7RHhscv/s/3on9LrueJj60AAAAAElFTkSuQmCC" class="strip" alt="">javascript</span><span class="slot"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAbklEQVQ4y2NgGL6gJDvwPzImWfPmpbX/75+bDcYgNtGGwDR/eHYMbgAI9zVFE2cISBFIM7oBIEND/az/k2U7zACQK/AaAjIAXSOyAQRdQTMDYJqJMgA5+tA1EwwDEAApAClE1ki0ZmRDsOHBmWcA96X3a1dSPKUAAAAASUVORK5CYII=" alt="">python</span><span class="slot"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAATklEQVR42rXRsQ2AUAwD0ew/QMbJEh7oUdH9gISE24tzheu/xOtBPOLGjtGIvW82HIw+46giWk6CIDuugtUetxvn/uj9eWttbrxljA+jXU9CdVLa6TttAAAAAElFTkSuQmCC" alt="">swift (a little)</span>
         </div>
       </div>
       <div class="panel">
         <p class="panel-label">Inventory · Infrastructure &amp; devops</p>
         <div class="slot-grid">
-          <span class="slot">docker</span><span class="slot">linux</span><span class="slot">unraid</span><span class="slot">nginx</span><span class="slot">cloudflare</span><span class="slot">git</span><span class="slot">claude code</span><span class="slot">self-hosting</span><span class="slot">networking</span>
+          <span class="slot"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAHlBMVEWLZzyZcUCAXjZ4WDZrUzJmTShFPztVOh8wLCkoIhwpiTDPAAAAaUlEQVR42l2MwQnDMBRDRfDHV9VN6TXYNZqgZCPjScxfwds2aW7RQyBdHvi4gPECkWKlEnprzcfomNPnGajsB98Cg/DCe0OgcV3WDZYCPykC8Rmo/yg6jgE+Wu8+/O7ZC+piPAvlmpWVf7P/GOxd0BSQAAAAAElFTkSuQmCC" alt="">docker</span><span class="slot"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAHlBMVEUAAAD////Y2NjBwcGJZydoTh5ERERJNhUoHgsYGBhl7cYfAAAAAXRSTlMAQObYZgAAAEVJREFUeNpjwArS0hLANJuQsVopmJU509gDKllkCaHZI4wmgBklDZMnQAQYgAywAMOkCRABhokTIAIMnFABqBYoowPNZgA3CQ9j/SFa9AAAAABJRU5ErkJggg==" alt="">linux</span><span class="slot"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAHlBMVEUAAADfw423mWPNe0amVyyBVjR9QDRiMiBPKxBCHgFdKJCFAAAAAXRSTlMAQObYZgAAAFtJREFUeNp1j0cOgDAQA2GLy/8/jEBAEgl8m5G8ZfsJKS1ctCVPImmDi6niEB0EOSpAxx7dL1cmoiEPzowmZ1HVoPxsyEvhEahb3B0RdQbvEIkAyOlQnbE//z4AeVsC+phl1NIAAAAASUVORK5CYII=" alt="">unraid</span><span class="slot"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAGFBMVEUAAABiYWJSVVJKTEpBREE+Pj44ODgwMDAGhTNBAAAAAXRSTlMAQObYZgAAAFVJREFUeNqNj0sKwFAIA2M05v43LpXXz1sUOrsZJCD+kYulyl5kjbPbQzcNQCLHi5QwpeKEZV0jGsq4Z8msxyFGRL4CFME0sJ2U8S6Rm0MsYy/+evQAGRYBzooBnPsAAAAASUVORK5CYII=" alt="">nginx</span><span class="slot"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAHlBMVEUAAAD9++747qXq24TRp11B5n/Fh0IAu0agWyOFQA8RGs9sAAAAAXRSTlMAQObYZgAAAF1JREFUeNptzkkOwDAMAsDYEGr+/+FK6RJXKjfPATz+UyvtxsoWIyIT3kAmyAYxyZgN5hE5jwZigvKetAD5ni7QoERZV69dGQmw7PcxklQrrRWPLZTk8QV6dPFTeAJoLQLslSF6LQAAAABJRU5ErkJggg==" alt="">cloudflare</span><span class="slot"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAG1BMVEUAAAAfZRlwUy5aPx5MMhR/YTkQUhBXrT9Ajy+kPdBRAAAAAXRSTlMAQObYZgAAAGBJREFUeNoFwYEBwDAIAyCMrvr/xQMAAABwALBUQeA5fJMHSOre+9IN9rbiJV0L7OVrib0FSCbYBdTLnleATtfeVnrAVaXzTXrqcHd6k+lxB9ir3OIAt5M9ANCZBQDdA/zrxwHu1gEFbAAAAABJRU5ErkJggg==" alt="">git</span><span class="slot"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAPFBMVEUAAADW1ta3t7fTohbUlhqZmZlbW1ukLCtlSxfFEzmdGzeJISBUPhNSLhBEMxBsFxdEJQphFBQxIQQWEAV8/BcXAAAAAXRSTlMAQObYZgAAAG1JREFUeNp1z0EWgyAMBNA0NA0WwTG5/101Ik9dOLv5ZBbQa8zsWWvOlyxLzREbr6pTbi3kPJ7/0yUx7hIAOy5aiO4Vv5jwIZoShIXI64djhfRlFsMpgGgRgzt1EeZSeh2CskYdAvhKt7j76683mGkGwVjE2/sAAAAASUVORK5CYII=" alt="">claude code</span><span class="slot"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAJ1BMVEXFxcWwsLCoqKidnZ2RkZGFhYV3d3doaGhdW1tQTk48OzshISERERGSYbg8AAAAdElEQVR42gXBwQHCMAwEMJ1jHt1/XGgOKQ9SQqPWVWkqTSeT9Lpp773NtW2zAf2KVZ8B8vklEzO0LXPZwoUOuvF+FcTcXbLJTdo06hEAzLNGmoO3abLS2RP0/V1dyeeAbN7XGIe25bwxuaOF1mnWOVdBuvEHfptGY6k/wX4AAAAASUVORK5CYII=" alt="">self-hosting</span><span class="slot"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAGFBMVEUAAAD/AACqDwFyAABcBwBBBQA0BgUtAAChZ6iRAAAAAXRSTlMAQObYZgAAAElJREFUeNpjwA9YHKAMZxWogKJqAZjhJGQYDhZQUlR1BQk5C5kKB6WDZIyETENAcqWKykGhIBH2IFPXMLC28tSwcgYwKC/HaiEAtf4MFvnbFVwAAAAASUVORK5CYII=" alt="">networking</span>
         </div>
       </div>
       <div class="panel">
         <p class="panel-label">Inventory · Design tools</p>
         <div class="slot-grid">
-          <span class="slot">photoshop</span><span class="slot">davinci resolve</span><span class="slot">figma</span><span class="slot">obsidian</span>
+          <span class="slot"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAkklEQVQ4y2NgoDVITk7+T5FmU1NTMCZZM7JGNTU1woZsnJ/xf3KRFxhXuPCjsLHhZBtRVANBiqd1VfyfN62bIAapw2oATMHmdfP/nzi6FwODxGFqMAwAOQufZnRDcBqATzMMU8UAkJcp8gJIPVYDiA1ErC4gJRoxDAAFCgzDEgu2hAXCoESH4QU1Gc7/pGKq5FYAXwx7sb9dWx8AAAAASUVORK5CYII=" alt="">photoshop</span><span class="slot"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAKlBMVEUAAAD////04GNovb3ekjq9aigzkJCoX1igVhF+PzkeZWZVKSVTKwszFxLdsQeLAAAAAXRSTlMAQObYZgAAAFJJREFUeNp9yDsWwCAIBVHCR0F8+99uTpqAjdPdoUtqdnoN6cd5yNOOK68hos3fWf8IfliZy5NZzXZ5RjfljEyUtyMTVDZzdIf5phYiQEcA3XoBJtoCXYU3DgwAAAAASUVORK5CYII=" alt="">davinci resolve</span><span class="slot"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAANlBMVEUAAAD7w7buw5r8mYLbppG/lX+lg2/BWjaHbluGZSZzX06lSSZ1WCFrUR9ZQxltNCFJNhUgGAq7k09NAAAAAXRSTlMAQObYZgAAAFRJREFUeNp9ylEOgCAMA9A5O5yAIve/rJAYCx/abB+vqXzH3WcrrHe0op2/RreOA4O2j1xYNyKN0ZISLCDS65ICKddettJIn7nI6CNXmYrHbKr85QZE5wKdmeyv0gAAAABJRU5ErkJggg==" alt="">figma</span><span class="slot"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAD1BMVEU7J1QnHj0QDBwGAwsAAAFbDTSxAAAAaUlEQVR42gVAARGAMAj8mUA3AzhYAOUJoED/TB68Ut/xNLiFb9wVhfPpaybePs3KHJ+sqmRCVpCNBbG9+ekJvySq3hPVZI7qgl56aBihTmPph+Cyu4ng3kJ2vRSHMoQ+8FGHLU9o5FwkfyEoFb7iY82bAAAAAElFTkSuQmCC" alt="">obsidian</span>
         </div>
       </div>
     </section>
