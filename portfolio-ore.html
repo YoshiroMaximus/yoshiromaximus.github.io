@@ -107,6 +107,57 @@
       user-select: none;
     }
     .game-title:active { transform: translateY(2px); }
+
+    /* ── Pistons flanking the title, retract on hover ── */
+    /* piston_side texture: head plate = top 12px, body = lower 36px (at 3x) */
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+    .piston {
+      position: relative;
+      width: 84px;
+      height: 48px;
+      flex-shrink: 0;
+    }
+    .p-rot {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 48px;
+      height: 84px;
+      transform: translate(-50%, -50%) rotate(90deg);
+    }
+    .p-rot > span {
+      position: absolute;
+      left: 0;
+      background-image: var(--piston);
+      background-size: 48px 48px;
+      image-rendering: pixelated;
+    }
+    .p-body { width: 48px; height: 36px; bottom: 0; background-position: 0 -12px; }
+    .p-head { width: 48px; height: 12px; top: 0; background-position: 0 0; transition: top 0.18s ease; }
+    .p-arm {
+      left: 18px !important;
+      width: 12px;
+      height: 40px;
+      top: 8px;
+      background: #99794c;
+      border-left: 2px solid #6b5232;
+      border-right: 2px solid #6b5232;
+      box-sizing: border-box;
+      background-image: none !important;
+      transition: height 0.18s ease, top 0.18s ease;
+    }
+    .piston.flip .p-rot { transform: translate(-50%, -50%) rotate(-90deg); }
+    .title-row:hover .p-head { top: 36px; }
+    .title-row:hover .p-arm { height: 4px; top: 44px; }
+    @media (prefers-reduced-motion: reduce) {
+      .p-arm, .p-head { transition: none; }
+    }
+    @media (max-width: 620px) { .piston { display: none; } }
     .splash {
       display: inline-block;
       margin-top: 0.5rem;
@@ -408,7 +459,23 @@
   <a class="back" href="/portfolio">← normal ui</a>
 
   <header>
-    <h1 class="game-title">YOSHIRO</h1>
+    <div class="title-row">
+      <span class="piston" aria-hidden="true" style="--piston: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAOVBMVEVTUVFEREQ1NTUvLy9wcHCGhoalpaVnUCx+Yjevj1WfhE3Nzc3CnWK4lF+WdEGRkZGFhYV3d3doaGhvPxk2AAAAj0lEQVR42iWMgRHEIAgED0QTE32B/nvNg64zcqAL3jbnGCPKCNqLVvuv9x4lmLWhyhP0KtE/j1SIXHcgcl+BCBFAcb4PG0IBXA0OX8scjALTTGstdXgBwdTMYdmfgUd/rq2QwgFVIL+CQJHdNLKrag5su/lqR3GHrtQQyXIpdAumCIvBGW1bmQjMhZkOzER/ETwKlG0kuiAAAAAASUVORK5CYII=)">
+        <span class="p-rot">
+          <span class="p-arm"></span>
+          <span class="p-head"></span>
+          <span class="p-body"></span>
+        </span>
+      </span>
+      <h1 class="game-title">YOSHIRO</h1>
+      <span class="piston flip" aria-hidden="true" style="--piston: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAOVBMVEVTUVFEREQ1NTUvLy9wcHCGhoalpaVnUCx+Yjevj1WfhE3Nzc3CnWK4lF+WdEGRkZGFhYV3d3doaGhvPxk2AAAAj0lEQVR42iWMgRHEIAgED0QTE32B/nvNg64zcqAL3jbnGCPKCNqLVvuv9x4lmLWhyhP0KtE/j1SIXHcgcl+BCBFAcb4PG0IBXA0OX8scjALTTGstdXgBwdTMYdmfgUd/rq2QwgFVIL+CQJHdNLKrag5su/lqR3GHrtQQyXIpdAumCIvBGW1bmQjMhZkOzER/ETwKlG0kuiAAAAAASUVORK5CYII=)">
+        <span class="p-rot">
+          <span class="p-arm"></span>
+          <span class="p-head"></span>
+          <span class="p-body"></span>
+        </span>
+      </span>
+    </div>
     <span class="splash">Also try the real portfolio!</span>
   </header>
 
