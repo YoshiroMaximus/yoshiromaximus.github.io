@@ -210,6 +210,27 @@
       transition: background 0.15s ease;
     }
     .world-row:hover { background: #3a3a3f; }
+    #tab-builds .world-row { cursor: pointer; }
+    #tab-builds .world-row:hover { box-shadow: 0 0 0 2px #d0d1d4; }
+
+    .world-sub {
+      font-family: 'Silkscreen', monospace;
+      font-size: 0.6rem;
+      color: var(--muted);
+      margin: 0.1rem 0 0.2rem;
+    }
+
+    /* expanded-in-place world row */
+    .world-row.expanded { flex-wrap: wrap; }
+    .world-row.expanded .world-thumb {
+      order: 5;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 21 / 9;
+      margin-top: 0.75rem;
+      cursor: zoom-in;
+    }
+    .world-row.expanded .world-meta { display: block; -webkit-line-clamp: unset; }
     .world-thumb {
       width: 84px;
       height: 84px;
@@ -396,8 +417,8 @@
         <img class="world-thumb" src="images/homelab.webp" alt="Homelab build">
         <div class="world-info">
           <p class="world-name">DIY Homelab</p>
+          <p class="world-sub">unraid · online 24/7 · 33tb</p>
           <p class="world-meta">Self-built home server running all my self-hosted services and containers 24/7. immich, jellyfin, vaultwarden, navidrome and more.</p>
-          <div class="world-tags"><span class="mc-tag">Ryzen 3400G</span><span class="mc-tag">32GB RAM</span><span class="mc-tag">2x16TB</span></div>
         </div>
         <div class="world-action"><span class="btn btn-green">Online</span></div>
       </div>
@@ -406,8 +427,8 @@
         <img class="world-thumb" src="images/mc-screenshot.webp" alt="Minecraft server">
         <div class="world-info">
           <p class="world-name">Modded Minecraft Server</p>
+          <p class="world-sub">papermc 26.1.2 · modded · private smp</p>
           <p class="world-meta">PaperMC 26.1.2 modded server through Crafty Controller, hosted for me and my friends.</p>
-          <div class="world-tags"><span class="mc-tag">PaperMC</span><span class="mc-tag">modded</span></div>
         </div>
         <div class="world-action"><button class="btn btn-green" onclick="revealAddr(this)">Join Server</button></div>
       </div>
@@ -416,8 +437,8 @@
         <img class="world-thumb" src="images/pi-cluster.webp" alt="Pi cluster">
         <div class="world-info">
           <p class="world-name">Raspberry Pi Cluster</p>
+          <p class="world-sub">dietpi · cluster · always tinkering</p>
           <p class="world-meta">Craigslist Pis running DietPi, used for random projects and learning how clusters actually work.</p>
-          <div class="world-tags"><span class="mc-tag">DietPi</span><span class="mc-tag">cluster</span></div>
         </div>
         <div class="world-action"><span class="btn">Learning</span></div>
       </div>
@@ -426,8 +447,8 @@
         <img class="world-thumb" src="images/modrinth-versioneye-plugin.webp" alt="VersionEye">
         <div class="world-info">
           <p class="world-name">VersionEye</p>
+          <p class="world-sub">paper plugin · mc 26.1.x · mit</p>
           <p class="world-meta">Paper plugin that checks installed plugins for updates on Modrinth and downloads them for you.</p>
-          <div class="world-tags"><span class="mc-tag">Paper</span><span class="mc-tag">Java 25</span><span class="mc-tag">MIT</span></div>
         </div>
         <div class="world-action"><a class="btn" href="https://modrinth.com/plugin/versioneye" target="_blank" rel="noopener">Modrinth</a></div>
       </div>
@@ -436,8 +457,8 @@
         <img class="world-thumb" src="images/modrinth-vulkan-upd-modpack.webp" alt="Vulkan Updated">
         <div class="world-info">
           <p class="world-name">Vulkan Updated</p>
+          <p class="world-sub">fabric modpack · client-side · mit</p>
           <p class="world-meta">Client-side Fabric modpack built around the Vulkan renderer. Around 52% faster with shaders than Sodium on driver-bound systems.</p>
-          <div class="world-tags"><span class="mc-tag">Fabric</span><span class="mc-tag">client-side</span><span class="mc-tag">MIT</span></div>
         </div>
         <div class="world-action"><a class="btn" href="https://modrinth.com/modpack/vulkan-updated" target="_blank" rel="noopener">Modrinth</a></div>
       </div>
@@ -621,6 +642,24 @@
         document.body.classList.add('cave-on');
       });
     }
+
+    // ── Worlds tab: expand rows in place ──
+    (function worldExpander() {
+      const tab = document.getElementById('tab-builds');
+      tab.querySelectorAll('.world-row').forEach(row => {
+        row.addEventListener('click', e => {
+          if (e.target.closest('a, button')) return;
+          // an expanded screenshot opens full size instead of collapsing
+          if (row.classList.contains('expanded') && e.target.classList.contains('world-thumb')) {
+            window.open(e.target.src, '_blank', 'noopener');
+            return;
+          }
+          const current = tab.querySelector('.world-row.expanded');
+          if (current && current !== row) current.classList.remove('expanded');
+          row.classList.toggle('expanded');
+        });
+      });
+    })();
 
     // ── Achievement toasts ──
     const unlocked = new Set();
