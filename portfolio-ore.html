@@ -512,15 +512,28 @@
 
   <script>
     const visitedTabs = new Set(['about']);
-    function showTab(btn, name) {
+    const TAB_IDS = ['about', 'builds', 'oss', 'contact'];
+    const TAB_HASH = { about: 'about', builds: 'worlds', oss: 'realms', contact: 'servers' };
+    function showTab(btn, name, skipHash) {
       document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', 'false'));
       btn.setAttribute('aria-selected', 'true');
-      ['about', 'builds', 'oss', 'contact'].forEach(id => {
+      TAB_IDS.forEach(id => {
         document.getElementById('tab-' + id).hidden = (id !== name);
       });
       visitedTabs.add(name);
       if (visitedTabs.size === 4) achievement('tabs', 'Completionist');
+      // remember the tab in the URL so a reload lands on the same one
+      if (!skipHash) {
+        history.replaceState(null, '', name === 'about' ? location.pathname : '#' + TAB_HASH[name]);
+      }
     }
+    function activateTabFromHash() {
+      const h = location.hash.slice(1);
+      const name = TAB_IDS.find(id => TAB_HASH[id] === h) || 'about';
+      showTab(document.querySelectorAll('.tab')[TAB_IDS.indexOf(name)], name, true);
+    }
+    window.addEventListener('hashchange', activateTabFromHash);
+    if (location.hash) activateTabFromHash();
 
     // ── Cave backgrounds from real game textures, three depths ──
     // Textures pulled from the local Minecraft client jar as data URIs.
