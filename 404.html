@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 · Yoshiro</title>
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAWRJREFUaIHtmDFqQkEQhvM0ZRqDGhXRC5gT6BHSBBHSeQXxAAnoFXKBdGm8gZZWsbS0DD4RiY2t71nPP7jLZoVhYL7ul2XHn/nnvd2XtFrt/E4xBek/EIsZkOYefxjPX4jeHndRBeqPdaLTv9S5vlGqOet/D1ZEq++AGZCGzQBmLjTDuD6U0JlT3wEzIA2bgTyhmmV+8kv1e9O9HijmGdHn6ZbW/6D7NUrumVLfATMgDZuBBG8HkPnO65Do9eTLXQFmBDNfrTwQvYf66ejHub36DpgBaRK8E7890/N4uUozGsphfyIaM5/BewfXY/3PxYZo9R0wA9Kw90Bs5n37ZVfW/be++g6YAWnYDBTgLILP6Vhq3T7Ru+Usaj/1HTAD0rAZuHXmEcx87Myp74AZkIbNgA+8Mz/13M91X8Z9mWd3dEB9B8yANMEzgN9OfWeZ0Izj/qgR9R0wA9Kw70LaUN8BMyDNBVzCWcR7QxVwAAAAAElFTkSuQmCC">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Noto Sans', sans-serif;
+      color: #fff;
+      background-color: #1d1d21;
+      background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAFVBMVEV5VTq5hVyHh4eWbEpsbGx0WERZPSk6VlZqAAAAa0lEQVR42gXBwQnDQAxFwSd+0FnLgs8+5SyjsA2kgZQgY9j+S8gMM61oM9R6W85NeBDs4BPLSpbk9bBeary02zGC02JIMIpVFCm5kkbtDUPIYt5HnaQuffNxPCuAgfiVH1bk7T5EkTPPovwPGbIOYwnMHcMAAAAASUVORK5CYII=);
+      background-size: 96px 96px;
+      image-rendering: pixelated;
+      position: relative;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(18, 14, 10, 0.82);
+    }
+    .box {
+      position: relative;
+      text-align: center;
+      padding: 2rem;
+      max-width: 480px;
+    }
+    h1 {
+      font-family: 'Silkscreen', monospace;
+      font-size: clamp(3.5rem, 12vw, 6rem);
+      text-shadow: 0 4px 0 rgba(0,0,0,0.6);
+    }
+    p {
+      font-family: 'Silkscreen', monospace;
+      font-size: 0.8rem;
+      color: #c8c9cb;
+      margin: 0.75rem 0 2rem;
+    }
+    .btn {
+      display: inline-block;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #fff;
+      background: #3c8527;
+      border: 2px solid #1a1a1c;
+      box-shadow: inset 0 -4px 0 #2a5e1a;
+      padding: 0.6rem 1.5rem 0.75rem;
+      text-decoration: none;
+    }
+    .btn:hover { background: #4f9c38; }
+    .btn:active { box-shadow: inset 0 -2px 0 #2a5e1a; transform: translateY(2px); }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>404</h1>
+    <p>This world does not exist (yet)</p>
+    <a class="btn" href="/">Back to spawn</a>
+  </div>
+</body>
+</html>
