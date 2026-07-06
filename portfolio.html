@@ -332,6 +332,29 @@
       letter-spacing: 0.04em;
     }
 
+    .project-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.15rem;
+    }
+
+    .project-link {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      background: var(--tag-bg);
+      color: var(--text);
+      padding: 0.25rem 0.6rem;
+      border-radius: 2px;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .project-link:hover { background: var(--line); }
+
     /* ── Project image ── */
     .project-img {
       width: 100%;
@@ -638,6 +661,10 @@
             <span class="spec">26.1.2</span>
             <span class="spec">modded</span>
           </div>
+          <div class="project-links">
+            <a class="project-link" href="https://modrinth.com/collection/3S4B4n7M" target="_blank" rel="noopener">mod collection ↗</a>
+            <button class="project-link" type="button" onclick="revealAddr(this)">server address: click to reveal</button>
+          </div>
           <div class="project-img" onclick="openLightbox('images/mc-screenshot.webp', 'Modded Minecraft Server')">
             <img src="images/mc-screenshot.webp" alt="Minecraft server" loading="lazy" decoding="async">
             <span class="project-img-label">add screenshot</span>
@@ -711,6 +738,68 @@
           </div>
         </div>
 
+        <div class="project-card">
+          <div class="project-header">
+            <span class="project-name">VersionEye</span>
+            <span class="project-type">paper plugin</span>
+          </div>
+          <p class="project-desc">Paper plugin that checks your installed plugins for updates on Modrinth and can download them for you. Plugins are matched by the sha512 hash of their jar, so there's no name guessing, and all checks run off the main thread. Reports to the console, to ops when they join, or to a Discord webhook.</p>
+          <div class="project-specs">
+            <span class="spec">Paper / Purpur / Folia</span>
+            <span class="spec">Java 25</span>
+            <span class="spec">MIT</span>
+          </div>
+          <div class="project-links">
+            <a class="project-link" href="https://modrinth.com/plugin/versioneye" target="_blank" rel="noopener">modrinth ↗</a>
+          </div>
+          <div class="project-img" onclick="openLightbox('images/modrinth-versioneye-plugin.webp', 'VersionEye')">
+            <img src="images/modrinth-versioneye-plugin.webp" alt="VersionEye plugin on Modrinth" loading="lazy" decoding="async">
+            <span class="project-img-label">add screenshot</span>
+          </div>
+        </div>
+
+        <div class="project-card">
+          <div class="project-header">
+            <span class="project-name">Vulkan Updated</span>
+            <span class="project-type">fabric modpack</span>
+          </div>
+          <p class="project-desc">Client-side Fabric modpack built around the Vulkan renderer. Around 52% more performance with shaders than Sodium on driver-bound systems, with zero bloat: just the renderer and what it needs to run.</p>
+          <div class="project-specs">
+            <span class="spec">Fabric</span>
+            <span class="spec">client-side</span>
+            <span class="spec">MIT</span>
+          </div>
+          <div class="project-links">
+            <a class="project-link" href="https://modrinth.com/modpack/vulkan-updated" target="_blank" rel="noopener">modrinth ↗</a>
+          </div>
+          <div class="project-img" onclick="openLightbox('images/modrinth-vulkan-upd-modpack.webp', 'Vulkan Updated')">
+            <img src="images/modrinth-vulkan-upd-modpack.webp" alt="Vulkan Updated modpack on Modrinth" loading="lazy" decoding="async">
+            <span class="project-img-label">add screenshot</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Open source -->
+    <section id="opensource">
+      <p class="section-label">Open source</p>
+      <div class="contact-list">
+        <a class="contact-item" href="https://github.com/EternalCodeTeam/EternalCombat/pull/400" target="_blank" rel="noopener">
+          <span class="contact-platform">pr · merged</span>
+          <span class="contact-value">EternalCombat: fixed EntityMountEvent registration failing on modern Paper</span>
+          <span class="contact-arrow">→</span>
+        </a>
+        <a class="contact-item" href="https://github.com/YoshiroMaximus/pumpkin-unraid-template" target="_blank" rel="noopener">
+          <span class="contact-platform">template</span>
+          <span class="contact-value">Unraid CA template for the Pumpkin Minecraft server</span>
+          <span class="contact-arrow">→</span>
+        </a>
+        <a class="contact-item" href="https://github.com/YoshiroMaximus/automcs-unraid-template" target="_blank" rel="noopener">
+          <span class="contact-platform">template</span>
+          <span class="contact-value">Unraid CA template for auto-mcs</span>
+          <span class="contact-arrow">→</span>
+        </a>
       </div>
     </section>
 
@@ -766,7 +855,25 @@
       { src: 'images/mc-screenshot.webp', caption: 'Modded Minecraft Server' },
       { src: 'images/homelab.webp',        caption: 'DIY Homelab' },
       { src: 'images/pi-cluster.webp',     caption: 'Raspberry Pi Cluster' },
+      { src: 'images/modrinth-versioneye-plugin.webp', caption: 'VersionEye' },
+      { src: 'images/modrinth-vulkan-upd-modpack.webp', caption: 'Vulkan Updated' },
     ];
+
+    // ── Server address reveal ──
+    // Assembled at click time so the address isn't a plain string in the page source.
+    function revealAddr(btn) {
+      const addr = ['mc', 'sn4k', 'org'].join('.');
+      if (btn.dataset.revealed) {
+        navigator.clipboard?.writeText(addr).then(() => {
+          btn.textContent = addr + ' (copied)';
+          setTimeout(() => { btn.textContent = addr; }, 1500);
+        });
+        return;
+      }
+      btn.textContent = addr;
+      btn.dataset.revealed = '1';
+      btn.title = 'click again to copy';
+    }
 
     let lbIndex = 0;
 
