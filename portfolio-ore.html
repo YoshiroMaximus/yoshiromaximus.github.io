@@ -87,7 +87,7 @@
     @keyframes toast-in { from { transform: translateY(-130%); opacity: 0; } }
     @keyframes toast-out { to { transform: translateY(-130%); opacity: 0; } }
     @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
-    @keyframes descend { from { background-position-y: 0; } to { background-position-y: -384px; } }
+    @keyframes descend { from { background-position-y: 0; } to { background-position-y: -768px; } }
     @media (prefers-reduced-motion: reduce) { .cave { animation: none; } }
 
     .shell { max-width: 820px; margin: 0 auto; padding: 0 1.25rem; }
@@ -507,22 +507,42 @@
     function buildCaveTile(depth, done) {
       if (caveTiles[depth]) return done(caveTiles[depth]);
       const SET = CAVE_SETS[depth];
-      const BLOCKS = 8, BP = 16, SC = 3, TILE = BLOCKS * BP * SC;
-      const bag = [];
-      SET.forEach(t => { for (let i = 0; i < t.w; i++) bag.push(t); });
+      const BLOCKS = 16, BP = 16, SC = 3, TILE = BLOCKS * BP * SC;
+      // entries with big weights are base rock; small weights are ores
+      const base = SET.filter(t => t.w >= 10);
+      const ores = SET.filter(t => t.w < 10);
+      const baseBag = [];
+      base.forEach(t => { for (let i = 0; i < t.w; i++) baseBag.push(t); });
       Promise.all(SET.map(t => new Promise(res => {
         const img = new Image();
         img.onload = () => { t.img = img; res(); };
         img.src = t.src;
       }))).then(() => {
+        // fill with base rock
+        const grid = new Array(BLOCKS * BLOCKS);
+        for (let i = 0; i < grid.length; i++) {
+          grid[i] = baseBag[Math.floor(Math.random() * baseBag.length)];
+        }
+        // carve ore veins: a short random walk of connected blocks, like real generation
+        ores.forEach(ore => {
+          for (let v = 0; v < ore.w; v++) {
+            let x = Math.floor(Math.random() * BLOCKS);
+            let y = Math.floor(Math.random() * BLOCKS);
+            const size = 1 + Math.floor(Math.random() * 4);
+            for (let s = 0; s < size; s++) {
+              grid[y * BLOCKS + x] = ore;
+              if (Math.random() < 0.5) x = (x + 1) % BLOCKS;
+              else y = (y + 1) % BLOCKS;
+            }
+          }
+        });
         const cv = document.createElement('canvas');
         cv.width = cv.height = TILE;
         const ctx = cv.getContext('2d');
         ctx.imageSmoothingEnabled = false;
         for (let by = 0; by < BLOCKS; by++) {
           for (let bx = 0; bx < BLOCKS; bx++) {
-            const t = bag[Math.floor(Math.random() * bag.length)];
-            ctx.drawImage(t.img, bx * BP * SC, by * BP * SC, BP * SC, BP * SC);
+            ctx.drawImage(grid[by * BLOCKS + bx].img, bx * BP * SC, by * BP * SC, BP * SC, BP * SC);
           }
         }
         ctx.fillStyle = 'rgba(10,10,14,0.45)';
