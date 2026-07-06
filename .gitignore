@@ -21,3 +21,6 @@ break-times/webfishing/
 
 # Audio hosted on R2 (bucket: sn4k, path: audio/)
 audio/
+
+# Claude Code instructions (local only)
+CLAUDE.md
