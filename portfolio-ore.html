@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Ore UI icons: maksiuuuuu/Themes (MIT, LOLCATpl). Cave textures: Minecraft 26.2 (Mojang) via local jar, personal use only -->
+  <title>Yoshiro · Ore UI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #1d1d21;          /* bedrock backdrop */
+      --panel: #313135;       /* panel slate */
+      --panel-2: #48494a;     /* raised slate */
+      --line: #5b5c5e;
+      --text: #ffffff;
+      --muted: #a5a6a8;
+      --btn: #d0d1d4;
+      --btn-edge: #58585a;
+      --btn-text: #1e1e1f;
+      --green: #3c8527;
+      --green-edge: #2a5e1a;
+      --green-hover: #4f9c38;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans', sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      padding-bottom: 4rem;
+    }
+
+    /* ── Cave background, easter egg: click the title 3 times ── */
+    .cave {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background-repeat: repeat;
+      image-rendering: pixelated;
+      animation: descend 60s linear infinite;
+      opacity: 0;
+      transition: opacity 1.2s ease;
+    }
+    /* dark vignette so the UI stays readable over the cave */
+    .cave-shade {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse at 50% 30%, rgba(29,29,33,0.55) 0%, rgba(29,29,33,0.88) 70%, rgba(20,20,23,0.96) 100%);
+      opacity: 0;
+      transition: opacity 1.2s ease;
+    }
+    body.cave-on .cave, body.cave-on .cave-shade { opacity: 1; }
+    @keyframes descend { from { background-position-y: 0; } to { background-position-y: -384px; } }
+    @media (prefers-reduced-motion: reduce) { .cave { animation: none; } }
+
+    .shell { max-width: 820px; margin: 0 auto; padding: 0 1.25rem; }
+
+    /* ── Title bar, like the Bedrock main menu ── */
+    header {
+      text-align: center;
+      padding: 3.5rem 0 2rem;
+    }
+    .game-title {
+      font-family: 'Silkscreen', monospace;
+      font-size: clamp(2rem, 6vw, 3.25rem);
+      letter-spacing: 0.02em;
+      text-shadow: 0 4px 0 rgba(0,0,0,0.55);
+      cursor: default;
+      user-select: none;
+    }
+    .game-title:active { transform: translateY(2px); }
+    .splash {
+      display: inline-block;
+      margin-top: 0.5rem;
+      color: #ffff55;
+      font-family: 'Silkscreen', monospace;
+      font-size: 0.8rem;
+      transform: rotate(-3deg);
+      text-shadow: 0 2px 0 rgba(0,0,0,0.55);
+      animation: splash 0.9s ease-in-out infinite alternate;
+    }
+    @keyframes splash { from { transform: rotate(-3deg) scale(1); } to { transform: rotate(-3deg) scale(1.06); } }
+    @media (prefers-reduced-motion: reduce) { .splash { animation: none; } }
+
+    /* ── Tab strip, like the Play screen ── */
+    .tabs {
+      display: flex;
+      gap: 2px;
+      border-bottom: 2px solid var(--line);
+      margin-bottom: 1.5rem;
+      overflow-x: auto;
+    }
+    .tab {
+      font-family: 'Silkscreen', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: none;
+      border: none;
+      padding: 0.75rem 1.1rem;
+      cursor: pointer;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .tab img {
+      width: 18px;
+      height: 18px;
+      image-rendering: pixelated;
+      opacity: 0.6;
+    }
+    .tab[aria-selected="true"] img, .tab:hover img { opacity: 1; }
+    .server-ping img { width: 20px; height: 20px; image-rendering: pixelated; vertical-align: middle; }
+    .tab[aria-selected="true"] {
+      color: var(--text);
+      box-shadow: inset 0 -4px 0 var(--green);
+    }
+    .tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .tab:focus-visible { outline: 2px solid #fff; outline-offset: -2px; }
+
+    section[hidden] { display: none; }
+
+    .panel {
+      background: var(--panel);
+      border: 2px solid #232326;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .panel-label {
+      font-family: 'Silkscreen', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+
+    /* ── Ore UI buttons ── */
+    .btn {
+      display: inline-block;
+      font-family: 'Noto Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--btn-text);
+      background: var(--btn);
+      border: 2px solid #1a1a1c;
+      box-shadow: inset 0 -4px 0 var(--btn-edge);
+      padding: 0.55rem 1.25rem 0.7rem;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      transition: filter 0.1s ease;
+    }
+    .btn:hover { filter: brightness(1.12); }
+    .btn:active { box-shadow: inset 0 -2px 0 var(--btn-edge); transform: translateY(2px); }
+    .btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+    .btn-green {
+      color: #fff;
+      background: var(--green);
+      box-shadow: inset 0 -4px 0 var(--green-edge);
+    }
+    .btn-green:hover { background: var(--green-hover); filter: none; }
+
+    /* ── World list rows (builds) ── */
+    .world-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--panel);
+      border: 2px solid #232326;
+      padding: 0.9rem;
+      margin-bottom: 0.6rem;
+      transition: background 0.15s ease;
+    }
+    .world-row:hover { background: #3a3a3f; }
+    .world-thumb {
+      width: 84px;
+      height: 84px;
+      flex-shrink: 0;
+      object-fit: cover;
+      border: 2px solid #1a1a1c;
+      image-rendering: auto;
+      background: var(--panel-2);
+    }
+    .world-thumb.placeholder {
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Silkscreen', monospace; font-size: 1.5rem; color: var(--muted);
+    }
+    .world-info { flex: 1; min-width: 0; }
+    .world-name { font-weight: 700; }
+    .world-meta {
+      color: var(--muted);
+      font-size: 0.8rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .world-tags { margin-top: 0.3rem; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+    .mc-tag {
+      font-family: 'Silkscreen', monospace;
+      font-size: 0.6rem;
+      color: var(--muted);
+      background: var(--bg);
+      border: 1px solid var(--line);
+      padding: 0.15rem 0.45rem;
+    }
+    .world-action { flex-shrink: 0; }
+
+    @media (max-width: 560px) {
+      .world-row { flex-wrap: wrap; }
+      .world-action { width: 100%; }
+      .world-action .btn { width: 100%; }
+    }
+
+    /* ── Skills as hotbar-ish tag slots ── */
+    .slot-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .slot {
+      background: var(--panel-2);
+      border: 2px solid #1a1a1c;
+      box-shadow: inset 0 2px 0 rgba(255,255,255,0.08), inset 0 -2px 0 rgba(0,0,0,0.35);
+      font-family: 'Silkscreen', monospace;
+      font-size: 0.65rem;
+      padding: 0.5rem 0.7rem;
+    }
+
+    /* ── Server rows (contact + open source) ── */
+    .server-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      background: var(--panel);
+      border: 2px solid #232326;
+      padding: 0.9rem 1rem;
+      margin-bottom: 0.6rem;
+      text-decoration: none;
+      color: var(--text);
+    }
+    .server-row:hover { background: #3a3a3f; }
+    .server-label { font-family: 'Silkscreen', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase; }
+    .server-value { flex: 1; font-size: 0.9rem; }
+    .server-ping { color: var(--green); font-family: 'Silkscreen', monospace; font-size: 0.7rem; }
+
+    .about-text { color: var(--text); margin-bottom: 0.75rem; }
+    .about-text.muted { color: var(--muted); font-size: 0.9rem; }
+
+    .back {
+      font-family: 'Silkscreen', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-decoration: none;
+      display: inline-block;
+      padding: 1rem 0 0 1.25rem;
+    }
+    .back:hover { color: var(--text); }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-family: 'Silkscreen', monospace;
+      font-size: 0.65rem;
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cave" aria-hidden="true"></div>
+  <div class="cave-shade" aria-hidden="true"></div>
+
+  <a class="back" href="/portfolio">← normal ui</a>
+
+  <header>
+    <h1 class="game-title">YOSHIRO</h1>
+    <span class="splash">Also try the real portfolio!</span>
+  </header>
+
+  <div class="shell">
+
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" onclick="showTab(this, 'about')"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAM1JREFUaIHtmrENwkAMRQnKADQUSRFGoKBjByrWYBzWoMoOdBQskRQ0bAC1D4lgGeXJ0n+do5PiJ8uX8ylV121ei8Qs6QSiSICmLh+sDlcij5959nsTp6+ABGg+esDLMI4mflx2X9dvT0P0lYb0FZAAjQRoJEAT/g60TWPif+/zU6SvgARo3D3gPftMEe2Z9BWQAI27B8p9f328mVjzgBMJ0EiARgI0EqCRAM3s88D93JpY8wCdQJT0AuF5YO57oJL0FZAATaV/JWAkQPMGGtgiB7F7NIEAAAAASUVORK5CYII=" alt="">About</button>
+      <button class="tab" role="tab" aria-selected="false" onclick="showTab(this, 'builds')"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAbVJREFUaIFjlJOT/88whAHTQDuAUjDqgYEGLOgCszbcROFLiH6gyILnL/kp0o8O0oM0UPhDPgZGPTDQACMP6CmwovA//xFG4Svyv0XhwyqRf1DGzdeo5jGiqYOLQyV05NlQ+HB1UMblB79wOB0Chl8MkApgIczEiFcZyeb9I1L98IuBSw9+o/DFofUAeggzovH/42hR/UeTh6d1KP/KQ/xpnBAYfjGACaBB9R8SdLC0yQgLUZgqHDEAC3FcpREufcSCkRADkLCDBRS8nEcvsKFBzcmOWm/oKkDC6D+R5TqpYPjHACNa6v2HkYgZ0dQRMg/ZNMrB8IsBHnbUsPnyiY8kA78wwOoRSFi/QSv3eThJcyAhMPxiABOQ2shBTeWUlvOEwPCLAXY2ZppauLfTFYV/VcWKIvOGfAyMemCgAUYeOH6Xtha+fY3aaWZ/ug2Ff99QjiTzhnwMjHpgoAFGHrj5nErDC1Bw43YQqoC2Mkn6f3x4hFd+yMfAqAcGGmDkgedvf5JkwMt71lRzDDlgyMfAqAcGGmDkgYFO0+jg3Y8feOWHfAyMemCgAePoWokBBqMeGGgAAAGZY0ABHAUiAAAAAElFTkSuQmCC" alt="">Worlds</button>
+      <button class="tab" role="tab" aria-selected="false" onclick="showTab(this, 'oss')"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAQ9JREFUaIHtmS0OwkAQhSmpqcCgSZEIDCHcoGfiFJyJGzQEg8CjMYhK8LNJXyazycsj88n+7Ozr29nOtE3fb78LYZbsCURJAWxae2CzersGeH3WoQlE4/2fA1Ge19Ps+d0wVo0n70AKYOPOAe+uM90ervG8u5K8AymATROtRtG+j3LgcJ4i4fUdSAFsivcAWtO18caztZS8AymATZEDdo3dL93sAN1x7wrovR71D/IOpAA2RS1k63Fbr6OciGJrIzQfeQdSABt3T4z2cVT/2/vR9Qh5B1IAG9gTR+t1NF60Z5Z3IAWwge8B7xpF3za9/QZC3oEUwCb8bdSCciD6V9Mi70D1v5S1nzBC3oEUwOYH8GRL539yrRkAAAAASUVORK5CYII=" alt="">Realms</button>
+      <button class="tab" role="tab" aria-selected="false" onclick="showTab(this, 'contact')"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAlVJREFUaIHtms9LVFEUx+95vnJoITyifPAaw4UDzv8QBK3dCILtglZG0iowl0b+ABeS1SrFjcxE/4HEIATNRly4MBmL0Cl8SuYwBo3oe7et3++DaRPcuXC/u8/M/fHOu+fcc+bekb6+21pdktaAHScRAfYMPcd/kzPAtHz2+beVKnCtNQWsdQI82PMCWMQH/tycpClTYlHt5JHPzw+t4fdte1sgZ4Bp+fzB99/oo8Ubc9SC9+ErwFphTBUD7C/Uf6f5jIbH+d9tbgGnNL71K+AMMK1MDAjZVNl+CBzdugnMPj/Ywz5/FXjn9ClNeAFY3kCfx6yTlfUr4AwwLZ/35Vr8CFg89PF6fR/4XnGFhyTmGJkGXqp+BY66ab6zcdVO1q+AM8C0MnmA632u1gd63wD/+IX7eP46tqdyXi1/+gacan6HGAP53CJwXY0AW78CzgDT8rmWKYToc19+PgH2VBcNgU5eP24Cf9g9Ak40tt9rYd7J517ifMJh6s6FOkvWG5DJA57gb9wC7fvchWungfA18N4frGUSRXkjtwAsFGP7rcc0P+Yp61fAGWBaPp+3lybQh+/PUT1OtU1KZ521eIy+P8cOGtuzz/PzXFu9QxOWAK1fAWeAaWXyAPtoeeIV8OgsxoQI3amxj9P9A9de/AqPl99j/38cDFm/As4A0xK+Jw7Du9AgCCLs4OE+HTwYBu4PngN/PDwAjvQM8Em5gk+UYAw1Gtg/jteBrV8BZ4BpZWKAa5HsyRDt44LvQOiOK7Pva0o9nDe41kr5vxvujqyzZL0BfwG5dKComQ5+zQAAAABJRU5ErkJggg==" alt="">Servers</button>
+    </div>
+
+    <!-- About -->
+    <section id="tab-about">
+      <div class="panel">
+        <p class="panel-label">Player profile</p>
+        <p class="about-text">I make stuff and tinker with things. I spend way too much time configuring my home lab to the point that it breaks, and I have to refix it all over again. I like using random programs and figuring out how things actually work.</p>
+        <p class="about-text muted">Outside of tech... I'm into some music, graphic design, and collecting things that I probably don't even need. I like clean aesthetics that don't make it seem cluttered and overly loud.</p>
+      </div>
+      <div class="panel">
+        <p class="panel-label">Inventory · Languages &amp; frameworks</p>
+        <div class="slot-grid">
+          <span class="slot">html / css</span><span class="slot">javascript</span><span class="slot">python</span><span class="slot">swift (a little)</span>
+        </div>
+      </div>
+      <div class="panel">
+        <p class="panel-label">Inventory · Infrastructure &amp; devops</p>
+        <div class="slot-grid">
+          <span class="slot">docker</span><span class="slot">linux</span><span class="slot">unraid</span><span class="slot">nginx</span><span class="slot">cloudflare</span><span class="slot">git</span><span class="slot">claude code</span><span class="slot">self-hosting</span><span class="slot">networking</span>
+        </div>
+      </div>
+      <div class="panel">
+        <p class="panel-label">Inventory · Design tools</p>
+        <div class="slot-grid">
+          <span class="slot">photoshop</span><span class="slot">davinci resolve</span><span class="slot">figma</span><span class="slot">obsidian</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Builds as world list -->
+    <section id="tab-builds" hidden>
+      <div class="world-row">
+        <img class="world-thumb" src="images/homelab.webp" alt="Homelab build">
+        <div class="world-info">
+          <p class="world-name">DIY Homelab</p>
+          <p class="world-meta">Self-built home server running all my self-hosted services and containers 24/7. immich, jellyfin, vaultwarden, navidrome and more.</p>
+          <div class="world-tags"><span class="mc-tag">Ryzen 3400G</span><span class="mc-tag">32GB RAM</span><span class="mc-tag">2x16TB</span></div>
+        </div>
+        <div class="world-action"><span class="btn btn-green">Online</span></div>
+      </div>
+
+      <div class="world-row">
+        <img class="world-thumb" src="images/mc-screenshot.webp" alt="Minecraft server">
+        <div class="world-info">
+          <p class="world-name">Modded Minecraft Server</p>
+          <p class="world-meta">PaperMC 26.1.2 modded server through Crafty Controller, hosted for me and my friends.</p>
+          <div class="world-tags"><span class="mc-tag">PaperMC</span><span class="mc-tag">modded</span></div>
+        </div>
+        <div class="world-action"><button class="btn btn-green" onclick="revealAddr(this)">Join Server</button></div>
+      </div>
+
+      <div class="world-row">
+        <img class="world-thumb" src="images/pi-cluster.webp" alt="Pi cluster">
+        <div class="world-info">
+          <p class="world-name">Raspberry Pi Cluster</p>
+          <p class="world-meta">Craigslist Pis running DietPi, used for random projects and learning how clusters actually work.</p>
+          <div class="world-tags"><span class="mc-tag">DietPi</span><span class="mc-tag">cluster</span></div>
+        </div>
+        <div class="world-action"><span class="btn">Learning</span></div>
+      </div>
+
+      <div class="world-row">
+        <img class="world-thumb" src="images/modrinth-versioneye-plugin.webp" alt="VersionEye">
+        <div class="world-info">
+          <p class="world-name">VersionEye</p>
+          <p class="world-meta">Paper plugin that checks installed plugins for updates on Modrinth and downloads them for you.</p>
+          <div class="world-tags"><span class="mc-tag">Paper</span><span class="mc-tag">Java 25</span><span class="mc-tag">MIT</span></div>
+        </div>
+        <div class="world-action"><a class="btn" href="https://modrinth.com/plugin/versioneye" target="_blank" rel="noopener">Modrinth</a></div>
+      </div>
+
+      <div class="world-row">
+        <img class="world-thumb" src="images/modrinth-vulkan-upd-modpack.webp" alt="Vulkan Updated">
+        <div class="world-info">
+          <p class="world-name">Vulkan Updated</p>
+          <p class="world-meta">Client-side Fabric modpack built around the Vulkan renderer. Around 52% faster with shaders than Sodium on driver-bound systems.</p>
+          <div class="world-tags"><span class="mc-tag">Fabric</span><span class="mc-tag">client-side</span><span class="mc-tag">MIT</span></div>
+        </div>
+        <div class="world-action"><a class="btn" href="https://modrinth.com/modpack/vulkan-updated" target="_blank" rel="noopener">Modrinth</a></div>
+      </div>
+    </section>
+
+    <!-- Open source -->
+    <section id="tab-oss" hidden>
+      <a class="server-row" href="https://github.com/EternalCodeTeam/EternalCombat/pull/400" target="_blank" rel="noopener">
+        <span class="server-label">pr · merged</span>
+        <span class="server-value">EternalCombat: fixed EntityMountEvent registration failing on modern Paper</span>
+        <span class="server-ping"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAN5JREFUaIHtmrENwjAQRQliABqKpAgjUNBlh1RZg3FYg4od6ChYIilo2CDUPks21mF9fem/7pwUfvp3doo0fX9cN8Rs0RvwIgE0O7uwHx+IffzM5z4ENX0CEkAjATQSQBPdA7WZlyWo37dz8v3TZU4+p09AAmiqz0Bpz5dCn4AE0EQz4D2nvT2fO/ct9AlIAI37HnhdO7Ni6zSlPW+hT0ACaKIZ6No2qA/TM6i93zLenrfQJyABNNl7wDsT/+55C30CEkBT/C1kZ6J2j+egT0ACaCSARgJoGv0rAUYCaL6Ctysjrd4W9wAAAABJRU5ErkJggg==" alt="online"></span>
+      </a>
+      <a class="server-row" href="https://github.com/YoshiroMaximus/pumpkin-unraid-template" target="_blank" rel="noopener">
+        <span class="server-label">template</span>
+        <span class="server-value">Unraid CA template for the Pumpkin Minecraft server</span>
+        <span class="server-ping"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAN5JREFUaIHtmrENwjAQRQliABqKpAgjUNBlh1RZg3FYg4od6ChYIilo2CDUPks21mF9fem/7pwUfvp3doo0fX9cN8Rs0RvwIgE0O7uwHx+IffzM5z4ENX0CEkAjATQSQBPdA7WZlyWo37dz8v3TZU4+p09AAmiqz0Bpz5dCn4AE0EQz4D2nvT2fO/ct9AlIAI37HnhdO7Ni6zSlPW+hT0ACaKIZ6No2qA/TM6i93zLenrfQJyABNNl7wDsT/+55C30CEkBT/C1kZ6J2j+egT0ACaCSARgJoGv0rAUYCaL6Ctysjrd4W9wAAAABJRU5ErkJggg==" alt="online"></span>
+      </a>
+      <a class="server-row" href="https://github.com/YoshiroMaximus/automcs-unraid-template" target="_blank" rel="noopener">
+        <span class="server-label">template</span>
+        <span class="server-value">Unraid CA template for auto-mcs</span>
+        <span class="server-ping"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAN5JREFUaIHtmrENwjAQRQliABqKpAgjUNBlh1RZg3FYg4od6ChYIilo2CDUPks21mF9fem/7pwUfvp3doo0fX9cN8Rs0RvwIgE0O7uwHx+IffzM5z4ENX0CEkAjATQSQBPdA7WZlyWo37dz8v3TZU4+p09AAmiqz0Bpz5dCn4AE0EQz4D2nvT2fO/ct9AlIAI37HnhdO7Ni6zSlPW+hT0ACaKIZ6No2qA/TM6i93zLenrfQJyABNNl7wDsT/+55C30CEkBT/C1kZ6J2j+egT0ACaCSARgJoGv0rAUYCaL6Ctysjrd4W9wAAAABJRU5ErkJggg==" alt="online"></span>
+      </a>
+    </section>
+
+    <!-- Contact -->
+    <section id="tab-contact" hidden>
+      <a class="server-row" href="https://github.com/YoshiroMaximus" target="_blank" rel="noopener">
+        <span class="server-label">github</span>
+        <span class="server-value">github.com/YoshiroMaximus</span>
+        <span class="server-ping"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAN5JREFUaIHtmrENwjAQRQliABqKpAgjUNBlh1RZg3FYg4od6ChYIilo2CDUPks21mF9fem/7pwUfvp3doo0fX9cN8Rs0RvwIgE0O7uwHx+IffzM5z4ENX0CEkAjATQSQBPdA7WZlyWo37dz8v3TZU4+p09AAmiqz0Bpz5dCn4AE0EQz4D2nvT2fO/ct9AlIAI37HnhdO7Ni6zSlPW+hT0ACaKIZ6No2qA/TM6i93zLenrfQJyABNNl7wDsT/+55C30CEkBT/C1kZ6J2j+egT0ACaCSARgJoGv0rAUYCaL6Ctysjrd4W9wAAAABJRU5ErkJggg==" alt="online"></span>
+      </a>
+      <a class="server-row" href="mailto:nico@sendan.com">
+        <span class="server-label">email</span>
+        <span class="server-value">nico@sendan.com</span>
+        <span class="server-ping"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAN5JREFUaIHtmrENwjAQRQliABqKpAgjUNBlh1RZg3FYg4od6ChYIilo2CDUPks21mF9fem/7pwUfvp3doo0fX9cN8Rs0RvwIgE0O7uwHx+IffzM5z4ENX0CEkAjATQSQBPdA7WZlyWo37dz8v3TZU4+p09AAmiqz0Bpz5dCn4AE0EQz4D2nvT2fO/ct9AlIAI37HnhdO7Ni6zSlPW+hT0ACaKIZ6No2qA/TM6i93zLenrfQJyABNNl7wDsT/+55C30CEkBT/C1kZ6J2j+egT0ACaCSARgJoGv0rAUYCaL6Ctysjrd4W9wAAAABJRU5ErkJggg==" alt="online"></span>
+      </a>
+    </section>
+
+  </div>
+
+  <footer>not affiliated with mojang, obviously</footer>
+
+  <script>
+    function showTab(btn, name) {
+      document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', 'false'));
+      btn.setAttribute('aria-selected', 'true');
+      ['about', 'builds', 'oss', 'contact'].forEach(id => {
+        document.getElementById('tab-' + id).hidden = (id !== name);
+      });
+    }
+
+    // ── Cave background from real game textures ──
+    // Block textures are pulled from the local Minecraft client jar and
+    // embedded as data URIs (16x16 each, ~200 bytes). 8x8 blocks at 3x = 384px tile.
+    (function buildCave() {
+      const TEXTURES = [
+        { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAD1BMVEVkZGR5eXlRUVE9PUMvLzdi5EnwAAAAYUlEQVR42gXBAQHEIAwEweUUgIM0qYHPoaDgX9PPMDONKqlrR7pg6r1nm1Y5FuKkm0GxIj8ig6nX6dvIHtRJqvxIbnwzsvdB6tonF9RYVT2RH+QG74861yxq/xSDJb0PyR+e6w/hsG/r7QAAAABJRU5ErkJggg==', w: 46 },
+        { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAElBMVEV6enppaWlaWlpKSk8/P0U1NTnf4I6sAAAAdUlEQVR42gVAQRLCIAzc2j7AIT6AAXpXSO7WkLul4f9f6aCdeqB+Enjwn/TImG4n++jQJVUxdyA0txlXBOIrEgoC27kWYvC0I0sW4FUrSzeE0pLaTCBR5UgV2ab3VRoK23PLwjAtDxI32HsLVX4N+3e/+ojLDSfPGK0cTn8xAAAAAElFTkSuQmCC', w: 22 },
+        { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAG1BMVEVkZGR5eXlRUVFJSz89PUMvLzcqKiofHx8KCgpYHVTvAAAAeUlEQVR42gXBgQHAMAjDMMcLlP8vnkRQbQGtYmfamUFbCwS83Zm+bano2/3eBZC5tfDuErAkoEPijELAmanu26lge/sG3C+K9fbbhyRW2uFtorUzBTGxnencBujMgJ0pAbxv78BvT6BlL8HuZVoSku4riRASRMeAwg+cUgLsgAjYJAAAAABJRU5ErkJggg==', w: 3 },
+        { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAHlBMVEU9PUNRUVFkZGR5eXmIdFWvjnfYr5PiwKp3Z08vLzd5FklzAAAAfklEQVR42gXBgQHAQAgCsQPEvvsv3IRYksC2hIS4A5DfzBPY0+HuyDQA042E7MQWRwLMtGMLEnm6+22jqYmtpLsJdwgLIInFISE0RfGbPhDw2l1L3dyB5ewXuERKsEWSCL1RjAXT+E13O4bpJba6XxNI5gkOJ7GDnVg62ZbsH30eAuNYOtkhAAAAAElFTkSuQmCC', w: 2 },
+        { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAMFBMVEVRUVFkZGR5eXmEWVn3HBz9Xl7/iYn/AADGBASXAwPKBweWBgY7LCxNNzcvLzc9PUNRsDaYAAAAiklEQVR42gXBgWHDMAzEQICUk9SS+Ptv2ztKgESFAGQmSRASgpbee2YmmYTgvXvvY5UKE979fp/fn6WEKvx9P98W39VSCt0NSXfAe09i6b0T4K5nn1Dud7/PguzVgJDnszrYTSCZSXcVyrn3FCGhRM5e79qSd6Ek6eejZDKTUKXdmZSgRZUIQynoP2YCBhKdaJ9XAAAAAElFTkSuQmCC', w: 2 },
+        { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAJFBMVEVRUVFkZGR5eXlkioxheXcxQEB359EUj5Ie0NbV//YvLzc9PUMT0xLSAAAAhklEQVR42gXBhwHAQAgDsTPtCd5/30iEAGxJYADftW0ENkYKLXTfeV4aI9KelxGZgjPYzpRCwkQgvkH6pkCE8pvdV+zLM4jOrKzurDPAbNnd3wjb4KoDZt8r3xkhFlyZ3UQgYUUE3fMIIdwd0nyz+0rYNS8l3maWTYQy7XMlSEGEEBwhgfQDXnAETfum3bwAAAAASUVORK5CYII=', w: 2 },
+        { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAG1BMVEVRUVFkZGR5eXnrnQ6cZCAvLzf87kv//7U9PUPYRpKtAAAAe0lEQVR42gXBgQHAMAjDMMdAl/8vnoQBKEmgAL1bKYHelcTI7d31dksJ3M5Gdxau0J23iTMWJfPeNyFKMMF5s7R3hdDW0VBmhe7QNYRqaOeJgbvmStCE9nYHJbmrlp353obc7piN856G7rzvRbpjWjTz7FWFEY3CYQLmB506Aw5MTqulAAAAAElFTkSuQmCC', w: 1 },
+        { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAJFBMVEVkZGR5eXkX3WIAexjZ/+scmCkXxURB84Q3Wz4vLzc9PUNRUVEhiLJVAAAAfUlEQVR42hXMuQEDMRDDQND3aYn++7WUANkQVFtAq9iZtpVzC3P/0Jn9Tkv9XWkr+yDThFlCApbEzvc9ICoE1ndfz7KHFzrru553Ybcr3fj7JIg97kkizrQJkFg98CoJ4HmuIxvAo8P1blmgPTi4tjwtCWx3miiEBBPHgMIfUgoFsOCzz4kAAAAASUVORK5CYII=', w: 1 }
+      ];
+      const BLOCKS = 8, BP = 16, S = 3, TILE = BLOCKS * BP * S;
+      const bag = [];
+      TEXTURES.forEach(t => { for (let i = 0; i < t.w; i++) bag.push(t); });
+      Promise.all(TEXTURES.map(t => new Promise(res => {
+        const img = new Image();
+        img.onload = () => { t.img = img; res(); };
+        img.src = t.src;
+      }))).then(() => {
+        const cv = document.createElement('canvas');
+        cv.width = cv.height = TILE;
+        const ctx = cv.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        for (let by = 0; by < BLOCKS; by++) {
+          for (let bx = 0; bx < BLOCKS; bx++) {
+            const t = bag[Math.floor(Math.random() * bag.length)];
+            ctx.drawImage(t.img, bx * BP * S, by * BP * S, BP * S, BP * S);
+          }
+        }
+        // pull the whole tile down toward cave darkness
+        ctx.fillStyle = 'rgba(10,10,14,0.45)';
+        ctx.fillRect(0, 0, TILE, TILE);
+        document.querySelector('.cave').style.backgroundImage = `url(${cv.toDataURL()})`;
+      });
+    })();
+
+    // ── Easter egg: click the title 3 times to enter the cave ──
+    (function caveEgg() {
+      const title = document.querySelector('.game-title');
+      const splash = document.querySelector('.splash');
+      const originalSplash = splash.textContent;
+      let clicks = 0, timer;
+      title.addEventListener('click', () => {
+        clicks++;
+        clearTimeout(timer);
+        timer = setTimeout(() => { clicks = 0; }, 1500);
+        if (clicks >= 3) {
+          clicks = 0;
+          const on = document.body.classList.toggle('cave-on');
+          splash.textContent = on ? 'Now with 100% more cave!' : originalSplash;
+        }
+      });
+    })();
+
+    function revealAddr(btn) {
+      const addr = ['mc', 'sn4k', 'org'].join('.');
+      if (btn.dataset.revealed) {
+        navigator.clipboard?.writeText(addr).then(() => {
+          btn.textContent = 'Copied!';
+          setTimeout(() => { btn.textContent = addr; }, 1200);
+        });
+        return;
+      }
+      btn.textContent = addr;
+      btn.dataset.revealed = '1';
+    }
+  </script>
+</body>
+</html>
