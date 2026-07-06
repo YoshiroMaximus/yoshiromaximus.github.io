@@ -231,6 +231,25 @@
     }
     .world-row.expanded .world-meta { display: block; -webkit-line-clamp: unset; }
 
+    /* plugin list, only in the expanded server row */
+    .world-plugins { display: none; }
+    .world-row.expanded .world-plugins {
+      display: block;
+      order: 6;
+      width: 100%;
+      margin-top: 0.85rem;
+    }
+    .wp-label {
+      font-family: 'Silkscreen', monospace;
+      font-size: 0.6rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+    .wp-grid { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+    a.mc-tag { text-decoration: none; transition: border-color 0.15s ease, color 0.15s ease; }
+    a.mc-tag:hover { color: var(--text); border-color: var(--muted); }
+
     /* ── Lightbox ── */
     .lightbox {
       position: fixed;
@@ -455,6 +474,31 @@
           <p class="world-meta">PaperMC 26.1.2 modded server through Crafty Controller, hosted for me and my friends.</p>
         </div>
         <div class="world-action"><button class="btn btn-green" onclick="revealAddr(this)">Join Server</button></div>
+        <div class="world-plugins">
+          <p class="wp-label">Plugins · 20</p>
+          <div class="wp-grid">
+            <a class="mc-tag" href="https://modrinth.com/project/auramobs" target="_blank" rel="noopener">AuraMobs</a>
+            <a class="mc-tag" href="https://modrinth.com/project/auraskills" target="_blank" rel="noopener">AuraSkills</a>
+            <a class="mc-tag" href="https://modrinth.com/project/autotreechop" target="_blank" rel="noopener">AutoTreeChop</a>
+            <a class="mc-tag" href="https://modrinth.com/project/chunky" target="_blank" rel="noopener">Chunky</a>
+            <a class="mc-tag" href="https://modrinth.com/project/clickvillagers" target="_blank" rel="noopener">Click Villagers</a>
+            <a class="mc-tag" href="https://modrinth.com/project/eternalcombat" target="_blank" rel="noopener">EternalCombat</a>
+            <a class="mc-tag" href="https://modrinth.com/project/eternalcore" target="_blank" rel="noopener">EternalCore</a>
+            <a class="mc-tag" href="https://modrinth.com/project/farmprotect" target="_blank" rel="noopener">Farm Protect</a>
+            <a class="mc-tag" href="https://modrinth.com/project/gsit" target="_blank" rel="noopener">GSit</a>
+            <a class="mc-tag" href="https://modrinth.com/project/invsee++" target="_blank" rel="noopener">InvSee++</a>
+            <a class="mc-tag" href="https://modrinth.com/project/luckperms" target="_blank" rel="noopener">LuckPerms</a>
+            <a class="mc-tag" href="https://modrinth.com/project/packetevents" target="_blank" rel="noopener">PacketEvents</a>
+            <a class="mc-tag" href="https://modrinth.com/project/placeholderapi" target="_blank" rel="noopener">PlaceholderAPI</a>
+            <a class="mc-tag" href="https://modrinth.com/project/smartspawner" target="_blank" rel="noopener">SmartSpawner</a>
+            <a class="mc-tag" href="https://modrinth.com/project/toolstats" target="_blank" rel="noopener">ToolStats</a>
+            <a class="mc-tag" href="https://modrinth.com/project/vane" target="_blank" rel="noopener">vane</a>
+            <a class="mc-tag" href="https://modrinth.com/project/vaultunlocked" target="_blank" rel="noopener">VaultUnlocked</a>
+            <a class="mc-tag" href="https://modrinth.com/project/veinminer" target="_blank" rel="noopener">VeinMiner</a>
+            <a class="mc-tag" href="https://modrinth.com/project/viabackwards" target="_blank" rel="noopener">ViaBackwards</a>
+            <a class="mc-tag" href="https://modrinth.com/project/viaversion" target="_blank" rel="noopener">ViaVersion</a>
+          </div>
+        </div>
       </div>
 
       <div class="world-row">
