@@ -230,6 +230,31 @@
       margin-top: 0.75rem;
     }
     .world-row.expanded .world-meta { display: block; -webkit-line-clamp: unset; }
+
+    /* ── Lightbox ── */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(12,12,14,0.92);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 1.5rem;
+    }
+    .lightbox[hidden] { display: none; }
+    .lightbox img {
+      max-width: min(1100px, 100%);
+      max-height: 75vh;
+      border: 2px solid #1a1a1c;
+      background: var(--panel);
+    }
+    .lb-bar { display: flex; align-items: center; gap: 1rem; }
+    #lb-caption { font-family: 'Silkscreen', monospace; font-size: 0.7rem; }
+    .lb-close { position: absolute; top: 1rem; right: 1rem; }
+    .world-row.expanded .world-thumb { cursor: zoom-in; }
     .world-thumb {
       width: 84px;
       height: 84px;
@@ -529,6 +554,16 @@
 
   </div>
 
+  <div class="lightbox" id="lightbox" hidden>
+    <button class="btn lb-close" type="button">Close</button>
+    <img id="lb-img" alt="">
+    <div class="lb-bar">
+      <button class="btn lb-prev" type="button">&lt;</button>
+      <span id="lb-caption"></span>
+      <button class="btn lb-next" type="button">&gt;</button>
+    </div>
+  </div>
+
   <footer>not affiliated with mojang, obviously</footer>
 
   <script>
@@ -642,12 +677,47 @@
       });
     }
 
+    // ── Lightbox for world screenshots ──
+    (function lightbox() {
+      const lb = document.getElementById('lightbox');
+      const img = document.getElementById('lb-img');
+      const cap = document.getElementById('lb-caption');
+      const gallery = Array.from(document.querySelectorAll('#tab-builds .world-row')).map(r => ({
+        src: r.querySelector('.world-thumb').src,
+        name: r.querySelector('.world-name').textContent,
+      }));
+      let i = 0;
+      function render() {
+        img.src = gallery[i].src;
+        img.alt = gallery[i].name;
+        cap.textContent = gallery[i].name + ' · ' + (i + 1) + ' / ' + gallery.length;
+      }
+      window.openLightbox = n => { i = n; render(); lb.hidden = false; };
+      function close() { lb.hidden = true; }
+      function nav(d) { i = (i + d + gallery.length) % gallery.length; render(); }
+      lb.addEventListener('click', e => { if (e.target === lb) close(); });
+      lb.querySelector('.lb-close').addEventListener('click', close);
+      lb.querySelector('.lb-prev').addEventListener('click', () => nav(-1));
+      lb.querySelector('.lb-next').addEventListener('click', () => nav(1));
+      document.addEventListener('keydown', e => {
+        if (lb.hidden) return;
+        if (e.key === 'Escape') close();
+        if (e.key === 'ArrowLeft') nav(-1);
+        if (e.key === 'ArrowRight') nav(1);
+      });
+    })();
+
     // ── Worlds tab: expand rows in place ──
     (function worldExpander() {
       const tab = document.getElementById('tab-builds');
       tab.querySelectorAll('.world-row').forEach(row => {
         row.addEventListener('click', e => {
           if (e.target.closest('a, button')) return;
+          // expanded screenshot opens the lightbox instead of collapsing
+          if (row.classList.contains('expanded') && e.target.classList.contains('world-thumb')) {
+            openLightbox(Array.from(tab.querySelectorAll('.world-row')).indexOf(row));
+            return;
+          }
           const current = tab.querySelector('.world-row.expanded');
           if (current && current !== row) current.classList.remove('expanded');
           row.classList.toggle('expanded');
