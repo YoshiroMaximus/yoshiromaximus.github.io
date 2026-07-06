@@ -228,7 +228,6 @@
       height: auto;
       aspect-ratio: auto;
       margin-top: 0.75rem;
-      cursor: zoom-in;
     }
     .world-row.expanded .world-meta { display: block; -webkit-line-clamp: unset; }
     .world-thumb {
@@ -649,11 +648,6 @@
       tab.querySelectorAll('.world-row').forEach(row => {
         row.addEventListener('click', e => {
           if (e.target.closest('a, button')) return;
-          // an expanded screenshot opens full size instead of collapsing
-          if (row.classList.contains('expanded') && e.target.classList.contains('world-thumb')) {
-            window.open(e.target.src, '_blank', 'noopener');
-            return;
-          }
           const current = tab.querySelector('.world-row.expanded');
           if (current && current !== row) current.classList.remove('expanded');
           row.classList.toggle('expanded');
