@@ -152,8 +152,8 @@
       transition: height 0.18s ease, top 0.18s ease;
     }
     .piston.flip .p-rot { transform: translate(-50%, -50%) rotate(-90deg); }
-    .title-row:hover .p-head { top: 36px; }
-    .title-row:hover .p-arm { height: 4px; top: 44px; }
+    .title-row:has(.game-title:hover) .p-head { top: 36px; }
+    .title-row:has(.game-title:hover) .p-arm { height: 4px; top: 44px; }
     @media (prefers-reduced-motion: reduce) {
       .p-arm, .p-head { transition: none; }
     }
