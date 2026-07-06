@@ -20,7 +20,6 @@ npx wrangler deploy   # ship to Cloudflare (does NOT run D1 migrations)
 | `break-times/` | Games. Custom canvas games are committed; large/WASM games live in R2 (gitignored) and are linked by absolute `r2.sn4k.org` URL. |
 | `src/worker.js` | The entire backend: decks, notes, and leaderboard APIs. R2 bucket `sn4k`, D1 `gambit-leaderboard`, per-IP rate limiter. |
 | `migrations/` | D1 schema. Applied manually: `npx wrangler d1 execute gambit-leaderboard --file migrations/<f>.sql --remote`. |
-| `decks/` | Static deck JSON for deep links (separate from the R2 `/api/decks` store). |
 | `images/` | Page images (webp). |
 | `favistuff/` | Favicons and web manifest. |
 | `.assetsignore` | Keeps `src/`, `migrations/`, config, and dot-dirs from being served as static assets on Cloudflare. |
