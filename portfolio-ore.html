@@ -243,10 +243,39 @@
     }
     .world-action { flex-shrink: 0; }
 
+    /* clickable rows promote themselves to the featured slot */
+    .world-row:not(.featured) { cursor: pointer; }
+
+    .world-row.featured {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      padding: 0;
+      cursor: default;
+      margin-bottom: 1rem;
+    }
+    .world-row.featured .world-thumb {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 21 / 9;
+      border: none;
+      border-bottom: 2px solid #1a1a1c;
+    }
+    .world-row.featured .world-info { padding: 1rem 1.1rem 0.25rem; }
+    .world-row.featured .world-name { font-size: 1.05rem; }
+    .world-row.featured .world-meta {
+      display: block;
+      -webkit-line-clamp: unset;
+      margin-top: 0.25rem;
+    }
+    .world-row.featured .world-tags { margin-top: 0.6rem; }
+    .world-row.featured .world-action { padding: 0.75rem 1.1rem 1.1rem; }
+
     @media (max-width: 560px) {
       .world-row { flex-wrap: wrap; }
       .world-action { width: 100%; }
       .world-action .btn { width: 100%; }
+      .world-row.featured .world-action { width: auto; }
     }
 
     /* ── Skills as hotbar-ish tag slots ── */
@@ -538,6 +567,28 @@
         document.body.classList.add('cave-on');
       });
     }
+
+    // ── Worlds tab: featured world picker ──
+    // First row starts featured; clicking another row promotes it to the
+    // top slot and the previous one drops back into the compact list.
+    (function worldPicker() {
+      const tab = document.getElementById('tab-builds');
+      function featureWorld(row, scroll) {
+        const current = tab.querySelector('.world-row.featured');
+        if (current === row) return;
+        if (current) current.classList.remove('featured');
+        row.classList.add('featured');
+        tab.prepend(row);
+        if (scroll) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+      tab.querySelectorAll('.world-row').forEach(row => {
+        row.addEventListener('click', e => {
+          if (e.target.closest('a, button')) return;   // don't hijack Join/Modrinth clicks
+          featureWorld(row, true);
+        });
+      });
+      featureWorld(tab.querySelector('.world-row'), false);
+    })();
 
     // ── Achievement toasts ──
     const unlocked = new Set();
