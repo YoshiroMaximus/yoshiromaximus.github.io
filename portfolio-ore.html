@@ -57,6 +57,36 @@
       transition: opacity 1.2s ease;
     }
     body.cave-on .cave, body.cave-on .cave-shade { opacity: 1; }
+
+    /* ── Achievement toasts ── */
+    .toasts {
+      position: fixed;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      pointer-events: none;
+    }
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: var(--panel-2);
+      border: 2px solid #1a1a1c;
+      box-shadow: inset 0 -4px 0 rgba(0,0,0,0.3);
+      padding: 0.6rem 1.1rem;
+      min-width: 240px;
+      animation: toast-in 0.3s ease, toast-out 0.4s ease 3.6s forwards;
+    }
+    .toast img { width: 26px; height: 26px; image-rendering: pixelated; }
+    .toast .t-title { color: #ffff55; font-family: 'Silkscreen', monospace; font-size: 0.55rem; }
+    .toast .t-name { font-weight: 700; font-size: 0.85rem; }
+    @keyframes toast-in { from { transform: translateY(-130%); opacity: 0; } }
+    @keyframes toast-out { to { transform: translateY(-130%); opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
     @keyframes descend { from { background-position-y: 0; } to { background-position-y: -384px; } }
     @media (prefers-reduced-motion: reduce) { .cave { animation: none; } }
 
@@ -274,6 +304,7 @@
 
   <div class="cave" aria-hidden="true"></div>
   <div class="cave-shade" aria-hidden="true"></div>
+  <div class="toasts" aria-live="polite"></div>
 
   <a class="back" href="/portfolio">← normal ui</a>
 
@@ -409,32 +440,55 @@
   <footer>not affiliated with mojang, obviously</footer>
 
   <script>
+    const visitedTabs = new Set(['about']);
     function showTab(btn, name) {
       document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', 'false'));
       btn.setAttribute('aria-selected', 'true');
       ['about', 'builds', 'oss', 'contact'].forEach(id => {
         document.getElementById('tab-' + id).hidden = (id !== name);
       });
+      visitedTabs.add(name);
+      if (visitedTabs.size === 4) achievement('tabs', 'Completionist');
     }
 
-    // ── Cave background from real game textures ──
-    // Block textures are pulled from the local Minecraft client jar and
-    // embedded as data URIs (16x16 each, ~200 bytes). 8x8 blocks at 3x = 384px tile.
-    (function buildCave() {
-      const TEXTURES = [
-        { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAD1BMVEVkZGR5eXlRUVE9PUMvLzdi5EnwAAAAYUlEQVR42gXBAQHEIAwEweUUgIM0qYHPoaDgX9PPMDONKqlrR7pg6r1nm1Y5FuKkm0GxIj8ig6nX6dvIHtRJqvxIbnwzsvdB6tonF9RYVT2RH+QG74861yxq/xSDJb0PyR+e6w/hsG/r7QAAAABJRU5ErkJggg==', w: 46 },
-        { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAElBMVEV6enppaWlaWlpKSk8/P0U1NTnf4I6sAAAAdUlEQVR42gVAQRLCIAzc2j7AIT6AAXpXSO7WkLul4f9f6aCdeqB+Enjwn/TImG4n++jQJVUxdyA0txlXBOIrEgoC27kWYvC0I0sW4FUrSzeE0pLaTCBR5UgV2ab3VRoK23PLwjAtDxI32HsLVX4N+3e/+ojLDSfPGK0cTn8xAAAAAElFTkSuQmCC', w: 22 },
-        { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAG1BMVEVkZGR5eXlRUVFJSz89PUMvLzcqKiofHx8KCgpYHVTvAAAAeUlEQVR42gXBgQHAMAjDMMcLlP8vnkRQbQGtYmfamUFbCwS83Zm+bano2/3eBZC5tfDuErAkoEPijELAmanu26lge/sG3C+K9fbbhyRW2uFtorUzBTGxnencBujMgJ0pAbxv78BvT6BlL8HuZVoSku4riRASRMeAwg+cUgLsgAjYJAAAAABJRU5ErkJggg==', w: 3 },
-        { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAHlBMVEU9PUNRUVFkZGR5eXmIdFWvjnfYr5PiwKp3Z08vLzd5FklzAAAAfklEQVR42gXBgQHAQAgCsQPEvvsv3IRYksC2hIS4A5DfzBPY0+HuyDQA042E7MQWRwLMtGMLEnm6+22jqYmtpLsJdwgLIInFISE0RfGbPhDw2l1L3dyB5ewXuERKsEWSCL1RjAXT+E13O4bpJba6XxNI5gkOJ7GDnVg62ZbsH30eAuNYOtkhAAAAAElFTkSuQmCC', w: 2 },
-        { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAMFBMVEVRUVFkZGR5eXmEWVn3HBz9Xl7/iYn/AADGBASXAwPKBweWBgY7LCxNNzcvLzc9PUNRsDaYAAAAiklEQVR42gXBgWHDMAzEQICUk9SS+Ptv2ztKgESFAGQmSRASgpbee2YmmYTgvXvvY5UKE979fp/fn6WEKvx9P98W39VSCt0NSXfAe09i6b0T4K5nn1Dud7/PguzVgJDnszrYTSCZSXcVyrn3FCGhRM5e79qSd6Ek6eejZDKTUKXdmZSgRZUIQynoP2YCBhKdaJ9XAAAAAElFTkSuQmCC', w: 2 },
-        { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAJFBMVEVRUVFkZGR5eXlkioxheXcxQEB359EUj5Ie0NbV//YvLzc9PUMT0xLSAAAAhklEQVR42gXBhwHAQAgDsTPtCd5/30iEAGxJYADftW0ENkYKLXTfeV4aI9KelxGZgjPYzpRCwkQgvkH6pkCE8pvdV+zLM4jOrKzurDPAbNnd3wjb4KoDZt8r3xkhFlyZ3UQgYUUE3fMIIdwd0nyz+0rYNS8l3maWTYQy7XMlSEGEEBwhgfQDXnAETfum3bwAAAAASUVORK5CYII=', w: 2 },
-        { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAG1BMVEVRUVFkZGR5eXnrnQ6cZCAvLzf87kv//7U9PUPYRpKtAAAAe0lEQVR42gXBgQHAMAjDMMdAl/8vnoQBKEmgAL1bKYHelcTI7d31dksJ3M5Gdxau0J23iTMWJfPeNyFKMMF5s7R3hdDW0VBmhe7QNYRqaOeJgbvmStCE9nYHJbmrlp353obc7piN856G7rzvRbpjWjTz7FWFEY3CYQLmB506Aw5MTqulAAAAAElFTkSuQmCC', w: 1 },
-        { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAJFBMVEVkZGR5eXkX3WIAexjZ/+scmCkXxURB84Q3Wz4vLzc9PUNRUVEhiLJVAAAAfUlEQVR42hXMuQEDMRDDQND3aYn++7WUANkQVFtAq9iZtpVzC3P/0Jn9Tkv9XWkr+yDThFlCApbEzvc9ICoE1ndfz7KHFzrru553Ybcr3fj7JIg97kkizrQJkFg98CoJ4HmuIxvAo8P1blmgPTi4tjwtCWx3miiEBBPHgMIfUgoFsOCzz4kAAAAASUVORK5CYII=', w: 1 }
-      ];
-      const BLOCKS = 8, BP = 16, S = 3, TILE = BLOCKS * BP * S;
+    // ── Cave backgrounds from real game textures, three depths ──
+    // Textures pulled from the local Minecraft client jar as data URIs.
+    const CAVE_SETS = {
+      1: [ // stone cave
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAAAAAA6mKC9AAAAXklEQVR42gXBMQEAMAwEocqNgNuR8JYLb9uUruCRgLv0dFddBR6bsaF6Ucm2xTNAXddebGur4NVdV1R424xtoMewjW3zTuouUT2wgc2eyhR3XW9TVFR7CsC2PaBsxAdyLn2NNWHIVAAAAABJRU5ErkJggg==', w: 46 },
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAElBMVEW1tbWmpqaIh4hubW1hYWFSUlLm8qFQAAAAcUlEQVR42gVAARGDMAz8MAMjh4CSLwIWIgDSIGAD/1p2iPk5pTfFOW3QLR3nGrrGQxSLTL1wp2TJ3PF6W/yaOjSV9eEB2y3a4omQPSerG4f6biMXkP0a8X2DMdpytQkuIWuY49CuziJmclhoIcsjUvgH41gVHD61kt4AAAAASUVORK5CYII=', w: 22 },
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAHlBMVEV/f3+Pj490dHRoaGhcXFxJSz85PDY2NjYuLi4lJSVYKuP9AAAAdklEQVR42gXBgQHAIAzDMMdkhf7/8CSSBMWjAIBIWzinCJ5jd27lXYAqb+73FlTcq/btVgVIkCTaHoPBqjhvCli78wqdj4TIzncfoiLEvltNoIVDbBG1OwdoLUirCt3v7ib9Zj2H2NmqvVsFVLgPCiSASiQB4Qdt9QKv63TjNgAAAABJRU5ErkJggg==', w: 3 },
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAG1BMVEV/f3+Pj4+IdFWvjnfYr5PiwKp3Z09oaGh0dHR2kUs9AAAAdElEQVR42gXBgQHAMAjDMBtYk/8vnoQALU3bKtAElDfzKHR2SlpmAZg9aZJCW6o2mdmdpIAwe/fd0lkpqHsnRaElqUoTAM1sUt7sKwXf7p24p0LQ+0xR2gKgCLwRoemsfbN3O8XZInXvWwWcVwBVAFBoQSn8xv0DBu+myPQAAAAASUVORK5CYII=', w: 2 },
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAHlBMVEV/f390dHRoaGiccCDrnQ5cXFz87kv//7WioqKPj48wUnvMAAAAfklEQVR42gXBgQHAQAgCsQN9C/sv3IS2lYQsAQBiwID9EMiu31h6bwZo8Zsd8WZHCPxmb9zuBijeu28lJyqCZm8nEgCSrWyCpB2oZ5tJCwaB9kJa3nsuuEll682sLcB2i2f3uzFoZsUoe5eIzt53jZiNVFD2CpC0W4AGiRYEP65HA2+xOYABAAAAAElFTkSuQmCC', w: 1 },
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAJFBMVEV/f390dHRSa1AX3WIAexjZ/+tB84QXxUQ3Wz4cmCloaGiPj48mkEo8AAAAfElEQVR42gXBgQHAIAzDMKcUBvX//05ClYRMAgBUoUrVhEDtlUBqLwBgNRS62iQEsC6oBkD0nFfJZCJh7tn9LoEqSNU9/b5bSe0FtRff0wRYHVitglSNwhiQ4Zw7SQAA6bP7gZCkivTX78sEpfYiuU8TIWG1jIIKgCaoBH4ExwQBmQbUuQAAAABJRU5ErkJggg==', w: 1 }
+      ],
+      2: [ // deepslate
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAD1BMVEVkZGR5eXlRUVE9PUMvLzdi5EnwAAAAYUlEQVR42gXBAQHEIAwEweUUgIM0qYHPoaDgX9PPMDONKqlrR7pg6r1nm1Y5FuKkm0GxIj8ig6nX6dvIHtRJqvxIbnwzsvdB6tonF9RYVT2RH+QG74861yxq/xSDJb0PyR+e6w/hsG/r7QAAAABJRU5ErkJggg==', w: 46 },
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAElBMVEV6enppaWlaWlpKSk8/P0U1NTnf4I6sAAAAdUlEQVR42gVAQRLCIAzc2j7AIT6AAXpXSO7WkLul4f9f6aCdeqB+Enjwn/TImG4n++jQJVUxdyA0txlXBOIrEgoC27kWYvC0I0sW4FUrSzeE0pLaTCBR5UgV2ab3VRoK23PLwjAtDxI32HsLVX4N+3e/+ojLDSfPGK0cTn8xAAAAAElFTkSuQmCC', w: 22 },
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAG1BMVEVkZGR5eXlRUVFJSz89PUMvLzcqKiofHx8KCgpYHVTvAAAAeUlEQVR42gXBgQHAMAjDMMcLlP8vnkRQbQGtYmfamUFbCwS83Zm+bano2/3eBZC5tfDuErAkoEPijELAmanu26lge/sG3C+K9fbbhyRW2uFtorUzBTGxnencBujMgJ0pAbxv78BvT6BlL8HuZVoSku4riRASRMeAwg+cUgLsgAjYJAAAAABJRU5ErkJggg==', w: 3 },
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAHlBMVEU9PUNRUVFkZGR5eXmIdFWvjnfYr5PiwKp3Z08vLzd5FklzAAAAfklEQVR42gXBgQHAQAgCsQPEvvsv3IRYksC2hIS4A5DfzBPY0+HuyDQA042E7MQWRwLMtGMLEnm6+22jqYmtpLsJdwgLIInFISE0RfGbPhDw2l1L3dyB5ewXuERKsEWSCL1RjAXT+E13O4bpJba6XxNI5gkOJ7GDnVg62ZbsH30eAuNYOtkhAAAAAElFTkSuQmCC', w: 2 },
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAMFBMVEVRUVFkZGR5eXmEWVn3HBz9Xl7/iYn/AADGBASXAwPKBweWBgY7LCxNNzcvLzc9PUNRsDaYAAAAiklEQVR42gXBgWHDMAzEQICUk9SS+Ptv2ztKgESFAGQmSRASgpbee2YmmYTgvXvvY5UKE979fp/fn6WEKvx9P98W39VSCt0NSXfAe09i6b0T4K5nn1Dud7/PguzVgJDnszrYTSCZSXcVyrn3FCGhRM5e79qSd6Ek6eejZDKTUKXdmZSgRZUIQynoP2YCBhKdaJ9XAAAAAElFTkSuQmCC', w: 2 },
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAJFBMVEVRUVFkZGR5eXlkioxheXcxQEB359EUj5Ie0NbV//YvLzc9PUMT0xLSAAAAhklEQVR42gXBhwHAQAgDsTPtCd5/30iEAGxJYADftW0ENkYKLXTfeV4aI9KelxGZgjPYzpRCwkQgvkH6pkCE8pvdV+zLM4jOrKzurDPAbNnd3wjb4KoDZt8r3xkhFlyZ3UQgYUUE3fMIIdwd0nyz+0rYNS8l3maWTYQy7XMlSEGEEBwhgfQDXnAETfum3bwAAAAASUVORK5CYII=', w: 2 },
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAG1BMVEVRUVFkZGR5eXnrnQ6cZCAvLzf87kv//7U9PUPYRpKtAAAAe0lEQVR42gXBgQHAMAjDMMdAl/8vnoQBKEmgAL1bKYHelcTI7d31dksJ3M5Gdxau0J23iTMWJfPeNyFKMMF5s7R3hdDW0VBmhe7QNYRqaOeJgbvmStCE9nYHJbmrlp353obc7piN856G7rzvRbpjWjTz7FWFEY3CYQLmB506Aw5MTqulAAAAAElFTkSuQmCC', w: 1 },
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAJFBMVEVkZGR5eXkX3WIAexjZ/+scmCkXxURB84Q3Wz4vLzc9PUNRUVEhiLJVAAAAfUlEQVR42hXMuQEDMRDDQND3aYn++7WUANkQVFtAq9iZtpVzC3P/0Jn9Tkv9XWkr+yDThFlCApbEzvc9ICoE1ndfz7KHFzrru553Ybcr3fj7JIg97kkizrQJkFg98CoJ4HmuIxvAo8P1blmgPTi4tjwtCWx3miiEBBPHgMIfUgoFsOCzz4kAAAAASUVORK5CYII=', w: 1 }
+      ],
+      3: [ // bedrock
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAAAAAA6mKC9AAAAbUlEQVR42gXBgQAAMBDEsLG8QmEKcFDVXfIGYDNBfGytRe2Qx8EBoeaebZ4pAL4jAGG18VBROIXj1VzN1eKeigoHMt9K0NWqnnCITKC9LVYc1eCdCq7c6p7AhAWAby1P4HD1NkFwJfg4uBruwH1D0lUfTgxevgAAAABJRU5ErkJggg==', w: 52 },
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAD1BMVEVkZGR5eXlRUVE9PUMvLzdi5EnwAAAAYUlEQVR42gXBAQHEIAwEweUUgIM0qYHPoaDgX9PPMDONKqlrR7pg6r1nm1Y5FuKkm0GxIj8ig6nX6dvIHtRJqvxIbnwzsvdB6tonF9RYVT2RH+QG74861yxq/xSDJb0PyR+e6w/hsG/r7QAAAABJRU5ErkJggg==', w: 12 },
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAwCAMAAAAvgQplAAAAHlBMVEVlKCj7qln4nkT0hSL1fBfmZBDKTgZyMjJQGxtBFha9tJBuAAABPUlEQVR42kWSS4pjAQwDK/bo4/tfeOiXTmcnBC5DIc70ynKHTEl6P5le1oXXSwG5ZIoWpWsZ7ZhiVCxTiLiC79j0rmVD4ZrhIWesxYRZibLGZm05WMgUQQVXvKbHUpbeFXHHwGWeBtFjwc1vLqlgXVTQaMcYLO3MJlQpVIZs+nziONHPD28+PvJwpYJer5Ddgor09jETS5tiXPzcksk1+A69fWRJ4cqWt2mtEXR/75VZdlcmD5ZGUIVrVvr48OMj4o6FQ0/z9ChsQfTikho0ZUtG1gqTWVs7gU4KtQCn13hynL77WFN4fDD0GH98sC7Mx8dYi3ZNEVv+2RQQV5ivDwSFa/ZNztpCUNmimYkWWTLI7KTsdx9SeogyDxJzh+AySv+2HFTY/OQSJqyKSjSzmggs25ok3RSqBd4OLO4/fzcOF56aV6gAAAAASUVORK5CYII=', w: 7 },
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAMFBMVEVRUVFkZGR5eXmEWVn3HBz9Xl7/iYn/AADGBASXAwPKBweWBgY7LCxNNzcvLzc9PUNRsDaYAAAAiklEQVR42gXBgWHDMAzEQICUk9SS+Ptv2ztKgESFAGQmSRASgpbee2YmmYTgvXvvY5UKE979fp/fn6WEKvx9P98W39VSCt0NSXfAe09i6b0T4K5nn1Dud7/PguzVgJDnszrYTSCZSXcVyrn3FCGhRM5e79qSd6Ek6eejZDKTUKXdmZSgRZUIQynoP2YCBhKdaJ9XAAAAAElFTkSuQmCC', w: 2 },
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAJFBMVEVRUVFkZGR5eXlkioxheXcxQEB359EUj5Ie0NbV//YvLzc9PUMT0xLSAAAAhklEQVR42gXBhwHAQAgDsTPtCd5/30iEAGxJYADftW0ENkYKLXTfeV4aI9KelxGZgjPYzpRCwkQgvkH6pkCE8pvdV+zLM4jOrKzurDPAbNnd3wjb4KoDZt8r3xkhFlyZ3UQgYUUE3fMIIdwd0nyz+0rYNS8l3maWTYQy7XMlSEGEEBwhgfQDXnAETfum3bwAAAAASUVORK5CYII=', w: 2 },
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAG1BMVEVRUVFkZGR5eXnrnQ6cZCAvLzf87kv//7U9PUPYRpKtAAAAe0lEQVR42gXBgQHAMAjDMMdAl/8vnoQBKEmgAL1bKYHelcTI7d31dksJ3M5Gdxau0J23iTMWJfPeNyFKMMF5s7R3hdDW0VBmhe7QNYRqaOeJgbvmStCE9nYHJbmrlp353obc7piN856G7rzvRbpjWjTz7FWFEY3CYQLmB506Aw5MTqulAAAAAElFTkSuQmCC', w: 1 }
+      ],
+    };
+    const caveTiles = {};
+    function buildCaveTile(depth, done) {
+      if (caveTiles[depth]) return done(caveTiles[depth]);
+      const SET = CAVE_SETS[depth];
+      const BLOCKS = 8, BP = 16, SC = 3, TILE = BLOCKS * BP * SC;
       const bag = [];
-      TEXTURES.forEach(t => { for (let i = 0; i < t.w; i++) bag.push(t); });
-      Promise.all(TEXTURES.map(t => new Promise(res => {
+      SET.forEach(t => { for (let i = 0; i < t.w; i++) bag.push(t); });
+      Promise.all(SET.map(t => new Promise(res => {
         const img = new Image();
         img.onload = () => { t.img = img; res(); };
         img.src = t.src;
@@ -446,30 +500,55 @@
         for (let by = 0; by < BLOCKS; by++) {
           for (let bx = 0; bx < BLOCKS; bx++) {
             const t = bag[Math.floor(Math.random() * bag.length)];
-            ctx.drawImage(t.img, bx * BP * S, by * BP * S, BP * S, BP * S);
+            ctx.drawImage(t.img, bx * BP * SC, by * BP * SC, BP * SC, BP * SC);
           }
         }
-        // pull the whole tile down toward cave darkness
         ctx.fillStyle = 'rgba(10,10,14,0.45)';
         ctx.fillRect(0, 0, TILE, TILE);
-        document.querySelector('.cave').style.backgroundImage = `url(${cv.toDataURL()})`;
+        caveTiles[depth] = cv.toDataURL();
+        done(caveTiles[depth]);
       });
-    })();
+    }
+    function setCaveDepth(depth) {
+      if (!depth) { document.body.classList.remove('cave-on'); return; }
+      buildCaveTile(depth, url => {
+        document.querySelector('.cave').style.backgroundImage = `url(${url})`;
+        document.body.classList.add('cave-on');
+      });
+    }
 
-    // ── Easter egg: click the title 3 times to enter the cave ──
+    // ── Achievement toasts ──
+    const unlocked = new Set();
+    function achievement(id, name) {
+      if (unlocked.has(id)) return;
+      unlocked.add(id);
+      const star = document.querySelectorAll('.tab img')[2].src;   // realms star icon
+      const el = document.createElement('div');
+      el.className = 'toast';
+      el.innerHTML = '<img src="' + star + '" alt=""><div><p class="t-title">Achievement Get!</p><p class="t-name"></p></div>';
+      el.querySelector('.t-name').textContent = name;
+      document.querySelector('.toasts').appendChild(el);
+      setTimeout(() => el.remove(), 4200);
+    }
+
+    // ── Easter egg: click the title 3 times to descend the cave ──
     (function caveEgg() {
       const title = document.querySelector('.game-title');
       const splash = document.querySelector('.splash');
       const originalSplash = splash.textContent;
-      let clicks = 0, timer;
+      const SPLASHES = { 1: 'Now with 100% more cave!', 2: 'Deepslate level!', 3: "You've hit bedrock." };
+      let depth = 0, clicks = 0, timer;
       title.addEventListener('click', () => {
         clicks++;
         clearTimeout(timer);
         timer = setTimeout(() => { clicks = 0; }, 1500);
         if (clicks >= 3) {
           clicks = 0;
-          const on = document.body.classList.toggle('cave-on');
-          splash.textContent = on ? 'Now with 100% more cave!' : originalSplash;
+          depth = (depth + 1) % 4;
+          setCaveDepth(depth);
+          splash.textContent = depth ? SPLASHES[depth] : originalSplash;
+          if (depth === 1) achievement('spelunker', 'Spelunker');
+          if (depth === 3) achievement('bedrock', 'Rock Bottom');
         }
       });
     })();
@@ -485,6 +564,7 @@
       }
       btn.textContent = addr;
       btn.dataset.revealed = '1';
+      achievement('friend', 'Making Friends');
     }
   </script>
 </body>
