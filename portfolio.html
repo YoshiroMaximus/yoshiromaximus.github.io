@@ -267,15 +267,21 @@
 
     /* ── Projects ── */
     .projects-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-      background: var(--line);
-      border: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    /* First build is the feature; it keeps the full row */
+    .projects-grid .project-card:first-child { grid-column: 1 / -1; }
+
+    @media (max-width: 560px) {
+      .projects-grid { grid-template-columns: 1fr; }
     }
 
     .project-card {
       background: var(--bg);
+      border: 1px solid var(--line);
       padding: 1.5rem;
       display: flex;
       flex-direction: column;
@@ -651,28 +657,6 @@
 
         <div class="project-card">
           <div class="project-header">
-            <span class="project-name">Modded Minecraft Server</span>
-            <span class="project-type">game server</span>
-          </div>
-          <p class="project-desc">PaperMC 26.1.2 modded server running through Crafty Controller, hosted for me and my friends. Crafty handles mod management, backups, and restarts through a web UI. It's easy to work with and still is advanced at the same time.</p>
-          <div class="project-specs">
-            <span class="spec">PaperMC</span>
-            <span class="spec">Crafty Controller</span>
-            <span class="spec">26.1.2</span>
-            <span class="spec">modded</span>
-          </div>
-          <div class="project-links">
-            <a class="project-link" href="https://modrinth.com/collection/3S4B4n7M" target="_blank" rel="noopener">mod collection ↗</a>
-            <button class="project-link" type="button" onclick="revealAddr(this)">server address: click to reveal</button>
-          </div>
-          <div class="project-img" onclick="openLightbox('images/mc-screenshot.webp', 'Modded Minecraft Server')">
-            <img src="images/mc-screenshot.webp" alt="Minecraft server" loading="lazy" decoding="async">
-            <span class="project-img-label">add screenshot</span>
-          </div>
-        </div>
-
-        <div class="project-card">
-          <div class="project-header">
             <span class="project-name">DIY Homelab</span>
             <span class="project-type">hardware</span>
           </div>
@@ -719,6 +703,28 @@
               </div>
             </div>
           </details>
+        </div>
+
+        <div class="project-card">
+          <div class="project-header">
+            <span class="project-name">Modded Minecraft Server</span>
+            <span class="project-type">game server</span>
+          </div>
+          <p class="project-desc">PaperMC 26.1.2 modded server running through Crafty Controller, hosted for me and my friends. Crafty handles mod management, backups, and restarts through a web UI. It's easy to work with and still is advanced at the same time.</p>
+          <div class="project-specs">
+            <span class="spec">PaperMC</span>
+            <span class="spec">Crafty Controller</span>
+            <span class="spec">26.1.2</span>
+            <span class="spec">modded</span>
+          </div>
+          <div class="project-links">
+            <a class="project-link" href="https://modrinth.com/collection/3S4B4n7M" target="_blank" rel="noopener">mod collection ↗</a>
+            <button class="project-link" type="button" onclick="revealAddr(this)">server address: click to reveal</button>
+          </div>
+          <div class="project-img" onclick="openLightbox('images/mc-screenshot.webp', 'Modded Minecraft Server')">
+            <img src="images/mc-screenshot.webp" alt="Minecraft server" loading="lazy" decoding="async">
+            <span class="project-img-label">add screenshot</span>
+          </div>
         </div>
 
         <div class="project-card">
