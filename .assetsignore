@@ -11,3 +11,6 @@ package-lock.json
 README.md
 CLAUDE.md
 .assetsignore
+migrations
+.github
+.claude
