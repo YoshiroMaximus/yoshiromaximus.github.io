@@ -486,6 +486,7 @@
     .server-icon { width: 38px; height: 38px; image-rendering: pixelated; flex-shrink: 0; }
     .server-body { flex: 1; display: flex; flex-direction: column; min-width: 0; }
     .server-name { font-weight: 700; }
+    .cr-arrow { font-family: 'Silkscreen', monospace; color: var(--muted); }
     .server-motd {
       color: var(--muted);
       font-size: 0.8rem;
@@ -572,6 +573,7 @@
       <button class="tab" role="tab" aria-selected="false" onclick="showTab(this, 'oss')"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAQ9JREFUaIHtmS0OwkAQhSmpqcCgSZEIDCHcoGfiFJyJGzQEg8CjMYhK8LNJXyazycsj88n+7Ozr29nOtE3fb78LYZbsCURJAWxae2CzersGeH3WoQlE4/2fA1Ge19Ps+d0wVo0n70AKYOPOAe+uM90ervG8u5K8AymATROtRtG+j3LgcJ4i4fUdSAFsivcAWtO18caztZS8AymATZEDdo3dL93sAN1x7wrovR71D/IOpAA2RS1k63Fbr6OciGJrIzQfeQdSABt3T4z2cVT/2/vR9Qh5B1IAG9gTR+t1NF60Z5Z3IAWwge8B7xpF3za9/QZC3oEUwCb8bdSCciD6V9Mi70D1v5S1nzBC3oEUwOYH8GRL539yrRkAAAAASUVORK5CYII=" alt="">Realms</button>
       <button class="tab" role="tab" aria-selected="false" onclick="showTab(this, 'contact')"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAlVJREFUaIHtms9LVFEUx+95vnJoITyifPAaw4UDzv8QBK3dCILtglZG0iowl0b+ABeS1SrFjcxE/4HEIATNRly4MBmL0Cl8SuYwBo3oe7et3++DaRPcuXC/u8/M/fHOu+fcc+bekb6+21pdktaAHScRAfYMPcd/kzPAtHz2+beVKnCtNQWsdQI82PMCWMQH/tycpClTYlHt5JHPzw+t4fdte1sgZ4Bp+fzB99/oo8Ubc9SC9+ErwFphTBUD7C/Uf6f5jIbH+d9tbgGnNL71K+AMMK1MDAjZVNl+CBzdugnMPj/Ywz5/FXjn9ClNeAFY3kCfx6yTlfUr4AwwLZ/35Vr8CFg89PF6fR/4XnGFhyTmGJkGXqp+BY66ab6zcdVO1q+AM8C0MnmA632u1gd63wD/+IX7eP46tqdyXi1/+gacan6HGAP53CJwXY0AW78CzgDT8rmWKYToc19+PgH2VBcNgU5eP24Cf9g9Ak40tt9rYd7J517ifMJh6s6FOkvWG5DJA57gb9wC7fvchWungfA18N4frGUSRXkjtwAsFGP7rcc0P+Yp61fAGWBaPp+3lybQh+/PUT1OtU1KZ521eIy+P8cOGtuzz/PzXFu9QxOWAK1fAWeAaWXyAPtoeeIV8OgsxoQI3amxj9P9A9de/AqPl99j/38cDFm/As4A0xK+Jw7Du9AgCCLs4OE+HTwYBu4PngN/PDwAjvQM8Em5gk+UYAw1Gtg/jteBrV8BZ4BpZWKAa5HsyRDt44LvQOiOK7Pva0o9nDe41kr5vxvujqyzZL0BfwG5dKComQ5+zQAAAABJRU5ErkJggg==" alt="">Servers</button>
       <button class="tab" role="tab" aria-selected="false" onclick="showTab(this, 'settings')"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAPtJREFUaIHtmjEKAjEURF2xWC+hRxFtROzstbIUDyOWVtrbidgonkUsPYPW+4WMn0SGD/O63Wz4GeZPQmCrXq//bgWmzV5ALhLApmNfrFdLxjp+ZrPdNZ7DOyABbL4ykMv5dEmOT6bjovXCOyABbNwZQD1ed+us+d6MhHdAAti4M4B6/N/zLeEdkAA2MAN230Y9PBwNkuO3691VD50L4R2QADYwA6X37dL1wjsgAWxgBhbzWeN5fzgmv8+9L9h6j+cr+X14BySADcwA6kFL7rnhrRfeAQlg474T233ags4JNF8ZiEZ4Ae4MoB4t3eOI8A5IAJtK/0qQkQA2H0fUMsNIGh2QAAAAAElFTkSuQmCC" alt="">Settings</button>
+      <button class="tab" role="tab" aria-selected="false" onclick="showTab(this, 'credits')"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAMlJREFUaIHtmrENgzAQRUPEAGmhICNQpMsObJJxskYqdqDPElCkyQZQ20i5WBfl6aT/OiNZuqfv44xE1XXn9RCYI12AFwnQ1PmD0zARdXzNe7wm6/AJSIBm1wMW87Ik69fj4iqgv82u/eETkACN2QOlZz4/09b+5739uN8ifAISoDF7oG2aZO19b/+a8AlIgKb4LmThnRulhE9AAjTuHvj3mc8Jn4AEaCRAIwEa9xygvxfCJyABGt2FaCRAozlAIwGaSv9KwEiAZgNeGTEL/nPL/gAAAABJRU5ErkJggg==" alt="">Credits</button>
     </div>
 
     <!-- About -->
@@ -810,6 +812,61 @@
       </div>
     </section>
 
+    <!-- Credits -->
+    <section id="tab-credits" hidden>
+      <div class="panel">
+        <p class="panel-label">This page is built with</p>
+      </div>
+      <a class="server-row" href="https://github.com/ninsent/Ore-UI-theme-pack" target="_blank" rel="noopener">
+        <img class="server-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAAxQTFRFEw0L/6RAHh4fRDowxM3oJgAAAFZJREFUSIljYCIRMAxSDcxAwEAAgNQMZg0wQUYowMUf7BrQJbFpGgoa8Hl+KGhAV4wtEEY10F4DyRE3SDWgexJdfLBrwOVZZP5g1jAIqyySNZACBqEGAPFbCEF5mI9SAAAAAElFTkSuQmCC" alt="">
+        <span class="server-body">
+          <span class="server-name">Ore UI Icon Pack</span>
+          <span class="server-motd">every interface icon on this page · MIT · by LOLCATpl</span>
+        </span>
+        <span class="server-ping cr-arrow">↗</span>
+      </a>
+      <a class="server-row" href="https://www.minecraft.net" target="_blank" rel="noopener">
+        <img class="server-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAWRJREFUaIHtmDFqQkEQhvM0ZRqDGhXRC5gT6BHSBBHSeQXxAAnoFXKBdGm8gZZWsbS0DD4RiY2t71nPP7jLZoVhYL7ul2XHn/nnvd2XtFrt/E4xBek/EIsZkOYefxjPX4jeHndRBeqPdaLTv9S5vlGqOet/D1ZEq++AGZCGzQBmLjTDuD6U0JlT3wEzIA2bgTyhmmV+8kv1e9O9HijmGdHn6ZbW/6D7NUrumVLfATMgDZuBBG8HkPnO65Do9eTLXQFmBDNfrTwQvYf66ejHub36DpgBaRK8E7890/N4uUozGsphfyIaM5/BewfXY/3PxYZo9R0wA9Kw90Bs5n37ZVfW/be++g6YAWnYDBTgLILP6Vhq3T7Ru+Usaj/1HTAD0rAZuHXmEcx87Myp74AZkIbNgA+8Mz/13M91X8Z9mWd3dEB9B8yANMEzgN9OfWeZ0Izj/qgR9R0wA9Kw70LaUN8BMyDNBVzCWcR7QxVwAAAAAElFTkSuQmCC" alt="">
+        <span class="server-body">
+          <span class="server-name">Minecraft textures</span>
+          <span class="server-motd">blocks, ores and pistons © Mojang Studios · fan use, not affiliated</span>
+        </span>
+        <span class="server-ping cr-arrow">↗</span>
+      </a>
+      <a class="server-row" href="https://fonts.google.com/specimen/Silkscreen" target="_blank" rel="noopener">
+        <img class="server-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAOtJREFUaIHtmrENwkAUQwmiZgGk0NKwAwxBnxEYJSOkZ4gMQcMctBRQ30XwMR+wLPl1F/3iLNu6X6Rp2/V9JsycfYEsFsBmUX9Y7o+Me7zNdeyLs7wDFsBm0gGU81B2Ztv1TyY/47ZblR/G8ijvgAWwCTtQZxydRzsxyXyAvAMWwCbsAJphtDNo5mvkHbAANn/fhbKZr5F3wALYpHchNPOX7vByfjOcoisVyDtgAWy+vgtFmY8yjs7LO2ABbNK7ELrbRO8AirwDFsAG7kB2n0ffgQh5ByyATdiBX2c+Oy/vgAWwafyvBBkLYPMA3KA1X9yIJHYAAAAASUVORK5CYII=" alt="">
+        <span class="server-body">
+          <span class="server-name">Silkscreen</span>
+          <span class="server-motd">the pixel typeface · SIL Open Font License · by Jason Kottke</span>
+        </span>
+        <span class="server-ping cr-arrow">↗</span>
+      </a>
+      <a class="server-row" href="https://fonts.google.com/noto/specimen/Noto+Sans" target="_blank" rel="noopener">
+        <img class="server-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAS9JREFUaIFjlJOT/88whAHTQDuAUjDqgYEGLOgCG7dvR+GfzPKnm2OIAW33f6Hwh3wMjHpgoAFGHpCWEEfhm0/biFd+XZAFDZxFPBjyMTDqgYEGGHlgpqsuCj9992UU/tMXL1H4QetOoPCLTZWp5TYGBgYGBmtZUbzyQz4GRj0w0AAjD1AKCKVZaoMhHwOjHhhoQDAPoJf76G0hdPmjj19T5CBS89CQj4FRDww0GK0HBhqMemCgAcE8gD4uhN7+H2gw5GNg1AMDDTDywK0P3/Dyvy2ahcI/P7mTBs7CB/hReEM+BkY9MNCAYD1QN7MRhb/5CmqeWHTqIHVdRADIG/mh8Id8DIx6YKABI/o8sT3Lx4FyC1Hg4J/RemBwgSHvAYx6AD2NDXYw5GNg1AMDDQARWzdaBO7KRAAAAABJRU5ErkJggg==" alt="">
+        <span class="server-body">
+          <span class="server-name">Noto Sans</span>
+          <span class="server-motd">body text · SIL Open Font License · by Google</span>
+        </span>
+        <span class="server-ping cr-arrow">↗</span>
+      </a>
+      <a class="server-row" href="https://originrealms.com" target="_blank" rel="noopener">
+        <img class="server-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAMJJREFUaIHtmr0NgzAQRkN++vRIZBM6JojYIBMwCBNkhUyQjjprIFHSoyjUNhKOhcWnk97rDiju6fzJtkRWFLffwTBHdQNbQUDN2X9wf06KPv7m9bg4tfkJIKAGATUIqFnsAz7d+HXqTz2sft+8820dRWJ+AgioCWYglrbqV9+nzoj5CSCgJnkGQqTOiPkJIKAGATUIqNl9H+As5IGAmuQZ4E4cCQJqghkoryen3nuNhzA/AQTUIKAGATUZ/0qIQUDNDG+6FkroBpFIAAAAAElFTkSuQmCC" alt="">
+        <span class="server-body">
+          <span class="server-name">Origin Realms</span>
+          <span class="server-motd">inspired the piston hover on the title</span>
+        </span>
+        <span class="server-ping cr-arrow">↗</span>
+      </a>
+      <a class="server-row" href="https://mc-heads.net" target="_blank" rel="noopener">
+        <img class="server-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAIAAADYYG7QAAAAAXNSR0IArs4c6QAAAKlJREFUWIXtmUEKg0AQBF3xHeYeX5LkvUleYt6TgyBDMFR2DTiHqpPCIEXTOLKWcTx1meiPFvhEIWKIN+dpOkTiNc/rdbqEFCIGHtni+bjjzOV6a3hyuoQUIio6FHvzSz9q5xfSJaQQoRChEKEQoRBRscviPvq2p9r2VyRdQgoRf/4e2t+ndAkpRECH9rxX2vqULiGFCIUIhYgSz6k9Y9xAIaL4rwNQiHgDVN4lFciNJ20AAAAASUVORK5CYII=" alt="">
+        <span class="server-body">
+          <span class="server-name">MC Heads</span>
+          <span class="server-motd">rendered the player head avatar</span>
+        </span>
+        <span class="server-ping cr-arrow">↗</span>
+      </a>
+    </section>
+
   </div>
 
   <div class="lightbox" id="lightbox" hidden>
@@ -826,8 +883,8 @@
 
   <script>
     const visitedTabs = new Set(['about']);
-    const TAB_IDS = ['about', 'builds', 'oss', 'contact', 'settings'];
-    const TAB_HASH = { about: 'about', builds: 'worlds', oss: 'realms', contact: 'servers', settings: 'settings' };
+    const TAB_IDS = ['about', 'builds', 'oss', 'contact', 'settings', 'credits'];
+    const TAB_HASH = { about: 'about', builds: 'worlds', oss: 'realms', contact: 'servers', settings: 'settings', credits: 'credits' };
     function showTab(btn, name, skipHash) {
       document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', 'false'));
       btn.setAttribute('aria-selected', 'true');
