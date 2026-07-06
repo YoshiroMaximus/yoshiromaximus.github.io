@@ -57,7 +57,8 @@
       opacity: 0;
       transition: opacity 1.2s ease;
     }
-    body.cave-on .cave, body.cave-on .cave-shade { opacity: 1; }
+    body.cave-on .cave { opacity: 1; }
+    body.cave-on .cave-shade { opacity: var(--shade-op, 1); }
 
     /* ── Achievement toasts ── */
     .toasts {
@@ -357,6 +358,37 @@
     .toggle[aria-checked="true"] { background: var(--green); }
     .toggle[aria-checked="true"] .knob { left: 30px; }
     .toggle:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+    .seg-group { display: flex; gap: 2px; flex-wrap: wrap; }
+    .seg {
+      font-family: 'Silkscreen', monospace;
+      font-size: 0.6rem;
+      padding: 0.4rem 0.7rem;
+      background: var(--panel-2);
+      border: 2px solid #1a1a1c;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .seg[aria-pressed="true"] {
+      background: var(--green);
+      color: #fff;
+      box-shadow: inset 0 -3px 0 var(--green-edge);
+    }
+    .seg:hover { color: var(--text); }
+
+    input[type="range"] {
+      width: 180px;
+      accent-color: var(--green);
+    }
+
+    .btn-danger {
+      background: #a12722;
+      color: #fff;
+      box-shadow: inset 0 -4px 0 #6e1a17;
+      font-size: 0.75rem;
+      padding: 0.4rem 0.9rem 0.55rem;
+    }
+    .btn-danger:hover { background: #bf3a34; filter: none; }
 
     .ach-row {
       display: flex;
@@ -723,7 +755,16 @@
         <p class="panel-label">Video</p>
         <div class="setting-row">
           <span>Cave background</span>
-          <button class="toggle" id="tgl-cave" type="button" role="switch" aria-checked="false" onclick="toggleCave()"><span class="knob"></span></button>
+          <div class="seg-group">
+            <button class="seg" type="button" data-depth="0" aria-pressed="true" onclick="setCaveDepth(0)">Off</button>
+            <button class="seg" type="button" data-depth="1" aria-pressed="false" onclick="setCaveDepth(1)">Stone</button>
+            <button class="seg" type="button" data-depth="2" aria-pressed="false" onclick="setCaveDepth(2)">Deepslate</button>
+            <button class="seg" type="button" data-depth="3" aria-pressed="false" onclick="setCaveDepth(3)">Bedrock</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <span>Brightness</span>
+          <input type="range" id="brightness" min="0" max="100" value="50" oninput="setBrightness(this.value)">
         </div>
         <div class="setting-row">
           <span>Animations</span>
@@ -735,6 +776,13 @@
         <div class="setting-row">
           <span>UI sounds</span>
           <button class="toggle" id="tgl-sound" type="button" role="switch" aria-checked="false" onclick="toggleSound()"><span class="knob"></span></button>
+        </div>
+      </div>
+      <div class="panel">
+        <p class="panel-label">Interface</p>
+        <div class="setting-row">
+          <span>Splash text</span>
+          <button class="btn" type="button" style="font-size:0.75rem; padding:0.4rem 0.9rem 0.55rem" onclick="rerollSplash()">Reroll</button>
         </div>
       </div>
       <div class="panel">
@@ -754,6 +802,10 @@
         <div class="ach-row" data-ach="tabs">
           <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAQ9JREFUaIHtmS0OwkAQhSmpqcCgSZEIDCHcoGfiFJyJGzQEg8CjMYhK8LNJXyazycsj88n+7Ozr29nOtE3fb78LYZbsCURJAWxae2CzersGeH3WoQlE4/2fA1Ge19Ps+d0wVo0n70AKYOPOAe+uM90ervG8u5K8AymATROtRtG+j3LgcJ4i4fUdSAFsivcAWtO18caztZS8AymATZEDdo3dL93sAN1x7wrovR71D/IOpAA2RS1k63Fbr6OciGJrIzQfeQdSABt3T4z2cVT/2/vR9Qh5B1IAG9gTR+t1NF60Z5Z3IAWwge8B7xpF3za9/QZC3oEUwCb8bdSCciD6V9Mi70D1v5S1nzBC3oEUwOYH8GRL539yrRkAAAAASUVORK5CYII=" alt="">
           <div><p class="ach-name">Completionist</p><p class="ach-desc">visit every tab</p></div>
+        </div>
+        <div class="setting-row" style="border-bottom:none; padding-top:0.9rem">
+          <span></span>
+          <button class="btn btn-danger" type="button" onclick="resetAchievements()">Reset achievements</button>
         </div>
       </div>
     </section>
@@ -879,6 +931,7 @@
     function setCaveDepth(depth) {
       caveDepth = depth;
       syncSettingsUI();
+      saveSettings();
       if (!depth) { document.body.classList.remove('cave-on'); return; }
       buildCaveTile(depth, url => {
         document.querySelector('.cave').style.backgroundImage = `url(${url})`;
@@ -954,15 +1007,49 @@
     function setToggle(id, on) {
       document.getElementById(id).setAttribute('aria-checked', on ? 'true' : 'false');
     }
-    function toggleCave() { setCaveDepth(caveDepth ? 0 : 2); }
     function toggleMotion() {
       const off = document.body.classList.toggle('no-motion');
       setToggle('tgl-motion', !off);
+      saveSettings();
+    }
+    let caveBrightness = 50;
+    function setBrightness(v, skipSave) {
+      caveBrightness = +v;
+      document.body.style.setProperty('--shade-op', String(1 - (caveBrightness / 100) * 0.65));
+      const el = document.getElementById('brightness');
+      if (el && +el.value !== caveBrightness) el.value = caveBrightness;
+      if (!skipSave) saveSettings();
+    }
+    function rerollSplash() {
+      const s = document.querySelector('.splash');
+      let next;
+      do { next = SPLASH_POOL[Math.floor(Math.random() * SPLASH_POOL.length)]; }
+      while (next === s.textContent && SPLASH_POOL.length > 1);
+      s.textContent = next;
+    }
+    function resetAchievements() {
+      unlocked.clear();
+      document.querySelectorAll('.ach-row').forEach(r => r.classList.remove('unlocked'));
+      document.getElementById('ach-count').textContent = '0 / 4';
+      saveSettings();
+    }
+    const SETTINGS_KEY = 'oreui-settings';
+    function saveSettings() {
+      try {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+          cave: caveDepth,
+          sounds: uiSounds,
+          motion: !document.body.classList.contains('no-motion'),
+          brightness: caveBrightness,
+          ach: Array.from(unlocked),
+        }));
+      } catch { /* private browsing */ }
     }
     let uiSounds = false, audioCtx;
     function toggleSound() {
       uiSounds = !uiSounds;
       setToggle('tgl-sound', uiSounds);
+      saveSettings();
       if (uiSounds) uiClick(true);
     }
     function uiClick(force) {
@@ -984,8 +1071,9 @@
       if (e.target.closest('.btn, .tab, .toggle, .world-row, .server-row, .game-title')) uiClick();
     });
     function syncSettingsUI() {
-      const el = document.getElementById('tgl-cave');
-      if (el) el.setAttribute('aria-checked', caveDepth ? 'true' : 'false');
+      document.querySelectorAll('.seg[data-depth]').forEach(b => {
+        b.setAttribute('aria-pressed', String(+b.dataset.depth === caveDepth));
+      });
     }
 
     // ── Achievement toasts ──
@@ -1003,6 +1091,7 @@
       const row = document.querySelector('.ach-row[data-ach="' + id + '"]');
       if (row) row.classList.add('unlocked');
       document.getElementById('ach-count').textContent = unlocked.size + ' / 4';
+      saveSettings();
     }
 
     // ── Easter egg: click the title 3 times to descend the cave ──
@@ -1024,6 +1113,23 @@
           if (caveDepth === 3) achievement('bedrock', 'Rock Bottom');
         }
       });
+    })();
+
+    // ── Restore saved settings ──
+    (function restoreSettings() {
+      let s;
+      try { s = JSON.parse(localStorage.getItem(SETTINGS_KEY)); } catch { return; }
+      if (!s) return;
+      (s.ach || []).forEach(id => {
+        unlocked.add(id);
+        const row = document.querySelector('.ach-row[data-ach="' + id + '"]');
+        if (row) row.classList.add('unlocked');
+      });
+      if (unlocked.size) document.getElementById('ach-count').textContent = unlocked.size + ' / 4';
+      if (s.sounds) { uiSounds = true; setToggle('tgl-sound', true); }
+      if (s.motion === false) { document.body.classList.add('no-motion'); setToggle('tgl-motion', false); }
+      if (typeof s.brightness === 'number') setBrightness(s.brightness, true);
+      if (s.cave) setCaveDepth(s.cave);
     })();
 
     function revealAddr(btn) {
