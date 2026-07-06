@@ -282,6 +282,16 @@
       color: var(--text);
     }
     .server-row:hover { background: #3a3a3f; }
+    .server-icon { width: 38px; height: 38px; image-rendering: pixelated; flex-shrink: 0; }
+    .server-body { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .server-name { font-weight: 700; }
+    .server-motd {
+      color: var(--muted);
+      font-size: 0.8rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
     .server-label { font-family: 'Silkscreen', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase; }
     .server-value { flex: 1; font-size: 0.9rem; }
     .server-ping { color: var(--green); font-family: 'Silkscreen', monospace; font-size: 0.7rem; }
@@ -454,13 +464,35 @@
     <!-- Contact -->
     <section id="tab-contact" hidden>
       <a class="server-row" href="https://github.com/YoshiroMaximus" target="_blank" rel="noopener">
-        <span class="server-label">github</span>
-        <span class="server-value">github.com/YoshiroMaximus</span>
+        <img class="server-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAIAAADYYG7QAAAAAXNSR0IArs4c6QAAAKlJREFUWIXtmUEKg0AQBF3xHeYeX5LkvUleYt6TgyBDMFR2DTiHqpPCIEXTOLKWcTx1meiPFvhEIWKIN+dpOkTiNc/rdbqEFCIGHtni+bjjzOV6a3hyuoQUIio6FHvzSz9q5xfSJaQQoRChEKEQoRBRscviPvq2p9r2VyRdQgoRf/4e2t+ndAkpRECH9rxX2vqULiGFCIUIhYgSz6k9Y9xAIaL4rwNQiHgDVN4lFciNJ20AAAAASUVORK5CYII=" alt="">
+        <span class="server-body">
+          <span class="server-name">GitHub</span>
+          <span class="server-motd">github.com/YoshiroMaximus · where the builds live</span>
+        </span>
+        <span class="server-ping"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAN5JREFUaIHtmrENwjAQRQliABqKpAgjUNBlh1RZg3FYg4od6ChYIilo2CDUPks21mF9fem/7pwUfvp3doo0fX9cN8Rs0RvwIgE0O7uwHx+IffzM5z4ENX0CEkAjATQSQBPdA7WZlyWo37dz8v3TZU4+p09AAmiqz0Bpz5dCn4AE0EQz4D2nvT2fO/ct9AlIAI37HnhdO7Ni6zSlPW+hT0ACaKIZ6No2qA/TM6i93zLenrfQJyABNNl7wDsT/+55C30CEkBT/C1kZ6J2j+egT0ACaCSARgJoGv0rAUYCaL6Ctysjrd4W9wAAAABJRU5ErkJggg==" alt="online"></span>
+      </a>
+      <a class="server-row" href="https://www.linkedin.com/in/nisendan/" target="_blank" rel="noopener">
+        <img class="server-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAVlJREFUaIFjlJOT/88whAHTQDuAUjDqgYEGLOgCua5lVLVgx8F6FP6rz79Q+GK8bCTJ3/7FjcIf8jEw6oGBBhh5gNagJ8CGJPVde0/hlR/yMTDqgYEGBPOAIv82kgy8/9ELhV/mbEaai9AAuv7U7VdR+EM+BkY9MNCAYB4oXnMZhd8bootXPscVNQ+gg7TtV1D4Mz11GBgYGBj+/4d0SzJ2oKbxWVB5XGD4xwCtAaXdwSEfA4zofWL0/gCl9YAey1YynYYdjNYDgw0MeQ9g5AHm7x+pagGflDxVzXv//gMKf8jHwKgHBhqMemCgwagHBhoQbI3G2amTZOCiQzfJdgw5YMjHwKgHBhpg5AH0NL/g9HMUfoKpJH55NP3FPhoofN36/Sj8y42OJMnr1B9A4Q/5GBj1wEADjP5AoqkEVS1AzwOUgtE8MNjAkPcARh4YamDIx8CoBwYaAAAtxk08jui00wAAAABJRU5ErkJggg==" alt="">
+        <span class="server-body">
+          <span class="server-name">LinkedIn</span>
+          <span class="server-motd">linkedin.com/in/nisendan · the professional realm</span>
+        </span>
+        <span class="server-ping"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAN5JREFUaIHtmrENwjAQRQliABqKpAgjUNBlh1RZg3FYg4od6ChYIilo2CDUPks21mF9fem/7pwUfvp3doo0fX9cN8Rs0RvwIgE0O7uwHx+IffzM5z4ENX0CEkAjATQSQBPdA7WZlyWo37dz8v3TZU4+p09AAmiqz0Bpz5dCn4AE0EQz4D2nvT2fO/ct9AlIAI37HnhdO7Ni6zSlPW+hT0ACaKIZ6No2qA/TM6i93zLenrfQJyABNNl7wDsT/+55C30CEkBT/C1kZ6J2j+egT0ACaCSARgJoGv0rAUYCaL6Ctysjrd4W9wAAAABJRU5ErkJggg==" alt="online"></span>
+      </a>
+      <a class="server-row" href="https://modrinth.com/user/Yoshiro" target="_blank" rel="noopener">
+        <img class="server-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAASVJREFUaIFjlJOT/88whAHTQDuAUjDqgYEGLOgCh3J08Grg1HJA4X+/doAiB5Bqnt2UKyj8IR8Dox4YaICRB9ABeho9tmYadV1w7RoK1yokC4VPKE8M+RgY9cBAA4w8QCjNB0w7SVMHbcgyR+Gj5wkGhtF6YHCBIe8BjDxAatvmb3kdCp+5swmv+vN6uSh8w0uT8aofrQcGOxjyHiDYFiIECKV5dEAozZMKhnwMjHpgoMGoBwYajHpgoAHF9cCHOTIofIGUJ3jVhy3SReGvirtMkf1DPgZGPTDQgGCfGH3cBh0QSvPogNQ0j+Ge0T7xIAND3gME+8To4zLo4zbUBqNjo0MNDHkPEGwLEcoT9J4jQwdDPgZGPTDQgHF0rcQAg1EPDDQAAO3pRtzVtltXAAAAAElFTkSuQmCC" alt="">
+        <span class="server-body">
+          <span class="server-name">Modrinth</span>
+          <span class="server-motd">modrinth.com/user/Yoshiro · plugins and modpacks</span>
+        </span>
         <span class="server-ping"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAN5JREFUaIHtmrENwjAQRQliABqKpAgjUNBlh1RZg3FYg4od6ChYIilo2CDUPks21mF9fem/7pwUfvp3doo0fX9cN8Rs0RvwIgE0O7uwHx+IffzM5z4ENX0CEkAjATQSQBPdA7WZlyWo37dz8v3TZU4+p09AAmiqz0Bpz5dCn4AE0EQz4D2nvT2fO/ct9AlIAI37HnhdO7Ni6zSlPW+hT0ACaKIZ6No2qA/TM6i93zLenrfQJyABNNl7wDsT/+55C30CEkBT/C1kZ6J2j+egT0ACaCSARgJoGv0rAUYCaL6Ctysjrd4W9wAAAABJRU5ErkJggg==" alt="online"></span>
       </a>
       <a class="server-row" href="mailto:nico@sendan.com">
-        <span class="server-label">email</span>
-        <span class="server-value">nico@sendan.com</span>
+        <img class="server-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAATxJREFUaIFjlJOT/88whAHTQDuAUjDqgYEGLOgCi6rtUfiH1mxF4dcu30dTBzVHOqHw7UK8UfhxrQdR+EM+BkY9MNBg1AMDDUY9MNAAox5ABxeefEHhXz1ziGaOwWafHQH1Qz4GRj0w0IARvT+A3hYabGC0LTTYwJD3AEY9cOnq44FwB9lgyMfAqAcGGmDkgddvP6Lw1x9/SDfHYAOBlvJ45Yd8DIx6YKABRh5wttNB4dvvfoLXgGP6f/HKf/P/jld+Sx8nXnl09yw8PNoWGlxgyHuAYJ9YYTI7Xvl/T77hlSc0ksrqOIGAit14ZYd8DIx6YKABwTzwIPcnXvkT+gQM8CfFOaSDIR8Dox4YaIAxLlQSoIRXw+/ZJ2jqINZUC7zyPRvuofCHfAyMemCgAUYeGGpgyMfAqAcGGgAA8xE8WkRIblcAAAAASUVORK5CYII=" alt="">
+        <span class="server-body">
+          <span class="server-name">Email</span>
+          <span class="server-motd">nico@sendan.com · fastest way to reach me</span>
+        </span>
         <span class="server-ping"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAN5JREFUaIHtmrENwjAQRQliABqKpAgjUNBlh1RZg3FYg4od6ChYIilo2CDUPks21mF9fem/7pwUfvp3doo0fX9cN8Rs0RvwIgE0O7uwHx+IffzM5z4ENX0CEkAjATQSQBPdA7WZlyWo37dz8v3TZU4+p09AAmiqz0Bpz5dCn4AE0EQz4D2nvT2fO/ct9AlIAI37HnhdO7Ni6zSlPW+hT0ACaKIZ6No2qA/TM6i93zLenrfQJyABNNl7wDsT/+55C30CEkBT/C1kZ6J2j+egT0ACaCSARgJoGv0rAUYCaL6Ctysjrd4W9wAAAABJRU5ErkJggg==" alt="online"></span>
       </a>
     </section>
