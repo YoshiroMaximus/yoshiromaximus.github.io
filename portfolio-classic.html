@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Portfolio">
+  <meta name="theme-color" content="#f5f4f0" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)">
+  <title>Yoshiro</title>
+  <link rel="icon" type="image/x-icon" href="/favistuff/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favistuff/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favistuff/favicon-32x32.png">
+  <link rel="apple-touch-icon" href="/favistuff/apple-touch-icon.png">
+  <link rel="manifest" href="/favistuff/site.webmanifest">
+  <meta name="description" content="Yoshiro — homelab dev and computer designer. Projects include self-hosted servers, Minecraft, and Raspberry Pi clusters.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #f5f4f0;
+      --bg2: #eeecea;
+      --text: #1a1a1a;
+      --muted: #888;
+      --line: #d8d6d0;
+      --accent: #9b8ea0;
+      --accent2: #7a9490;
+      --accent3: #a08b7a;
+      --tag-bg: #e8e6e2;
+    }
+
+    body.dark {
+      --bg: #111110;
+      --bg2: #1a1917;
+      --text: #e8e6e2;
+      --muted: #666;
+      --line: #2a2926;
+      --tag-bg: #1e1d1b;
+    }
+
+    /* ── Theme toggle ── */
+    .theme-toggle {
+      position: fixed;
+      top: max(1.5rem, env(safe-area-inset-top));
+      right: max(1.5rem, env(safe-area-inset-right));
+      display: flex;
+      align-items: center;
+      gap: 0.1rem;
+      z-index: 300;
+    }
+
+    .theme-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 1rem;
+      color: var(--line);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.15rem 0.3rem;
+      line-height: 1;
+      transition: color 0.2s ease;
+      user-select: none;
+    }
+
+    .theme-btn:hover { color: var(--muted); }
+    .theme-btn.active { color: var(--text); }
+
+    /* ── Back link ── */
+    .back-link {
+      position: fixed;
+      top: max(1.5rem, env(safe-area-inset-top));
+      left: max(1.5rem, env(safe-area-inset-left));
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--line);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      transition: color 0.2s ease;
+      z-index: 300;
+    }
+
+    .back-link:hover { color: var(--muted); }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    /* ── Layout ── */
+    .page {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 max(2rem, env(safe-area-inset-right)) 0 max(2rem, env(safe-area-inset-left));
+    }
+
+    section {
+      padding: 4rem 0;
+      border-bottom: 1px solid var(--line);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Header ── */
+    header {
+      padding: max(5rem, calc(env(safe-area-inset-top) + 3.5rem)) 0 4rem;
+      border-bottom: 1px solid var(--line);
+      opacity: 0;
+      animation: fadeUp 0.6s ease 0.1s forwards;
+    }
+
+    .header-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: clamp(2.8rem, 8vw, 4rem);
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      background: linear-gradient(100deg, #9b8ea0, #7a9490, #a08b7a, #9b8ea0);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1.25rem;
+      animation: gradientShift 8s linear infinite;
+    }
+
+    .tagline {
+      font-size: 1rem;
+      font-weight: 300;
+      color: var(--muted);
+      max-width: 380px;
+    }
+
+    /* ── Section labels ── */
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 2rem;
+    }
+
+    /* ── About ── */
+    .about-text {
+      font-size: 1.05rem;
+      font-weight: 300;
+      color: var(--text);
+      max-width: 520px;
+      line-height: 1.75;
+    }
+
+    .about-text + .about-text { margin-top: 1rem; }
+
+    /* ── Skills ── */
+    .skills-group + .skills-group { margin-top: 1.5rem; }
+    .skills-group-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.65rem;
+    }
+    .skills-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    /* ── Self-hosted ── */
+    .services-toggle {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.85rem 1.25rem;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text);
+      letter-spacing: 0.06em;
+      transition: background 0.2s ease;
+      user-select: none;
+    }
+    .services-toggle::-webkit-details-marker { display: none; }
+    .services-toggle:hover { background: var(--bg2); }
+    .services-toggle .count {
+      color: var(--muted);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+    }
+    .services-toggle .chevron {
+      color: var(--muted);
+      font-size: 0.7rem;
+      transition: transform 0.25s ease;
+      margin-left: 0.75rem;
+    }
+    details[open] .services-toggle .chevron { transform: rotate(90deg); }
+    details[open] .services-toggle { border-bottom-color: transparent; }
+    details .services-list { border-top: none; }
+    .services-details { margin-top: 0.5rem; }
+    .services-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+    .service-row {
+      background: var(--bg);
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      align-items: baseline;
+      gap: 1.25rem;
+      transition: background 0.2s ease;
+    }
+    .service-row:hover { background: var(--bg2); }
+    .service-name {
+      font-size: 0.95rem;
+      font-weight: 500;
+      min-width: 130px;
+    }
+    .service-purpose {
+      font-size: 0.85rem;
+      font-weight: 300;
+      color: var(--muted);
+    }
+
+    .tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      background: var(--tag-bg);
+      color: var(--text);
+      padding: 0.4rem 0.85rem;
+      border-radius: 2px;
+      letter-spacing: 0.02em;
+      transition: background 0.2s ease;
+    }
+
+    .tag:hover { background: var(--line); }
+
+    /* ── Projects ── */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    /* First build is the feature; it keeps the full row */
+    .projects-grid .project-card:first-child { grid-column: 1 / -1; }
+
+    @media (max-width: 560px) {
+      .projects-grid { grid-template-columns: 1fr; }
+    }
+
+    .project-card {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      transition: background 0.2s ease, transform 0.4s ease;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+
+    .project-card:hover { background: var(--bg2); }
+
+    .project-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .project-name {
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .project-type {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .project-desc {
+      font-size: 0.875rem;
+      font-weight: 300;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .project-specs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.15rem;
+    }
+
+    .spec {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      background: var(--tag-bg);
+      color: var(--muted);
+      padding: 0.25rem 0.6rem;
+      border-radius: 2px;
+      letter-spacing: 0.04em;
+    }
+
+    .project-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.15rem;
+    }
+
+    .project-link {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      background: var(--tag-bg);
+      color: var(--text);
+      padding: 0.25rem 0.6rem;
+      border-radius: 2px;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .project-link:hover { background: var(--line); }
+
+    /* ── Project image ── */
+    .project-img {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: var(--tag-bg);
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 0.75rem;
+      overflow: hidden;
+      position: relative;
+      border-radius: 2px;
+      cursor: zoom-in;
+    }
+
+    .project-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+
+    .project-card:hover .project-img img { transform: scale(1.02); }
+
+    .project-img-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--line);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      position: absolute;
+    }
+
+    .project-img img ~ .project-img-label { display: none; }
+
+    /* ── Lightbox ── */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(0,0,0,0.88);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .lightbox.open { display: flex; }
+
+    .lightbox-inner {
+      position: relative;
+      max-width: min(900px, 92vw);
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .lightbox-img-wrap {
+      width: 100%;
+      position: relative;
+    }
+
+    .lightbox-img-wrap img {
+      width: 100%;
+      max-height: 70vh;
+      object-fit: contain;
+      display: block;
+      border-radius: 2px;
+    }
+
+    /* nav arrows */
+    .lightbox-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .lb-arrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.35);
+      background: none;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      padding: 0.5rem 0;
+      transition: color 0.2s ease;
+      user-select: none;
+    }
+
+    .lb-arrow:hover { color: rgba(255,255,255,0.85); }
+    .lb-arrow:disabled { opacity: 0; pointer-events: none; }
+
+    .lb-counter {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.1em;
+    }
+
+    .lb-caption {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .lb-close {
+      position: absolute;
+      top: -0.25rem;
+      right: 0;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.3);
+      background: none;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      transition: color 0.2s ease;
+      padding: 0.25rem 0;
+    }
+
+    .lb-close:hover { color: rgba(255,255,255,0.8); }
+
+    /* ── Contact ── */
+    .contact-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--line);
+      text-decoration: none;
+      color: var(--text);
+      transition: padding-left 0.2s ease;
+    }
+
+    .contact-item:hover { padding-left: 0.5rem; }
+
+    .contact-platform {
+      font-size: 0.7rem;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      width: 80px;
+      flex-shrink: 0;
+    }
+
+    .contact-value {
+      font-size: 0.95rem;
+      font-weight: 400;
+      flex: 1;
+    }
+
+    .contact-arrow {
+      color: var(--muted);
+      font-size: 0.9rem;
+      transition: transform 0.2s ease;
+    }
+
+    .contact-item:hover .contact-arrow { transform: translateX(4px); }
+
+    /* ── Footer ── */
+    footer {
+      padding: 3rem 0 max(3rem, env(safe-area-inset-bottom));
+      opacity: 0;
+      animation: fadeUp 0.6s ease 0.2s forwards;
+    }
+
+    .footer-text {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--line);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes gradientShift {
+      to { background-position: 200% center; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Theme toggle -->
+  <div class="theme-toggle">
+    <button class="theme-btn" id="btn-light" onclick="setTheme('light')" title="Light">+</button>
+    <button class="theme-btn" id="btn-dark" onclick="setTheme('dark')" title="Dark">−</button>
+  </div>
+
+  <!-- Back link -->
+  <a class="back-link" href="/index.html">← index</a>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" onclick="handleLbClick(event)">
+    <div class="lightbox-inner">
+      <button class="lb-close" onclick="closeLightbox()">close ×</button>
+      <div class="lightbox-img-wrap">
+        <img id="lb-img" src="" alt="">
+      </div>
+      <div class="lightbox-nav">
+        <button class="lb-arrow" id="lb-prev" onclick="lbNav(-1)">← prev</button>
+        <span class="lb-counter" id="lb-counter"></span>
+        <button class="lb-arrow" id="lb-next" onclick="lbNav(1)">next →</button>
+      </div>
+      <p class="lb-caption" id="lb-caption"></p>
+    </div>
+  </div>
+
+  <div class="page">
+
+    <!-- Header -->
+    <header>
+      <p class="header-label">Portfolio</p>
+      <h1>Yoshiro</h1>
+      <p class="tagline">Homelab dev &amp; computer designer. High schooler building things that i actually use.</p>
+    </header>
+
+    <!-- About -->
+    <section id="about">
+      <p class="section-label">About</p>
+      <p class="about-text">
+       I make stuff and tinker with things. I spend way too much time configuring my home lab to the point that it breaks, and I have to refix it all over again. I like using random programs and figuring out how things actually work.
+      </p>
+      <p class="about-text" style="margin-top:1rem; color: var(--muted); font-size: 0.9rem;">
+        Outside of tech...  I'm into some music, graphic design, and collecting things that I probably don't even need. I like clean aesthetics that don't make it seem cluttered and overly loud.
+      </p>
+    </section>
+
+    <!-- Skills -->
+    <section id="skills">
+      <p class="section-label">Things I know</p>
+
+      <div class="skills-group">
+        <p class="skills-group-label">Languages &amp; frameworks</p>
+        <div class="skills-grid">
+          <span class="tag">html / css</span>
+          <span class="tag">javascript</span>
+          <span class="tag">python</span>
+          <span class="tag">swift (a little)</span>
+        </div>
+      </div>
+
+      <div class="skills-group">
+        <p class="skills-group-label">Infrastructure &amp; devops</p>
+        <div class="skills-grid">
+          <span class="tag">docker</span>
+          <span class="tag">linux</span>
+          <span class="tag">unraid</span>
+          <span class="tag">nginx</span>
+          <span class="tag">cloudflare</span>
+          <span class="tag">git</span>
+          <span class="tag">claude code</span>
+          <span class="tag">self-hosting</span>
+          <span class="tag">networking</span>
+        </div>
+      </div>
+
+      <div class="skills-group">
+        <p class="skills-group-label">Design tools</p>
+        <div class="skills-grid">
+          <span class="tag">photoshop</span>
+          <span class="tag">davinci resolve</span>
+          <span class="tag">figma</span>
+          <span class="tag">obsidian</span>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- Projects -->
+    <section id="projects">
+      <p class="section-label">Builds</p>
+      <div class="projects-grid">
+
+        <div class="project-card">
+          <div class="project-header">
+            <span class="project-name">DIY Homelab</span>
+            <span class="project-type">hardware</span>
+          </div>
+          <p class="project-desc">Self-built home server I put together myself. Runs all my self-hosted services and containers 24/7. The dual 16TB drives handle bulk storage and the SSD keeps things snappy for services that need it.</p>
+          <div class="project-specs">
+            <span class="spec">Ryzen 3400G</span>
+            <span class="spec">32GB RAM</span>
+            <span class="spec">2&times;16TB HDD</span>
+            <span class="spec">1TB SSD</span>
+          </div>
+          <div class="project-img" onclick="openLightbox('images/homelab.webp', 'DIY Homelab')">
+            <img src="images/homelab.webp" alt="Homelab build" loading="lazy" decoding="async">
+            <span class="project-img-label">add photo</span>
+          </div>
+          <details class="services-details" onclick="event.stopPropagation()">
+            <summary class="services-toggle">
+              <span>Services running on it <span class="count">· 6</span></span>
+              <span class="chevron">›</span>
+            </summary>
+            <div class="services-list">
+              <div class="service-row">
+                <span class="service-name">immich</span>
+                <span class="service-purpose">photo backup + management</span>
+              </div>
+              <div class="service-row">
+                <span class="service-name">voidauth</span>
+                <span class="service-purpose">sso for all my services</span>
+              </div>
+              <div class="service-row">
+                <span class="service-name">jellyfin</span>
+                <span class="service-purpose">media streaming</span>
+              </div>
+              <div class="service-row">
+                <span class="service-name">vaultwarden</span>
+                <span class="service-purpose">password manager</span>
+              </div>
+              <div class="service-row">
+                <span class="service-name">copyparty</span>
+                <span class="service-purpose">file sync + storage</span>
+              </div>
+              <div class="service-row">
+                <span class="service-name">navidrome</span>
+                <span class="service-purpose">music streaming</span>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="project-card">
+          <div class="project-header">
+            <span class="project-name">Modded Minecraft Server</span>
+            <span class="project-type">game server</span>
+          </div>
+          <p class="project-desc">PaperMC 26.1.2 modded server running through Crafty Controller, hosted for me and my friends. Crafty handles mod management, backups, and restarts through a web UI. It's easy to work with and still is advanced at the same time.</p>
+          <div class="project-specs">
+            <span class="spec">PaperMC</span>
+            <span class="spec">Crafty Controller</span>
+            <span class="spec">26.1.2</span>
+            <span class="spec">modded</span>
+          </div>
+          <div class="project-links">
+            <a class="project-link" href="https://modrinth.com/collection/3S4B4n7M" target="_blank" rel="noopener">mod collection ↗</a>
+            <button class="project-link" type="button" onclick="revealAddr(this)">server address: click to reveal</button>
+          </div>
+          <div class="project-img" onclick="openLightbox('images/mc-screenshot.webp', 'Modded Minecraft Server')">
+            <img src="images/mc-screenshot.webp" alt="Minecraft server" loading="lazy" decoding="async">
+            <span class="project-img-label">add screenshot</span>
+          </div>
+        </div>
+
+        <div class="project-card">
+          <div class="project-header">
+            <span class="project-name">Raspberry Pi Cluster</span>
+            <span class="project-type">cluster</span>
+          </div>
+          <p class="project-desc">I got a bunch of Raspberry Pis on Craigslist and have been partially using them ever since. They run DietPi, which is a stripped down, bloatware-free version with minimal overhead. Used for random projects that I don't want on my main NAS, meant for learning and seeing how clusters actually work.</p>
+          <div class="project-specs">
+            <span class="spec">Raspberry Pi</span>
+            <span class="spec">DietPi</span>
+            <span class="spec">cluster</span>
+          </div>
+          <div class="project-img" onclick="openLightbox('images/pi-cluster.webp', 'Raspberry Pi Cluster')">
+            <img src="images/pi-cluster.webp" alt="Pi cluster" loading="lazy" decoding="async">
+            <span class="project-img-label">add photo</span>
+          </div>
+        </div>
+
+        <div class="project-card">
+          <div class="project-header">
+            <span class="project-name">VersionEye</span>
+            <span class="project-type">paper plugin</span>
+          </div>
+          <p class="project-desc">Paper plugin that checks your installed plugins for updates on Modrinth and can download them for you. Plugins are matched by the sha512 hash of their jar, so there's no name guessing, and all checks run off the main thread. Reports to the console, to ops when they join, or to a Discord webhook.</p>
+          <div class="project-specs">
+            <span class="spec">Paper / Purpur / Folia</span>
+            <span class="spec">Java 25</span>
+            <span class="spec">MIT</span>
+          </div>
+          <div class="project-links">
+            <a class="project-link" href="https://modrinth.com/plugin/versioneye" target="_blank" rel="noopener">modrinth ↗</a>
+          </div>
+          <div class="project-img" onclick="openLightbox('images/modrinth-versioneye-plugin.webp', 'VersionEye')">
+            <img src="images/modrinth-versioneye-plugin.webp" alt="VersionEye plugin on Modrinth" loading="lazy" decoding="async">
+            <span class="project-img-label">add screenshot</span>
+          </div>
+        </div>
+
+        <div class="project-card">
+          <div class="project-header">
+            <span class="project-name">Vulkan Updated</span>
+            <span class="project-type">fabric modpack</span>
+          </div>
+          <p class="project-desc">Client-side Fabric modpack built around the Vulkan renderer. Around 52% more performance with shaders than Sodium on driver-bound systems, with zero bloat: just the renderer and what it needs to run.</p>
+          <div class="project-specs">
+            <span class="spec">Fabric</span>
+            <span class="spec">client-side</span>
+            <span class="spec">MIT</span>
+          </div>
+          <div class="project-links">
+            <a class="project-link" href="https://modrinth.com/modpack/vulkan-updated" target="_blank" rel="noopener">modrinth ↗</a>
+          </div>
+          <div class="project-img" onclick="openLightbox('images/modrinth-vulkan-upd-modpack.webp', 'Vulkan Updated')">
+            <img src="images/modrinth-vulkan-upd-modpack.webp" alt="Vulkan Updated modpack on Modrinth" loading="lazy" decoding="async">
+            <span class="project-img-label">add screenshot</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Open source -->
+    <section id="opensource">
+      <p class="section-label">Open source</p>
+      <div class="contact-list">
+        <a class="contact-item" href="https://github.com/EternalCodeTeam/EternalCombat/pull/400" target="_blank" rel="noopener">
+          <span class="contact-platform">pr · merged</span>
+          <span class="contact-value">EternalCombat: fixed EntityMountEvent registration failing on modern Paper</span>
+          <span class="contact-arrow">→</span>
+        </a>
+        <a class="contact-item" href="https://github.com/YoshiroMaximus/pumpkin-unraid-template" target="_blank" rel="noopener">
+          <span class="contact-platform">template</span>
+          <span class="contact-value">Unraid CA template for the Pumpkin Minecraft server</span>
+          <span class="contact-arrow">→</span>
+        </a>
+        <a class="contact-item" href="https://github.com/YoshiroMaximus/automcs-unraid-template" target="_blank" rel="noopener">
+          <span class="contact-platform">template</span>
+          <span class="contact-value">Unraid CA template for auto-mcs</span>
+          <span class="contact-arrow">→</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section id="contact">
+      <p class="section-label">Get in touch</p>
+      <div class="contact-list">
+        <a class="contact-item" href="https://github.com/YoshiroMaximus" target="_blank" rel="noopener">
+          <span class="contact-platform">GitHub</span>
+          <span class="contact-value">github.com/YoshiroMaximus</span>
+          <span class="contact-arrow">→</span>
+        </a>
+        <a class="contact-item" href="mailto:nico@sendan.com">
+          <span class="contact-platform">Email</span>
+          <span class="contact-value">nico@sendan.com</span>
+          <span class="contact-arrow">→</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <p class="footer-text">Yoshiro &middot; sn4k.org/yoshiro</p>
+    </footer>
+
+  </div>
+
+  <script>
+    // ── Theme ──
+    function setTheme(theme) {
+      document.body.classList.toggle('dark', theme === 'dark');
+      document.getElementById('btn-light').classList.toggle('active', theme === 'light');
+      document.getElementById('btn-dark').classList.toggle('active', theme === 'dark');
+      localStorage.setItem('theme', theme);
+    }
+    const saved = localStorage.getItem('theme') || 'light';
+    setTheme(saved);
+
+    // ── Scroll observer ──
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('section').forEach(el => observer.observe(el));
+
+    // ── Lightbox ──
+    // Collect all images from project cards
+    const gallery = [
+      { src: 'images/mc-screenshot.webp', caption: 'Modded Minecraft Server' },
+      { src: 'images/homelab.webp',        caption: 'DIY Homelab' },
+      { src: 'images/pi-cluster.webp',     caption: 'Raspberry Pi Cluster' },
+      { src: 'images/modrinth-versioneye-plugin.webp', caption: 'VersionEye' },
+      { src: 'images/modrinth-vulkan-upd-modpack.webp', caption: 'Vulkan Updated' },
+    ];
+
+    // ── Server address reveal ──
+    // Assembled at click time so the address isn't a plain string in the page source.
+    function revealAddr(btn) {
+      const addr = ['mc', 'sn4k', 'org'].join('.');
+      if (btn.dataset.revealed) {
+        navigator.clipboard?.writeText(addr).then(() => {
+          btn.textContent = addr + ' (copied)';
+          setTimeout(() => { btn.textContent = addr; }, 1500);
+        });
+        return;
+      }
+      btn.textContent = addr;
+      btn.dataset.revealed = '1';
+      btn.title = 'click again to copy';
+    }
+
+    let lbIndex = 0;
+
+    function openLightbox(src, caption) {
+      lbIndex = gallery.findIndex(g => g.src === src);
+      if (lbIndex === -1) lbIndex = 0;
+      renderLb();
+      const lb = document.getElementById('lightbox');
+      lb.style.display = 'flex';
+      requestAnimationFrame(() => lb.classList.add('open'));
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      const lb = document.getElementById('lightbox');
+      lb.classList.remove('open');
+      lb.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    function lbNav(dir) {
+      lbIndex = Math.max(0, Math.min(gallery.length - 1, lbIndex + dir));
+      renderLb();
+    }
+
+    function renderLb() {
+      const item = gallery[lbIndex];
+      document.getElementById('lb-img').src = item.src;
+      document.getElementById('lb-img').alt = item.caption;
+      document.getElementById('lb-caption').textContent = item.caption;
+      document.getElementById('lb-counter').textContent = (lbIndex + 1) + ' / ' + gallery.length;
+      document.getElementById('lb-prev').disabled = lbIndex === 0;
+      document.getElementById('lb-next').disabled = lbIndex === gallery.length - 1;
+    }
+
+    function handleLbClick(e) {
+      if (e.target === document.getElementById('lightbox')) closeLightbox();
+    }
+
+    document.addEventListener('keydown', e => {
+      const lb = document.getElementById('lightbox');
+      if (!lb.classList.contains('open')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') lbNav(-1);
+      if (e.key === 'ArrowRight') lbNav(1);
+    });
+  </script>
+
+  <script>
+    // 3D card tilt
+    document.querySelectorAll('.project-card').forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        card.style.transition = 'background 0.2s ease, transform 0.12s ease';
+      });
+      card.addEventListener('mousemove', e => {
+        const r = card.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5;
+        const y = (e.clientY - r.top) / r.height - 0.5;
+        card.style.transform = `perspective(700px) rotateY(${x * 7}deg) rotateX(${-y * 5}deg) translateZ(6px)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transition = 'background 0.2s ease, transform 0.5s ease';
+        card.style.transform = 'perspective(700px) rotateX(0) rotateY(0) translateZ(0)';
+      });
+    });
+  </script>
+</body>
+</html>
