@@ -7,312 +7,390 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Break">
-  <meta name="theme-color" content="#f5f4f0" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)">
-  <title>take a break</title>
-  <link rel="icon" type="image/x-icon" href="/favistuff/favicon.ico">
-  <link rel="icon" type="image/png" sizes="16x16" href="/favistuff/favicon-16x16.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favistuff/favicon-32x32.png">
-  <link rel="apple-touch-icon" href="/favistuff/apple-touch-icon.png">
-  <link rel="manifest" href="/favistuff/site.webmanifest">
+  <meta name="theme-color" content="#1d1d21">
+  <title>take a break · Ore UI</title>
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAWRJREFUaIHtmDFqQkEQhvM0ZRqDGhXRC5gT6BHSBBHSeQXxAAnoFXKBdGm8gZZWsbS0DD4RiY2t71nPP7jLZoVhYL7ux2XHn/nnvd2XtFrt/E4xBek/EIsZkOYefxjPX4jeHndRBeqPdaLTv9S5vlGqOet/D1ZEq++AGZCGzQBmLjTDuD6U0JlT3wEzIA2bgTyhmmV+8kv1e9O9HijmGdHn6ZbW/6D7NUrumVLfATMgDZuBBG8HkPnO65Do9eTLXQFmBDNfrTwQvYf66ejHub36DpgBaRK8E7890/N4uUozGsphfyIaM5/BewfXY/3PxYZo9R0wA9Kw90Bs5n37ZVfW/be++g6YAWnYDBTgLILP6Vhq3T7Ru+Usaj/1HTAD0rAZuHXmEcx87Myp74AZkIbNgA+8Mz/13M91X8Z9mWd3dEB9B8yANMEzgN9OfWeZ0Izj/qgR9R0wA9Kw70LaUN8BMyDNBVzCWcR7QxVwAAAAAElFTkSuQmCC">
   <meta name="description" content="Take a break - browser-playable things">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
     :root {
-      --bg: #f5f4f0;
-      --text: #1a1a1a;
-      --muted: #888;
-      --line: #d8d6d0;
-      --tag-bg: #e8e6e2;
+      --bg: #1d1d21;
+      --panel: #313135;
+      --panel-2: #48494a;
+      --line: #5b5c5e;
+      --text: #ffffff;
+      --muted: #a5a6a8;
+      --btn: #d0d1d4;
+      --btn-edge: #58585a;
+      --btn-text: #1e1e1f;
+      --green: #3c8527;
+      --green-edge: #2a5e1a;
+      --green-hover: #4f9c38;
     }
 
-    body.dark {
-      --bg: #111110;
-      --text: #e8e6e2;
-      --muted: #666;
-      --line: #2a2926;
-      --tag-bg: #1e1d1b;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: 'DM Sans', sans-serif;
       background: var(--bg);
       color: var(--text);
-      min-height: 100vh;
+      font-family: 'Noto Sans', sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      padding-bottom: 4rem;
+    }
+
+    .shell { max-width: 720px; margin: 0 auto; padding: 0 1.25rem; }
+
+    .back {
+      font-family: 'Silkscreen', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-decoration: none;
+      display: inline-block;
+      padding: 1rem 0 0 1.25rem;
+    }
+    .back:hover { color: var(--text); }
+
+    /* ── Achievement toasts ── */
+    .toasts {
+      position: fixed;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
-      transition: background 0.2s ease, color 0.2s ease;
+      gap: 0.5rem;
+      pointer-events: none;
     }
-
-    /* ── Back link ── */
-    .back-link {
-      position: fixed;
-      top: max(1.5rem, env(safe-area-inset-top));
-      left: max(1.5rem, env(safe-area-inset-left));
-      font-family: 'DM Mono', monospace;
-      font-size: 0.7rem;
-      color: var(--line);
-      text-decoration: none;
-      letter-spacing: 0.06em;
-      transition: color 0.2s ease;
-      z-index: 100;
-    }
-
-    .back-link:hover { color: var(--muted); }
-
-    /* ── Theme toggle ── */
-    .theme-toggle {
-      position: fixed;
-      top: max(1.5rem, env(safe-area-inset-top));
-      right: max(1.5rem, env(safe-area-inset-right));
+    .toast {
       display: flex;
       align-items: center;
-      gap: 0.1rem;
-      z-index: 100;
+      gap: 0.75rem;
+      background: var(--panel-2);
+      border: 2px solid #1a1a1c;
+      box-shadow: inset 0 -4px 0 rgba(0,0,0,0.3);
+      padding: 0.6rem 1.1rem;
+      min-width: 240px;
+      animation: toast-in 0.3s ease, toast-out 0.4s ease 3.6s forwards;
     }
+    .toast .t-star { color: #ffff55; font-size: 1.3rem; }
+    .toast .t-title { color: #ffff55; font-family: 'Silkscreen', monospace; font-size: 0.55rem; }
+    .toast .t-name { font-weight: 700; font-size: 0.85rem; }
+    @keyframes toast-in { from { transform: translateY(-130%); opacity: 0; } }
+    @keyframes toast-out { to { transform: translateY(-130%); opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
 
-    .theme-btn {
-      font-family: 'DM Mono', monospace;
-      font-size: 1rem;
-      color: var(--line);
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0.15rem 0.3rem;
-      line-height: 1;
-      transition: color 0.2s ease;
+    header {
+      text-align: center;
+      padding: 3rem 0 2rem;
+    }
+    .game-title {
+      font-family: 'Silkscreen', monospace;
+      font-size: clamp(1.8rem, 6vw, 3rem);
+      letter-spacing: 0.02em;
+      text-shadow: 0 4px 0 rgba(0,0,0,0.55);
       user-select: none;
     }
-
-    .theme-btn:hover { color: var(--muted); }
-    .theme-btn.active { color: var(--text); }
-
-    /* ── Container ── */
-    .container {
-      display: flex;
-      flex-direction: column;
-      max-width: 480px;
-      width: 100%;
-      opacity: 0;
-      animation: fadeUp 0.5s ease 0.1s forwards;
+    .splash {
+      display: block;
+      margin-top: 0.5rem;
+      color: #ffff55;
+      font-family: 'Silkscreen', monospace;
+      font-size: 0.8rem;
+      transform: rotate(-3deg);
+      text-shadow: 0 2px 0 rgba(0,0,0,0.55);
+      animation: splash 0.9s ease-in-out infinite alternate;
     }
+    @keyframes splash { from { transform: rotate(-3deg) scale(1); } to { transform: rotate(-3deg) scale(1.06); } }
+    @media (prefers-reduced-motion: reduce) { .splash { animation: none; } }
 
-    /* ── Header ── */
-    .page-label {
-      font-family: 'DM Mono', monospace;
+    .panel-label {
+      font-family: 'Silkscreen', monospace;
       font-size: 0.7rem;
       color: var(--muted);
-      letter-spacing: 0.12em;
       text-transform: uppercase;
-      margin-bottom: 1rem;
+      margin: 1.5rem 0 0.75rem;
     }
+    .panel-label:first-of-type { margin-top: 0; }
 
-    h1 {
-      font-size: clamp(2rem, 6vw, 2.8rem);
-      font-weight: 500;
-      letter-spacing: -0.03em;
-      line-height: 1;
-      margin-bottom: 3rem;
-      color: var(--text);
+    .btn {
+      display: inline-block;
+      font-family: 'Noto Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--btn-text);
+      background: var(--btn);
+      border: 2px solid #1a1a1c;
+      box-shadow: inset 0 -4px 0 var(--btn-edge);
+      padding: 0.55rem 1.25rem 0.7rem;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      transition: filter 0.1s ease;
     }
-
-    /* ── Game links ── */
-    .games {
-      display: flex;
-      flex-direction: column;
-      border-top: 1px solid var(--line);
+    .btn:hover { filter: brightness(1.12); }
+    .btn:active { box-shadow: inset 0 -2px 0 var(--btn-edge); transform: translateY(2px); }
+    .btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+    .btn-green {
+      color: #fff;
+      background: var(--green);
+      box-shadow: inset 0 -4px 0 var(--green-edge);
     }
+    .btn-green:hover { background: var(--green-hover); filter: none; }
 
-    .game-link {
+    .world-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 1.5rem 0;
-      border-bottom: 1px solid var(--line);
-      text-decoration: none;
-      color: var(--text);
-      background: none;
-      border-top: none;
-      border-left: none;
-      border-right: none;
-      width: 100%;
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      transition: padding-left 0.2s ease;
+      gap: 1rem;
+      background: var(--panel);
+      border: 2px solid #232326;
+      padding: 0.9rem;
+      margin-bottom: 0.6rem;
+      transition: background 0.15s ease;
     }
+    a.world-row { text-decoration: none; color: inherit; }
+    .world-row:hover { background: #3a3a3f; }
 
-    .game-link:hover { padding-left: 0.5rem; }
-
-    .game-name {
-      font-size: 1rem;
-      font-weight: 400;
-    }
-
-    .game-arrow {
-      font-size: 0.9rem;
-      color: var(--muted);
-      transition: transform 0.2s ease;
-    }
-
-    .game-link:hover .game-arrow { transform: translateX(4px); }
-
-    .star {
-      font-size: 0.75rem;
-      color: var(--accent2, #7a9490);
-      margin-left: 0.5rem;
-      vertical-align: 0.1em;
-    }
-
-    .game-group { border-bottom: 1px solid var(--line); }
-    .game-group-row { display: flex; align-items: center; }
-    .game-link--inline {
-      border-bottom: none;
-      padding: 1.5rem 0;
-      width: auto;
+    .world-thumb {
+      width: 56px;
+      height: 56px;
       flex-shrink: 0;
+      border: 2px solid #1a1a1c;
+      background: var(--panel-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
     }
-    .game-alt-toggle {
-      flex: 1;
-      display: flex; align-items: center; gap: 0.5rem;
-      background: none; border: none; cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      padding: 1.5rem 0;
-      text-align: left;
-      transition: padding-left 0.2s ease;
+    .world-thumb svg { width: 36px; height: 36px; }
+    .world-info { flex: 1; min-width: 0; }
+    .world-name { font-weight: 700; }
+    .world-name .star { color: #ffff55; font-size: 0.8em; margin-left: 0.3rem; }
+    .world-sub {
+      font-family: 'Silkscreen', monospace;
+      font-size: 0.6rem;
+      color: var(--muted);
+      margin-top: 0.1rem;
     }
-    .game-alt-toggle:hover { padding-left: 0.5rem; }
-    .game-alt-chevron {
-      font-size: 0.75rem; color: var(--muted);
-      transition: transform 0.18s ease;
-      line-height: 1;
-    }
-    .game-group.open .game-alt-chevron { transform: rotate(180deg); }
-    .game-alt-drawer {
-      overflow: hidden;
-      max-height: 0;
-      transition: max-height 0.22s ease;
-    }
-    .game-group.open .game-alt-drawer { max-height: 140px; }
-    .game-link--alt {
-      border-bottom: none;
-      padding-top: 0;
-      padding-left: 1rem;
-    }
-    .game-link--alt .game-name { font-size: 0.82rem; color: var(--muted); }
+    .world-action { flex-shrink: 0; display: flex; gap: 0.4rem; }
 
-    /* ── Disclaimer ── */
-    .disclaimer {
-      margin-top: 2.5rem;
-      font-family: 'DM Mono', monospace;
+    @media (max-width: 560px) {
+      .world-row { flex-wrap: wrap; }
+      .world-action { width: 100%; }
+      .world-action .btn { flex: 1; }
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-family: 'Silkscreen', monospace;
       font-size: 0.65rem;
-      color: var(--line);
-      letter-spacing: 0.06em;
-      line-height: 1.6;
-      max-width: 360px;
+      margin-top: 3rem;
+      line-height: 1.8;
     }
-
-    @keyframes fadeUp {
-      to { opacity: 1; transform: translateY(0); }
-    }
+    footer .star { color: #ffff55; }
   </style>
 </head>
 <body>
 
-  <a class="back-link" href="/index.html">← index</a>
+  <a class="back" href="/index.html">← index</a>
+  <div class="toasts" aria-live="polite"></div>
 
-  <div class="theme-toggle">
-    <button class="theme-btn" id="btn-light" onclick="setTheme('light')" title="Light">+</button>
-    <button class="theme-btn" id="btn-dark" onclick="setTheme('dark')" title="Dark">−</button>
-  </div>
+  <header>
+    <h1 class="game-title">BREAK TIMES</h1>
+    <span class="splash" id="splash"></span>
+  </header>
 
-  <div class="container">
-    <p class="page-label">take a break</p>
-    <h1>play</h1>
+  <div class="shell">
+    <p class="panel-label">My worlds · 2</p>
 
-    <div class="games">
-      <a class="game-link" href="https://r2.sn4k.org/1.12-wasm.html" target="_blank" rel="noopener">
-        <span class="game-name">minecraft</span>
-        <span class="game-arrow">→</span>
-      </a>
-      <a class="game-link" href="https://r2.sn4k.org/amog.html" target="_blank" rel="noopener">
-        <span class="game-name">among us</span>
-        <span class="game-arrow">→</span>
-      </a>
-      <a class="game-link" href="/break-times/run.html" target="_blank" rel="noopener">
-        <span class="game-name">run<span class="star">★</span></span>
-        <span class="game-arrow">→</span>
-      </a>
-      <div class="game-group">
-        <div class="game-group-row">
-          <button class="game-alt-toggle" onclick="this.closest('.game-group').classList.toggle('open')" aria-label="show alternative version">
-            <span class="game-name">gambit rogue<span class="star">★</span></span>
-            <span class="game-alt-chevron">▾</span>
-          </button>
-          <a class="game-link game-link--inline" href="/break-times/gambit.html" target="_blank" rel="noopener">
-            <span class="game-arrow">→</span>
-          </a>
-        </div>
-        <div class="game-alt-drawer">
-          <a class="game-link game-link--alt" href="/break-times/gambit.html" target="_blank" rel="noopener">
-            <span class="game-name">regular (recommended)</span>
-            <span class="game-arrow">→</span>
-          </a>
-          <a class="game-link game-link--alt" href="/break-times/gambit-8x8.html" target="_blank" rel="noopener">
-            <span class="game-name">8×8 — alternative version</span>
-            <span class="game-arrow">→</span>
-          </a>
-        </div>
-      </div>
-      <a class="game-link" href="https://r2.sn4k.org/drift/index.html" target="_blank" rel="noopener">
-        <span class="game-name">drift</span>
-        <span class="game-arrow">→</span>
-      </a>
-      <a class="game-link" href="https://r2.sn4k.org/karlson/index.html" target="_blank" rel="noopener">
-        <span class="game-name">karlson</span>
-        <span class="game-arrow">→</span>
-      </a>
-      <a class="game-link" href="https://r2.sn4k.org/ultrakill/index.html" target="_blank" rel="noopener">
-        <span class="game-name">ultrakill</span>
-        <span class="game-arrow">→</span>
-      </a>
-      <a class="game-link" href="https://r2.sn4k.org/webfishing/index.html" target="_blank" rel="noopener">
-        <span class="game-name">webfishing</span>
-        <span class="game-arrow">→</span>
-      </a>
-      <a class="game-link" href="https://r2.sn4k.org/balatro/index.html" target="_blank" rel="noopener">
-        <span class="game-name">balatro<span class="star">★</span></span>
-        <span class="game-arrow">→</span>
-      </a>
-      <a class="game-link" href="https://r2.sn4k.org/repo/index.html" target="_blank" rel="noopener">
-        <span class="game-name">repo<span class="star">★</span></span>
-        <span class="game-arrow">→</span>
-      </a>
+    <a class="world-row" data-game="run" href="/break-times/run.html" target="_blank" rel="noopener">
+      <span class="world-thumb" aria-hidden="true"><svg viewBox="0 0 12 12" shape-rendering="crispEdges"><rect x="6" y="0" width="3" height="2" fill="#ffd83d"/><rect x="5" y="2" width="3" height="2" fill="#ffd83d"/><rect x="3" y="4" width="6" height="2" fill="#ffd83d"/><rect x="5" y="6" width="2" height="2" fill="#ffd83d"/><rect x="4" y="8" width="2" height="2" fill="#ffd83d"/><rect x="3" y="10" width="2" height="2" fill="#ffd83d"/></svg></span>
+      <span class="world-info">
+        <span class="world-name">run</span>
+        <span class="world-sub" data-sub>canvas runner · built here</span>
+      </span>
+      <span class="world-action" aria-hidden="true"><span class="btn btn-green">Play</span></span>
+    </a>
+
+    <div class="world-row">
+      <span class="world-thumb" aria-hidden="true"><svg viewBox="0 0 12 12" shape-rendering="crispEdges"><rect x="5" y="1" width="2" height="1" fill="#e8e8e8"/><rect x="4" y="2" width="4" height="2" fill="#e8e8e8"/><rect x="5" y="4" width="2" height="3" fill="#e8e8e8"/><rect x="4" y="7" width="4" height="1" fill="#e8e8e8"/><rect x="3" y="9" width="6" height="2" fill="#e8e8e8"/></svg></span>
+      <span class="world-info">
+        <span class="world-name">gambit rogue</span>
+        <span class="world-sub" data-sub data-game-sub="gambit">roguelike chess · leaderboard · built here</span>
+      </span>
+      <span class="world-action">
+        <a class="btn btn-green" data-game="gambit" href="/break-times/gambit.html" target="_blank" rel="noopener">Play</a>
+        <a class="btn" data-game="gambit" href="/break-times/gambit-8x8.html" target="_blank" rel="noopener">8×8</a>
+      </span>
     </div>
 
-    <p class="disclaimer">
-      some of these were made by me —<br>
-      others are here as curated browser breaks.
-    </p>
+    <p class="panel-label">Imported worlds · 8</p>
+
+    <a class="world-row" data-game="minecraft" href="https://r2.sn4k.org/1.12-wasm.html" target="_blank" rel="noopener">
+      <span class="world-thumb" aria-hidden="true"><svg viewBox="0 0 12 12" shape-rendering="crispEdges"><rect x="1" y="2" width="10" height="9" fill="#8a5a32"/><rect x="1" y="2" width="10" height="3" fill="#7cbd4b"/><rect x="3" y="3" width="2" height="1" fill="#5d9c3a"/><rect x="7" y="4" width="2" height="1" fill="#5d9c3a"/><rect x="3" y="7" width="2" height="2" fill="#6e4526"/><rect x="7" y="8" width="2" height="1" fill="#6e4526"/></svg></span>
+      <span class="world-info">
+        <span class="world-name">minecraft</span>
+        <span class="world-sub" data-sub>1.12 · wasm port · r2</span>
+      </span>
+      <span class="world-action" aria-hidden="true"><span class="btn btn-green">Play</span></span>
+    </a>
+
+    <a class="world-row" data-game="amongus" href="https://r2.sn4k.org/amog.html" target="_blank" rel="noopener">
+      <span class="world-thumb" aria-hidden="true"><svg viewBox="0 0 12 12" shape-rendering="crispEdges"><rect x="1" y="3" width="2" height="5" fill="#9b0f0f"/><rect x="3" y="1" width="6" height="7" fill="#c51111"/><rect x="3" y="8" width="2" height="3" fill="#c51111"/><rect x="7" y="8" width="2" height="3" fill="#c51111"/><rect x="6" y="3" width="4" height="2" fill="#9acbd8"/></svg></span>
+      <span class="world-info">
+        <span class="world-name">among us</span>
+        <span class="world-sub" data-sub>browser port · r2</span>
+      </span>
+      <span class="world-action" aria-hidden="true"><span class="btn btn-green">Play</span></span>
+    </a>
+
+    <a class="world-row" data-game="drift" href="https://r2.sn4k.org/drift/index.html" target="_blank" rel="noopener">
+      <span class="world-thumb" aria-hidden="true"><svg viewBox="0 0 12 12" shape-rendering="crispEdges"><rect x="3" y="3" width="5" height="2" fill="#a12722"/><rect x="4" y="3" width="2" height="2" fill="#9acbd8"/><rect x="1" y="5" width="10" height="3" fill="#d83a34"/><rect x="2" y="8" width="2" height="2" fill="#1a1a1c"/><rect x="8" y="8" width="2" height="2" fill="#1a1a1c"/></svg></span>
+      <span class="world-info">
+        <span class="world-name">drift</span>
+        <span class="world-sub" data-sub>browser port · r2</span>
+      </span>
+      <span class="world-action" aria-hidden="true"><span class="btn btn-green">Play</span></span>
+    </a>
+
+    <a class="world-row" data-game="karlson" href="https://r2.sn4k.org/karlson/index.html" target="_blank" rel="noopener">
+      <span class="world-thumb" aria-hidden="true"><svg viewBox="0 0 12 12" shape-rendering="crispEdges"><rect x="4" y="2" width="4" height="2" fill="#d9d9d9"/><rect x="3" y="4" width="6" height="7" fill="#f2f2f2"/><rect x="3" y="7" width="6" height="2" fill="#3a6ea5"/></svg></span>
+      <span class="world-info">
+        <span class="world-name">karlson</span>
+        <span class="world-sub" data-sub>browser port · r2</span>
+      </span>
+      <span class="world-action" aria-hidden="true"><span class="btn btn-green">Play</span></span>
+    </a>
+
+    <a class="world-row" data-game="ultrakill" href="https://r2.sn4k.org/ultrakill/index.html" target="_blank" rel="noopener">
+      <span class="world-thumb" aria-hidden="true"><svg viewBox="0 0 12 12" shape-rendering="crispEdges"><rect x="2" y="1" width="8" height="6" fill="#e8e8e8"/><rect x="4" y="3" width="2" height="2" fill="#1a1a1c"/><rect x="7" y="3" width="2" height="2" fill="#1a1a1c"/><rect x="4" y="7" width="4" height="2" fill="#e8e8e8"/><rect x="5" y="7" width="1" height="1" fill="#1a1a1c"/><rect x="7" y="7" width="1" height="1" fill="#1a1a1c"/></svg></span>
+      <span class="world-info">
+        <span class="world-name">ultrakill</span>
+        <span class="world-sub" data-sub>browser port · r2</span>
+      </span>
+      <span class="world-action" aria-hidden="true"><span class="btn btn-green">Play</span></span>
+    </a>
+
+    <a class="world-row" data-game="webfishing" href="https://r2.sn4k.org/webfishing/index.html" target="_blank" rel="noopener">
+      <span class="world-thumb" aria-hidden="true"><svg viewBox="0 0 12 12" shape-rendering="crispEdges"><rect x="2" y="4" width="6" height="4" fill="#e8843c"/><rect x="8" y="3" width="2" height="2" fill="#e8843c"/><rect x="8" y="7" width="2" height="2" fill="#e8843c"/><rect x="3" y="5" width="1" height="1" fill="#1a1a1c"/></svg></span>
+      <span class="world-info">
+        <span class="world-name">webfishing</span>
+        <span class="world-sub" data-sub>browser port · r2</span>
+      </span>
+      <span class="world-action" aria-hidden="true"><span class="btn btn-green">Play</span></span>
+    </a>
+
+    <a class="world-row" data-game="balatro" href="https://r2.sn4k.org/balatro/index.html" target="_blank" rel="noopener">
+      <span class="world-thumb" aria-hidden="true"><svg viewBox="0 0 12 12" shape-rendering="crispEdges"><rect x="3" y="1" width="6" height="10" fill="#f2f2f2"/><rect x="5" y="4" width="2" height="1" fill="#d83a34"/><rect x="4" y="5" width="4" height="2" fill="#d83a34"/><rect x="5" y="7" width="2" height="1" fill="#d83a34"/></svg></span>
+      <span class="world-info">
+        <span class="world-name">balatro<span class="star" title="favorite">★</span></span>
+        <span class="world-sub" data-sub>browser port · r2</span>
+      </span>
+      <span class="world-action" aria-hidden="true"><span class="btn btn-green">Play</span></span>
+    </a>
+
+    <a class="world-row" data-game="repo" href="https://r2.sn4k.org/repo/index.html" target="_blank" rel="noopener">
+      <span class="world-thumb" aria-hidden="true"><svg viewBox="0 0 12 12" shape-rendering="crispEdges"><rect x="5" y="0" width="2" height="2" fill="#b8b8bc"/><rect x="2" y="3" width="8" height="7" fill="#b8b8bc"/><rect x="4" y="5" width="2" height="2" fill="#ffd83d"/><rect x="7" y="5" width="2" height="2" fill="#ffd83d"/><rect x="4" y="8" width="4" height="1" fill="#1a1a1c"/></svg></span>
+      <span class="world-info">
+        <span class="world-name">repo<span class="star" title="favorite">★</span></span>
+        <span class="world-sub" data-sub>browser port · r2</span>
+      </span>
+      <span class="world-action" aria-hidden="true"><span class="btn btn-green">Play</span></span>
+    </a>
+
+    <footer>
+      <span class="star">★</span> = favorites<br>
+      my worlds were built here · imported worlds are curated browser breaks
+    </footer>
   </div>
 
   <script>
-    function setTheme(theme) {
-      document.body.classList.toggle('dark', theme === 'dark');
-      document.getElementById('btn-light').classList.toggle('active', theme === 'light');
-      document.getElementById('btn-dark').classList.toggle('active', theme === 'dark');
-      localStorage.setItem('theme', theme);
+    // ── Splash, picked fresh each load ──
+    const SPLASHES = [
+      'Also try touching grass!',
+      'Deadline? What deadline?',
+      '0% productivity guaranteed!',
+      'Boss key not included!',
+      'Now in Ore UI!',
+      'Free range pixels!',
+    ];
+    document.getElementById('splash').textContent = SPLASHES[Math.floor(Math.random() * SPLASHES.length)];
+
+    // ── Last played, per game in localStorage ──
+    const LP_KEY = 'break-lastplayed';
+    function lastPlayed() {
+      try { return JSON.parse(localStorage.getItem(LP_KEY)) || {}; } catch { return {}; }
+    }
+    function ago(ts) {
+      const mins = Math.floor((Date.now() - ts) / 60000);
+      if (mins < 60) return 'just now';
+      const hours = Math.floor(mins / 60);
+      if (hours < 24) return hours + 'h ago';
+      return Math.floor(hours / 24) + 'd ago';
+    }
+    function renderLastPlayed() {
+      const lp = lastPlayed();
+      for (const [game, ts] of Object.entries(lp)) {
+        const sub = document.querySelector('[data-game="' + game + '"] [data-sub], [data-game-sub="' + game + '"]');
+        if (!sub) continue;
+        sub.textContent = sub.textContent.replace(/ · last played.*$/, '') + ' · last played ' + ago(ts);
+      }
+    }
+    renderLastPlayed();
+
+    // ── Launch tracking: last played + achievement ──
+    document.addEventListener('click', e => {
+      const el = e.target.closest('[data-game]');
+      if (el) {
+        const lp = lastPlayed();
+        lp[el.dataset.game] = Date.now();
+        try { localStorage.setItem(LP_KEY, JSON.stringify(lp)); } catch { /* private browsing */ }
+        renderLastPlayed();
+        if (Object.keys(lp).length >= 3) achievement('procrastinator', 'Procrastinator');
+      }
+      if (e.target.closest('.btn, .world-row, .back')) uiClick();
+    });
+
+    // ── Achievement toast ──
+    const ACH_KEY = 'break-achievements';
+    function achievement(id, name) {
+      let done;
+      try { done = JSON.parse(localStorage.getItem(ACH_KEY)) || []; } catch { done = []; }
+      if (done.includes(id)) return;
+      done.push(id);
+      try { localStorage.setItem(ACH_KEY, JSON.stringify(done)); } catch { /* private browsing */ }
+      const el = document.createElement('div');
+      el.className = 'toast';
+      el.innerHTML = '<span class="t-star">★</span><div><p class="t-title">Achievement Get!</p><p class="t-name"></p></div>';
+      el.querySelector('.t-name').textContent = name;
+      document.querySelector('.toasts').appendChild(el);
+      setTimeout(() => el.remove(), 4200);
     }
 
-    const saved = localStorage.getItem('theme') || 'light';
-    setTheme(saved);
-
+    // ── Click sound, honors the portfolio's sound setting ──
+    let audioCtx;
+    function soundsOn() {
+      try { return !!JSON.parse(localStorage.getItem('oreui-settings')).sounds; } catch { return false; }
+    }
+    function uiClick() {
+      if (!soundsOn()) return;
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const t = audioCtx.currentTime;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'square';
+      o.frequency.setValueAtTime(220, t);
+      o.frequency.exponentialRampToValueAtTime(160, t + 0.06);
+      g.gain.setValueAtTime(0.12, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      o.connect(g).connect(audioCtx.destination);
+      o.start(t);
+      o.stop(t + 0.09);
+    }
   </script>
 </body>
 </html>
