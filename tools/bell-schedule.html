@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#f4f4f6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
 <link rel="apple-touch-icon" href="/favistuff/apple-touch-icon.png">
-<link rel="manifest" href="/favistuff/site.webmanifest">
+<link rel="manifest" href="/tools/bell.webmanifest">
 <title>GWHS Bell Schedule</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -194,6 +194,8 @@
   .cdot{width:6px;height:6px;background:var(--red);border-radius:50%;flex-shrink:0;animation:pulse 1.5s infinite;}
   .rtime{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);}
   .rdur{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:right;}
+  .sched-row.free{opacity:.45;}
+  .free-tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--muted);}
 
   /* nickname editor */
   .nick-section{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:18px;overflow:hidden;box-shadow:0 1px 4px var(--shadow);}
@@ -203,7 +205,7 @@
   .nick-body{padding:14px 20px;display:none;}
   .nick-body.open{display:block;}
   .nick-body p{font-size:12px;color:var(--muted);margin-bottom:12px;}
-  .nick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:7px;}
+  .nick-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px 26px;}
   .nick-item{display:flex;align-items:center;gap:8px;}
   .nick-item label{font-size:11px;color:var(--muted);min-width:78px;font-family:'DM Mono',monospace;flex-shrink:0;}
   .nick-item input{
@@ -212,6 +214,11 @@
   }
   .nick-item input:focus{border-color:var(--red);}
   .nick-item input::placeholder{color:var(--muted);opacity:.5;}
+  .nick-item.nick-class{grid-column:1/-1;flex-wrap:wrap;}
+  .nick-item:not(.nick-class):last-child label{min-width:0;}
+  .nick-item input.in-room{flex:0 0 64px;}
+  .free-lbl{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;cursor:pointer;}
+  .free-lbl input{accent-color:var(--red);}
 
   footer{text-align:center;padding:26px 26px max(26px,calc(26px + env(safe-area-inset-bottom)));color:var(--muted);font-size:11px;letter-spacing:1px;border-top:1px solid var(--border);}
 
@@ -248,11 +255,11 @@
 
   <div class="nick-section">
     <div class="nick-hdr" onclick="toggleNick()">
-      <h3>📝 My Class Names</h3>
+      <h3>📝 My Classes</h3>
       <span class="chev" id="nchev">▼ show</span>
     </div>
     <div class="nick-body" id="nbody">
-      <p>Give your classes a nickname — shows up everywhere on the schedule.</p>
+      <p>Nicknames, rooms, and teachers show up across the schedule. Check "free" to mute a period you don't have.</p>
       <div class="nick-grid" id="ngrid"></div>
     </div>
   </div>
@@ -262,9 +269,10 @@
 
 <script>
 // ── YEAR CONFIG ── update these once per school year (plus OVERRIDES/FINALS_DATES below)
-const YEAR_LABEL='2025–26';
-const LAST_DAY='2026-06-03';   // last day of school — after this the page shows the summer banner
-const NEXT_YEAR_NOTE='Schedules return when the 2026–27 calendar is posted.';
+const YEAR_LABEL='2026–27';
+const FIRST_DAY='2026-08-17';  // first day of school; before this the page shows the summer countdown
+const LAST_DAY='2027-06-02';   // last day of school; after this the page shows the summer banner
+const NEXT_YEAR_NOTE='Schedules return when the 2027–28 calendar is posted.';
 
 // ── DATA ──
 const S = {
@@ -298,71 +306,49 @@ const S = {
 S[2]={label:"Tuesday", type:"Regular",   p:S[1].p};
 S[5]={label:"Friday",  type:"Regular",   p:S[1].p};
 
-// Date-specific overrides (YYYY-MM-DD). Includes the spring 2026 finals week.
-const OVERRIDES = {
-  '2026-05-26':{label:"Tue · May 26",type:"Block (Odd)",p:[
-    {id:"p1",n:"1st Period",      s:"08:40",e:"10:10",d:90},
-    {id:"nb",n:"Nutrition Break", s:"10:10",e:"10:20",d:10},
-    {id:"p3",n:"3rd Period",      s:"10:25",e:"11:55",d:90},
-    {id:"ln",n:"Lunch",           s:"11:55",e:"12:35",d:40},
-    {id:"p5",n:"5th Period",      s:"12:40",e:"14:10",d:90},
-    {id:"p7",n:"7th Period",      s:"14:15",e:"15:45",d:90},
-  ]},
-  '2026-05-27':{label:"Wed · May 27",type:"Block (Even)",p:[
-    {id:"p2",n:"2nd Period",      s:"08:40",e:"10:10",d:90},
-    {id:"av",n:"Advisory",        s:"10:15",e:"10:55",d:40},
-    {id:"p4",n:"4th Period",      s:"11:00",e:"12:30",d:90},
-    {id:"ln",n:"Lunch",           s:"12:30",e:"13:10",d:40},
-    {id:"p6",n:"6th Period",      s:"13:15",e:"14:45",d:90},
-  ]},
-  '2026-05-28':{label:"Thu · May 28 · Finals",type:"Finals · 1st & 2nd",isFinal:true,p:[
-    {id:"p1",n:"1st Period Final",s:"08:40",e:"10:25",d:105},
-    {id:"av",n:"Advisory",        s:"10:30",e:"10:55",d:25},
-    {id:"p2",n:"2nd Period Final",s:"11:00",e:"12:45",d:105},
-    {id:"ln",n:"Lunch",           s:"12:45",e:"13:25",d:40},
-  ]},
-  '2026-05-29':{label:"Fri · May 29 · Finals",type:"Finals · 4th & 6th",isFinal:true,p:[
-    {id:"p4",n:"4th Period Final",s:"08:40",e:"10:25",d:105},
-    {id:"av",n:"Advisory",        s:"10:30",e:"10:55",d:25},
-    {id:"p6",n:"6th Period Final",s:"11:00",e:"12:45",d:105},
-    {id:"ln",n:"Lunch",           s:"12:45",e:"13:25",d:40},
-  ]},
-  '2026-06-01':{label:"Mon · Jun 1 · Finals",type:"Finals · 3rd & 5th",isFinal:true,p:[
-    {id:"p3",n:"3rd Period Final",s:"08:40",e:"10:25",d:105},
-    {id:"av",n:"Advisory",        s:"10:30",e:"10:55",d:25},
-    {id:"p5",n:"5th Period Final",s:"11:00",e:"12:45",d:105},
-    {id:"ln",n:"Lunch",           s:"12:45",e:"13:25",d:40},
-  ]},
-  '2026-06-02':{label:"Tue · Jun 2 · Finals",type:"Finals · 7th",isFinal:true,p:[
-    {id:"p7",n:"7th Period Final",s:"08:40",e:"10:25",d:105},
-    {id:"av",n:"Advisory",        s:"10:30",e:"10:45",d:15},
-    {id:"p1",n:"1st Period",      s:"10:50",e:"11:05",d:15},
-    {id:"p2",n:"2nd Period",      s:"11:10",e:"11:25",d:15},
-    {id:"p3",n:"3rd Period",      s:"11:30",e:"11:45",d:15},
-    {id:"p4",n:"4th Period",      s:"11:50",e:"12:05",d:15},
-    {id:"p5",n:"5th Period",      s:"12:10",e:"12:25",d:15},
-    {id:"p6",n:"6th Period",      s:"12:30",e:"12:45",d:15},
-    {id:"ln",n:"Lunch",           s:"12:45",e:"13:25",d:40},
-  ]},
-  '2026-06-03':{label:"Wed · Jun 3 · Make-Up",type:"Make-Up Day",p:[
-    {id:"p1",n:"1st Period",      s:"08:40",e:"09:07",d:27},
-    {id:"p2",n:"2nd Period",      s:"09:12",e:"09:39",d:27},
-    {id:"p3",n:"3rd Period",      s:"09:44",e:"10:11",d:27},
-    {id:"av",n:"Advisory",        s:"10:16",e:"10:32",d:16},
-    {id:"p4",n:"4th Period",      s:"10:37",e:"11:04",d:27},
-    {id:"p5",n:"5th Period",      s:"11:09",e:"11:36",d:27},
-    {id:"p6",n:"6th Period",      s:"11:41",e:"12:08",d:27},
-    {id:"p7",n:"7th Period",      s:"12:13",e:"12:40",d:27},
-    {id:"ln",n:"Lunch",           s:"12:40",e:"13:10",d:30},
-  ]},
-};
-const FINALS_DATES=['2026-05-28','2026-05-29','2026-06-01','2026-06-02','2026-06-03'];
+// Date-specific overrides (YYYY-MM-DD). Add finals weeks / special days here as they're announced.
+// Example entry:
+// '2027-01-21':{label:"Thu · Jan 21 · Finals",type:"Finals · 1st & 2nd",isFinal:true,p:[
+//   {id:"p1",n:"1st Period Final",s:"08:40",e:"10:25",d:105},
+//   {id:"av",n:"Advisory",        s:"10:30",e:"10:55",d:25},
+//   {id:"p2",n:"2nd Period Final",s:"11:00",e:"12:45",d:105},
+//   {id:"ln",n:"Lunch",           s:"12:45",e:"13:25",d:40},
+// ]},
+const OVERRIDES = {};
+// Dates (keys in OVERRIDES) that make up finals week; drives the finals banner + pills. Empty = no banner.
+const FINALS_DATES=[];
+
+// No-school days for students (SFUSD 2026-27). Single days have s === e.
+const NO_SCHOOL=[
+  {s:'2026-09-07',e:'2026-09-07',label:'Labor Day'},
+  {s:'2026-11-11',e:'2026-11-11',label:'Veterans Day'},
+  {s:'2026-11-23',e:'2026-11-27',label:'Thanksgiving Recess'},
+  {s:'2026-12-21',e:'2027-01-01',label:'Winter Recess'},
+  {s:'2027-01-18',e:'2027-01-18',label:'MLK Jr. Day'},
+  {s:'2027-02-15',e:'2027-02-15',label:"Presidents' Day"},
+  {s:'2027-03-26',e:'2027-04-02',label:'Spring Recess'},
+  {s:'2027-05-31',e:'2027-05-31',label:'Memorial Day'},
+];
+function noSchool(iso){iso=iso||todayISO();return NO_SCHOOL.find(h=>iso>=h.s&&iso<=h.e)||null;}
+function fmtISO(iso){return new Date(iso+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'});}
+function nextSchoolISO(){
+  const d=new Date();
+  for(let i=0;i<60;i++){
+    d.setDate(d.getDate()+1);
+    const iso=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if(iso>LAST_DAY)return null;
+    if(d.getDay()===0||d.getDay()===6||noSchool(iso))continue;
+    return iso;
+  }
+  return null;
+}
 function todayISO(){const n=new Date();const m=String(n.getMonth()+1).padStart(2,'0'),d=String(n.getDate()).padStart(2,'0');return `${n.getFullYear()}-${m}-${d}`;}
 function isSummer(){return todayISO()>LAST_DAY;}
-function todaySched(){if(isSummer())return null;return OVERRIDES[todayISO()] || S[dow()] || null;}
+function isPreYear(){return todayISO()<FIRST_DAY;}
+function todaySched(){if(isSummer()||isPreYear()||noSchool())return null;return OVERRIDES[todayISO()] || S[dow()] || null;}
 
-const NKEYS=["p1","p2","p3","p4","p5","p6","p7","ln","nb","av","cp"];
-const NLBLS={p1:"1st Period",p2:"2nd Period",p3:"3rd Period",p4:"4th Period",p5:"5th Period",p6:"6th Period",p7:"7th Period",ln:"Lunch",nb:"Nutrition Brk",av:"Advisory",cp:"CPT"};
+const NKEYS=["p1","p2","p3","p4","p5","p6","p7","nb","av"];
+const NLBLS={p1:"1st Period",p2:"2nd Period",p3:"3rd Period",p4:"4th Period",p5:"5th Period",p6:"6th Period",p7:"7th Period",nb:"Nutrition Brk",av:"Advisory"};
 const MOTIVES=[
   {e:"☀️",t:"Good morning — let's get it!"},
   {e:"🎯",t:"Stay locked in, one period at a time."},
@@ -373,21 +359,35 @@ const MOTIVES=[
   {e:"🏖️",t:"School's out — go enjoy yourself!"},
 ];
 
-let nicks={};
-try{nicks=JSON.parse(localStorage.getItem('gwhs_nicks')||'{}');}catch(e){}
-function saveNicks(){try{localStorage.setItem('gwhs_nicks',JSON.stringify(nicks));}catch(e){}}
-function gn(id){return nicks[id]||'';}
-function dn(p){const k=gn(p.id);return k||p.n;}
+// Class info: {n: nickname, r: room, t: teacher, free: bool} per period id.
+// Migrates the old 'gwhs_nicks' store (plain nickname strings) on first load.
+let classes={};
+try{
+  const raw=JSON.parse(localStorage.getItem('gwhs_classes')||localStorage.getItem('gwhs_nicks')||'{}');
+  for(const k in raw)classes[k]=typeof raw[k]==='string'?{n:raw[k]}:(raw[k]||{});
+}catch(e){}
+function saveClasses(){try{localStorage.setItem('gwhs_classes',JSON.stringify(classes));}catch(e){}}
+function ci(id){return classes[id]||{};}
+function gn(id){return ci(id).n||'';}
+function dn(p){return gn(p.id)||p.n;}
+function sub(id){const c=ci(id);return[c.r?'Rm '+c.r:'',c.t||''].filter(Boolean).join(' · ');}
+function isFree(id){return id.startsWith('p')&&!!ci(id).free;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
 
-let theme=localStorage.getItem('gwhs_theme')||'dark';
+let theme=localStorage.getItem('gwhs_theme')||(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');
 function applyTheme(){
   document.documentElement.setAttribute('data-theme',theme);
   const d=theme==='dark';
   document.getElementById('t-icon').textContent=d?'☀️':'🌙';
   document.getElementById('t-lbl').textContent=d?'Light':'Dark';
-  try{localStorage.setItem('gwhs_theme',theme);}catch(e){}
 }
-function toggleTheme(){theme=theme==='dark'?'light':'dark';applyTheme();}
+function toggleTheme(){theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('gwhs_theme',theme);}catch(e){}}
+// Track the system theme live until the user picks one manually.
+if(window.matchMedia){
+  matchMedia('(prefers-color-scheme: light)').addEventListener('change',e=>{
+    if(!localStorage.getItem('gwhs_theme')){theme=e.matches?'light':'dark';applyTheme();}
+  });
+}
 
 function pt(t){const[h,m]=t.split(':').map(Number);return h*3600+m*60;}
 function now(){const n=new Date();return n.getHours()*3600+n.getMinutes()*60+n.getSeconds();}
@@ -423,7 +423,24 @@ function renderMotive(sched){
 function renderHero(sched){
   const el=document.getElementById('hero');
   if(isSummer()){el.innerHTML=`<div class="no-school"><h2>School's Out for Summer 🏖️</h2><p>The ${YEAR_LABEL} year is in the books. ${NEXT_YEAR_NOTE}</p></div>`;return;}
-  if(!sched){el.innerHTML=`<div class="no-school"><h2>No School Today</h2><p>Enjoy the weekend! 🎉</p></div>`;return;}
+  if(isPreYear()){
+    const first=new Date(FIRST_DAY+'T00:00:00');
+    const days=Math.ceil((first-new Date())/86400000);
+    const lbl=first.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+    el.innerHTML=`<div class="no-school"><h2>Summer Break 🏖️</h2><p>The ${YEAR_LABEL} year starts <strong style="color:var(--text)">${lbl}</strong> · ${days===1?'1 day':days+' days'} to go. First bell at ${t12(S[1].p[0].s)}.</p></div>`;
+    return;
+  }
+  const hol=noSchool();
+  if(hol){
+    const nx=nextSchoolISO();
+    el.innerHTML=`<div class="no-school"><h2>No School · ${hol.label} 🎉</h2><p>${nx?`Back in class ${fmtISO(nx)}.`:'Enjoy the break!'}</p></div>`;
+    return;
+  }
+  if(!sched){
+    const nx=nextSchoolISO();
+    el.innerHTML=`<div class="no-school"><h2>No School Today</h2><p>Enjoy the weekend! 🎉${nx?` Back in class ${fmtISO(nx)}.`:''}</p></div>`;
+    return;
+  }
   const p=sched.p,n=now(),start=ss(p),end=se(p);
   if(n<start){
     const d=start-n;
@@ -439,13 +456,15 @@ function renderHero(sched){
     const rem=cur.e-n,el2=n-cur.s,tot=cur.e-cur.s,pct=Math.min(100,(el2/tot)*100);
     const cc=rem<=120?'urgent':rem<=300?'warning':'ok';
     const nick=gn(cur.p.id);
-    const nd=nick?`${nick} <span style="font-size:22px;opacity:.45">(${cur.p.n})</span>`:cur.p.n;
-    const nxtHtml=nxt?`<div class="nu"><div class="nu-dot"></div><span>Next: <strong>${dn(nxt.p)}</strong> at ${t12(nxt.p.s)}</span></div>`:'';
+    const nd=nick?`${esc(nick)} <span style="font-size:22px;opacity:.45">(${cur.p.n})</span>`:cur.p.n;
+    const s2=sub(cur.p.id);
+    const nxs=nxt?sub(nxt.p.id):'';
+    const nxtHtml=nxt?`<div class="nu"><div class="nu-dot"></div><span>Next: <strong>${esc(dn(nxt.p))}</strong> at ${t12(nxt.p.s)}${nxs?' · '+esc(nxs):''}</span></div>`:'';
     el.innerHTML=`
       <div class="hero">
         <div class="hl">Now in Progress</div>
         <div class="cp">${nd}</div>
-        <div class="ptr">${t12(cur.p.s)} → ${t12(cur.p.e)} · ${cur.p.d} min</div>
+        <div class="ptr">${t12(cur.p.s)} → ${t12(cur.p.e)} · ${cur.p.d} min${s2?' · '+esc(s2):''}${isFree(cur.p.id)?' · free period':''}</div>
         <div class="cl">Ends in</div>
         <div class="ct ${cc}" id="cd">${hms(rem)}</div>
         <div class="pb-wrap"><div class="pb-fill" id="pf" style="width:${pct}%"></div></div>
@@ -461,25 +480,34 @@ function renderHero(sched){
         <div class="ptr"></div>
         <div class="cl">Next period in</div>
         <div class="ct ok" id="cd">${hms(till)}</div>
-        <div class="nu"><div class="nu-dot"></div><span>Next: <strong>${dn(nxt.p)}</strong> at ${t12(nxt.p.s)}</span></div>
+        <div class="nu"><div class="nu-dot"></div><span>Next: <strong>${esc(dn(nxt.p))}</strong> at ${t12(nxt.p.s)}${sub(nxt.p.id)?' · '+esc(sub(nxt.p.id)):''}</span></div>
       </div>`;
   }
 }
 
+// Skeleton is rebuilt only when the schedule changes; per-second values update in place.
+let statsKey='';
 function renderStats(sched){
   const el=document.getElementById('stats');
-  if(!sched){el.innerHTML='';return;}
+  if(!sched){if(statsKey!==''){statsKey='';el.innerHTML='';}return;}
   const p=sched.p,n=now(),end=se(p),start=ss(p);
   const cls=p.filter(x=>x.id.startsWith('p'));
   const done=cls.filter(x=>pt(x.e)<=n).length;
   const left=Math.max(0,end-n);
   const dur=end-start;
   const pct=n<start?0:n>=end?100:Math.min(100,Math.round(((n-start)/dur)*100));
-  el.innerHTML=`
-    <div class="stat-card"><div class="slbl">Day Progress</div><div class="sval">${pct}%</div><div class="ssub">of school day</div></div>
-    <div class="stat-card"><div class="slbl">Periods Done</div><div class="sval">${done}/${cls.length}</div><div class="ssub">class periods</div></div>
-    <div class="stat-card"><div class="slbl">School Ends</div><div class="sval" style="font-size:21px">${t12(p[p.length-1].e)}</div><div class="ssub">${left>0?hms(left)+' left':'Done!'}</div></div>
-    <div class="stat-card"><div class="slbl">Schedule</div><div class="sval" style="font-size:19px">${sched.type}</div><div class="ssub">${sched.label}</div></div>`;
+  const key=sched.label+'|'+sched.type;
+  if(key!==statsKey){
+    statsKey=key;
+    el.innerHTML=`
+      <div class="stat-card"><div class="slbl">Day Progress</div><div class="sval" id="st-pct"></div><div class="ssub">of school day</div></div>
+      <div class="stat-card"><div class="slbl">Periods Done</div><div class="sval" id="st-done"></div><div class="ssub">class periods</div></div>
+      <div class="stat-card"><div class="slbl">School Ends</div><div class="sval" style="font-size:21px">${t12(p[p.length-1].e)}</div><div class="ssub" id="st-left"></div></div>
+      <div class="stat-card"><div class="slbl">Schedule</div><div class="sval" style="font-size:19px">${sched.type}</div><div class="ssub">${sched.label}</div></div>`;
+  }
+  document.getElementById('st-pct').textContent=pct+'%';
+  document.getElementById('st-done').textContent=done+'/'+cls.length;
+  document.getElementById('st-left').textContent=left>0?hms(left)+' left':'Done!';
 }
 
 // activeTab is either a weekday number (1-5) or a YYYY-MM-DD override date.
@@ -497,7 +525,7 @@ function setTab(d){activeTab=d;renderTabs();renderFinals();renderTable(getSched(
 function renderFinals(){
   const el=document.getElementById('finals');
   const iso=todayISO();
-  if(iso>FINALS_DATES[FINALS_DATES.length-1]){el.innerHTML='';return;}
+  if(!FINALS_DATES.length||iso>FINALS_DATES[FINALS_DATES.length-1]){el.innerHTML='';return;}
   const pills=FINALS_DATES.map(dt=>{
     const o=OVERRIDES[dt];
     const lbl=o.label.replace(/ · Finals| · Make-Up/,'').replace(' · ',' ');
@@ -507,7 +535,7 @@ function renderFinals(){
   }).join('');
   el.innerHTML=`
     <div class="finals-banner">
-      <div class="fl">📝 Finals Week · Spring 2026</div>
+      <div class="fl">📝 Finals Week</div>
       <p>Tap a date to preview its schedule. Today's finals schedule auto-loads above.</p>
       <div class="finals-pills">${pills}</div>
     </div>`;
@@ -518,13 +546,16 @@ function renderTable(sched){
   if(!sched){el.innerHTML='';return;}
   const p=sched.p,n=now();
   const tt=todayTab();
-  const today=(activeTab===tt)&&!isSummer();
+  const today=(activeTab===tt)&&!isSummer()&&!isPreYear()&&!noSchool();
   const cur=today?getCur(p):null;
   const rows=p.map((x,i)=>{
     const isCur=cur&&cur.i===i,isPast=today&&pt(x.e)<=n&&!isCur;
-    const nick=gn(x.id);
-    const nd=nick?`${nick} <span class="rnick">(${x.n})</span>`:x.n;
-    return `<div class="sched-row ${isCur?'cur':''} ${isPast?'past':''}">
+    const free=isFree(x.id);
+    const nick=gn(x.id),s2=sub(x.id);
+    const nd=(nick?`${esc(nick)} <span class="rnick">(${x.n})</span>`:x.n)
+      +(s2?` <span class="rnick">${esc(s2)}</span>`:'')
+      +(free?` <span class="free-tag">free</span>`:'');
+    return `<div class="sched-row ${isCur?'cur':''} ${isPast?'past':''} ${free?'free':''}">
       <div class="rname">${isCur?'<span class="cdot"></span>':''}${nd}</div>
       <div class="rtime">${t12(x.s)} – ${t12(x.e)}</div>
       <div class="rdur">${x.d}m</div>
@@ -540,17 +571,32 @@ function toggleNick(){
   document.getElementById('nchev').textContent=nickOpen?'▲ hide':'▼ show';
 }
 function renderNickEditor(){
-  document.getElementById('ngrid').innerHTML=NKEYS.map(k=>`
-    <div class="nick-item">
-      <label>${NLBLS[k]}</label>
-      <input type="text" maxlength="24" placeholder="nickname" value="${gn(k)}"
-        oninput="nicks['${k}']=this.value.trim();saveNicks();renderTable(S[activeTab])">
-    </div>`).join('');
+  document.getElementById('ngrid').innerHTML=NKEYS.map(k=>{
+    const c=ci(k);
+    const nickInput=`<label>${NLBLS[k]}</label>
+      <input type="text" maxlength="24" placeholder="nickname" value="${esc(gn(k))}" oninput="setCI('${k}','n',this.value)">`;
+    if(!k.startsWith('p'))return `<div class="nick-item">${nickInput}</div>`;
+    return `<div class="nick-item nick-class">${nickInput}
+      <input type="text" class="in-room" maxlength="8" placeholder="room" value="${esc(c.r||'')}" oninput="setCI('${k}','r',this.value)">
+      <input type="text" maxlength="24" placeholder="teacher" value="${esc(c.t||'')}" oninput="setCI('${k}','t',this.value)">
+      <label class="free-lbl"><input type="checkbox" ${c.free?'checked':''} onchange="setCI('${k}','free',this.checked)">free</label>
+    </div>`;
+  }).join('');
+}
+function setCI(k,f,v){
+  const c=classes[k]||(classes[k]={});
+  if(f==='free')c.free=!!v;else c[f]=String(v).trim();
+  saveClasses();
+  renderTable(getSched(activeTab));
+  renderHero(todaySched());
 }
 
 let lastHeroState='';
 function heroState(sched){
   if(isSummer())return'summer';
+  if(isPreYear())return'preyear:'+todayISO();
+  const hol=noSchool();
+  if(hol)return'holiday:'+hol.label;
   if(!sched)return'no';
   const n=now(),p=sched.p;
   if(n<ss(p))return'before';
@@ -559,6 +605,22 @@ function heroState(sched){
   return cur?'cur:'+cur.p.id:'pass';
 }
 
+// Tab title shows the live countdown so the page is useful from a background tab.
+const BASE_TITLE=document.title;
+function updateTitle(sched){
+  let t=BASE_TITLE;
+  if(sched){
+    const n=now(),p=sched.p;
+    if(n>=ss(p)&&n<se(p)){
+      const cur=getCur(p),nxt=getNxt(p);
+      if(cur)t=`${hms(cur.e-n)} · ${dn(cur.p)}`;
+      else if(nxt)t=`${hms(nxt.s-n)} → ${dn(nxt.p)}`;
+    }
+  }
+  if(document.title!==t)document.title=t;
+}
+
+let lastTableKey='';
 function tick(){
   updateClock();
   const sched=todaySched();
@@ -586,8 +648,22 @@ function tick(){
   }
 
   renderStats(sched);
-  if(!isSummer()&&activeTab===todayTab())renderTable(sched);
+  updateTitle(sched);
+  // Re-render the table only when a period boundary is crossed, not every second.
+  if(sched&&activeTab===todayTab()){
+    const cur=getCur(sched.p);
+    const key=todayISO()+'|'+(cur?cur.i:-1)+'|'+sched.p.filter(x=>pt(x.e)<=now()).length;
+    if(key!==lastTableKey){lastTableKey=key;renderTable(sched);}
+  }
 }
+
+// Pause the 1s tick while the tab is hidden; catch up immediately on return.
+let timer=null;
+function startTicking(){if(!timer){tick();timer=setInterval(tick,1000);}}
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){if(timer){clearInterval(timer);timer=null;}}
+  else startTicking();
+});
 
 function init(){
   applyTheme();
@@ -599,7 +675,8 @@ function init(){
   if(activeTab===null)activeTab=todayTab();
   renderTable(getSched(activeTab));
   updateClock();
-  setInterval(tick,1000);
+  startTicking();
+  if('serviceWorker' in navigator){navigator.serviceWorker.register('/tools/bell-sw.js').catch(()=>{});}
 }
 init();
 </script>
