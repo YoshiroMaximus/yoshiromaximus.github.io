@@ -214,7 +214,7 @@
   .nick-item input:focus{border-color:var(--red);}
   .nick-item input::placeholder{color:var(--muted);opacity:.5;}
   .nick-item.nick-class{grid-column:1/-1;flex-wrap:wrap;}
-  .nick-item:not(.nick-class):last-child label{min-width:0;}
+  .nick-item.nick-col2 label{min-width:0;}
   .nick-item input.in-room{flex:0 0 64px;}
   .free-lbl{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;cursor:pointer;}
   .free-lbl input{accent-color:var(--red);}
@@ -228,7 +228,7 @@
     .sched-row.cur{padding-left:9px;}
     .hero{padding:16px 18px;}
     .nick-grid{grid-template-columns:1fr;gap:7px;}
-    .nick-item:not(.nick-class):last-child label{min-width:78px;}
+    .nick-item.nick-col2 label{min-width:78px;}
   }
 </style>
 </head>
@@ -309,16 +309,16 @@ S[2]={label:"Tuesday", type:"Regular",   p:S[1].p};
 S[5]={label:"Friday",  type:"Regular",   p:S[1].p};
 
 // Date-specific overrides (YYYY-MM-DD). Add finals weeks / special days here as they're announced.
+// isFinal:true adds the date to the finals-week banner; optional pill:"Thu Jan 21" sets the pill text.
 // Example entry:
-// '2027-01-21':{label:"Thu · Jan 21 · Finals",type:"Finals · 1st & 2nd",p:[
+// '2027-01-21':{label:"Thu · Jan 21 · Finals",type:"Finals · 1st & 2nd",isFinal:true,p:[
 //   {id:"p1",n:"1st Period Final",s:"08:40",e:"10:25",d:105},
 //   {id:"av",n:"Advisory",        s:"10:30",e:"10:55",d:25},
 //   {id:"p2",n:"2nd Period Final",s:"11:00",e:"12:45",d:105},
 //   {id:"ln",n:"Lunch",           s:"12:45",e:"13:25",d:40},
 // ]},
 const OVERRIDES = {};
-// Dates (keys in OVERRIDES) that make up finals week; drives the finals banner + pills. Empty = no banner.
-const FINALS_DATES=[];
+const FINALS_DATES=Object.keys(OVERRIDES).filter(d=>OVERRIDES[d].isFinal).sort();
 
 // No-school days for students (SFUSD 2026-27). Single days have s === e.
 const NO_SCHOOL=[
@@ -337,17 +337,25 @@ function nextSchoolISO(){
   const d=new Date();
   for(let i=0;i<60;i++){
     d.setDate(d.getDate()+1);
-    const iso=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const iso=isoOf(d);
     if(iso>LAST_DAY)return null;
     if(d.getDay()===0||d.getDay()===6||noSchool(iso))continue;
     return iso;
   }
   return null;
 }
-function todayISO(){const n=new Date();const m=String(n.getMonth()+1).padStart(2,'0'),d=String(n.getDate()).padStart(2,'0');return `${n.getFullYear()}-${m}-${d}`;}
-function isSummer(){return todayISO()>LAST_DAY;}
-function isPreYear(){return todayISO()<FIRST_DAY;}
-function todaySched(){if(isSummer()||isPreYear()||noSchool())return null;return OVERRIDES[todayISO()] || S[dow()] || null;}
+function isoOf(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function todayISO(){return isoOf(new Date());}
+// Single source of truth for what kind of day it is; every renderer keys off this.
+function dayState(){
+  const iso=todayISO();
+  if(iso>LAST_DAY)return{kind:'summer'};
+  if(iso<FIRST_DAY)return{kind:'preyear'};
+  const hol=noSchool(iso);
+  if(hol)return{kind:'holiday',hol};
+  return(OVERRIDES[iso]||S[dow()])?{kind:'school'}:{kind:'weekend'};
+}
+function todaySched(){return dayState().kind==='school'?(OVERRIDES[todayISO()]||S[dow()]):null;}
 
 const NKEYS=["p1","p2","p3","p4","p5","p6","p7","nb","av"];
 const NLBLS={p1:"1st Period",p2:"2nd Period",p3:"3rd Period",p4:"4th Period",p5:"5th Period",p6:"6th Period",p7:"7th Period",nb:"Nutrition Brk",av:"Advisory"};
@@ -427,23 +435,25 @@ function renderMotive(sched){
   document.getElementById('mt').textContent=m.t;
 }
 
+function subSfx(id){const s=sub(id);return s?' · '+esc(s):'';}
+function nuHtml(nxt){return `<div class="nu"><div class="nu-dot"></div><span>Next: <strong>${esc(dn(nxt.p))}</strong> at ${t12(nxt.p.s)}${subSfx(nxt.p.id)}</span></div>`;}
 function renderHero(sched){
   const el=document.getElementById('hero');
-  if(isSummer()){el.innerHTML=`<div class="no-school"><h2>School's Out for Summer 🏖️</h2><p>The ${YEAR_LABEL} year is in the books. ${NEXT_YEAR_NOTE}</p></div>`;return;}
-  if(isPreYear()){
+  const st=dayState();
+  if(st.kind==='summer'){el.innerHTML=`<div class="no-school"><h2>School's Out for Summer 🏖️</h2><p>The ${YEAR_LABEL} year is in the books. ${NEXT_YEAR_NOTE}</p></div>`;return;}
+  if(st.kind==='preyear'){
     const first=new Date(FIRST_DAY+'T00:00:00');
     const days=Math.ceil((first-new Date())/86400000);
     const lbl=first.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
     el.innerHTML=`<div class="no-school"><h2>Summer Break 🏖️</h2><p>The ${YEAR_LABEL} year starts <strong style="color:var(--text)">${lbl}</strong> · ${days===1?'1 day':days+' days'} to go. First bell at ${t12(S[1].p[0].s)}.</p></div>`;
     return;
   }
-  const hol=noSchool();
-  if(hol){
+  if(st.kind==='holiday'){
     const nx=nextSchoolISO();
-    el.innerHTML=`<div class="no-school"><h2>No School · ${hol.label} 🎉</h2><p>${nx?`Back in class ${fmtISO(nx)}.`:'Enjoy the break!'}</p></div>`;
+    el.innerHTML=`<div class="no-school"><h2>No School · ${st.hol.label} 🎉</h2><p>${nx?`Back in class ${fmtISO(nx)}.`:'Enjoy the break!'}</p></div>`;
     return;
   }
-  if(!sched){
+  if(st.kind==='weekend'){
     const nx=nextSchoolISO();
     el.innerHTML=`<div class="no-school"><h2>No School Today</h2><p>Enjoy the weekend! 🎉${nx?` Back in class ${fmtISO(nx)}.`:''}</p></div>`;
     return;
@@ -464,14 +474,12 @@ function renderHero(sched){
     const cc=rem<=120?'urgent':rem<=300?'warning':'ok';
     const nick=gn(cur.p.id);
     const nd=nick?`${esc(nick)} <span style="font-size:22px;opacity:.45">(${cur.p.n})</span>`:cur.p.n;
-    const s2=sub(cur.p.id);
-    const nxs=nxt?sub(nxt.p.id):'';
-    const nxtHtml=nxt?`<div class="nu"><div class="nu-dot"></div><span>Next: <strong>${esc(dn(nxt.p))}</strong> at ${t12(nxt.p.s)}${nxs?' · '+esc(nxs):''}</span></div>`:'';
+    const nxtHtml=nxt?nuHtml(nxt):'';
     el.innerHTML=`
       <div class="hero">
         <div class="hl">Now in Progress</div>
         <div class="cp">${nd}</div>
-        <div class="ptr">${t12(cur.p.s)} → ${t12(cur.p.e)} · ${cur.p.d} min${s2?' · '+esc(s2):''}${isFree(cur.p.id)?' · free period':''}</div>
+        <div class="ptr">${t12(cur.p.s)} → ${t12(cur.p.e)} · ${cur.p.d} min${subSfx(cur.p.id)}${isFree(cur.p.id)?' · free period':''}</div>
         <div class="cl">Ends in</div>
         <div class="ct ${cc}" id="cd">${hms(rem)}</div>
         <div class="pb-wrap"><div class="pb-fill" id="pf" style="width:${pct}%"></div></div>
@@ -487,7 +495,7 @@ function renderHero(sched){
         <div class="ptr"></div>
         <div class="cl">Next period in</div>
         <div class="ct ok" id="cd">${hms(till)}</div>
-        <div class="nu"><div class="nu-dot"></div><span>Next: <strong>${esc(dn(nxt.p))}</strong> at ${t12(nxt.p.s)}${sub(nxt.p.id)?' · '+esc(sub(nxt.p.id)):''}</span></div>
+        ${nuHtml(nxt)}
       </div>`;
   }
 }
@@ -535,7 +543,7 @@ function renderFinals(){
   if(!FINALS_DATES.length||iso>FINALS_DATES[FINALS_DATES.length-1]){el.innerHTML='';return;}
   const pills=FINALS_DATES.map(dt=>{
     const o=OVERRIDES[dt];
-    const lbl=o.label.replace(/ · Finals| · Make-Up/,'').replace(' · ',' ');
+    const lbl=o.pill||o.label.replace(/ · Finals| · Make-Up/,'').replace(' · ',' ');
     const isToday=dt===iso;
     const isActive=activeTab===dt;
     return `<button class="fp ${isToday?'is-today':''} ${isActive?'active':''}" onclick="setTab('${dt}')">${lbl}${isToday?' ★':''}</button>`;
@@ -553,7 +561,7 @@ function renderTable(sched){
   if(!sched){el.innerHTML='';return;}
   const p=sched.p,n=now();
   const tt=todayTab();
-  const today=(activeTab===tt)&&!isSummer()&&!isPreYear()&&!noSchool();
+  const today=(activeTab===tt)&&!!todaySched();
   const cur=today?getCur(p):null;
   const rows=p.map((x,i)=>{
     const isCur=cur&&cur.i===i,isPast=today&&pt(x.e)<=n&&!isCur;
@@ -579,11 +587,12 @@ function toggleNick(){
   document.querySelector('.nick-hdr').setAttribute('aria-expanded',nickOpen);
 }
 function renderNickEditor(){
+  let plain=0;  // non-class items alternate grid columns; column 2 drops the label alignment width
   document.getElementById('ngrid').innerHTML=NKEYS.map(k=>{
     const c=ci(k);
     const nickInput=`<label>${NLBLS[k]}</label>
       <input type="text" maxlength="24" placeholder="nickname" value="${esc(gn(k))}" oninput="setCI('${k}','n',this.value)">`;
-    if(!k.startsWith('p'))return `<div class="nick-item">${nickInput}</div>`;
+    if(!k.startsWith('p'))return `<div class="nick-item${(plain++%2)?' nick-col2':''}">${nickInput}</div>`;
     return `<div class="nick-item nick-class">${nickInput}
       <input type="text" class="in-room" maxlength="8" placeholder="room" value="${esc(c.r||'')}" oninput="setCI('${k}','r',this.value)">
       <input type="text" maxlength="24" placeholder="teacher" value="${esc(c.t||'')}" oninput="setCI('${k}','t',this.value)">
@@ -596,16 +605,20 @@ function setCI(k,f,v){
   if(f==='free')c.free=!!v;else c[f]=String(v).trim();
   saveClasses();
   renderTable(getSched(activeTab));
-  renderHero(todaySched());
+  // Rebuild the hero only when the edited class is the one it's showing.
+  const sched=todaySched();
+  if(sched){
+    const cur=getCur(sched.p),nxt=getNxt(sched.p);
+    if((cur&&cur.p.id===k)||(nxt&&nxt.p.id===k))renderHero(sched);
+  }
 }
 
 let lastHeroState='';
 function heroState(sched){
-  if(isSummer())return'summer';
-  if(isPreYear())return'preyear:'+todayISO();
-  const hol=noSchool();
-  if(hol)return'holiday:'+hol.label;
-  if(!sched)return'no';
+  const st=dayState();
+  if(st.kind==='preyear')return'preyear:'+todayISO();
+  if(st.kind==='holiday')return'holiday:'+st.hol.label;
+  if(st.kind!=='school')return st.kind;
   const n=now(),p=sched.p;
   if(n<ss(p))return'before';
   if(n>=se(p))return'done';
@@ -637,10 +650,8 @@ function tick(){
   const iso=todayISO();
   if(iso!==curISO){
     curISO=iso;
-    activeTab=todayTab();
     statsKey='';lastTableKey='';
-    renderTabs();renderFinals();
-    renderTable(getSched(activeTab));
+    setTab(todayTab());
   }
   const sched=todaySched();
   renderMotive(sched);
@@ -670,8 +681,8 @@ function tick(){
   updateTitle(sched);
   // Re-render the table only when a period boundary is crossed, not every second.
   if(sched&&activeTab===todayTab()){
-    const cur=getCur(sched.p);
-    const key=todayISO()+'|'+(cur?cur.i:-1)+'|'+sched.p.filter(x=>pt(x.e)<=now()).length;
+    const n2=now(),cur=getCur(sched.p);
+    const key=(cur?cur.i:-1)+'|'+sched.p.filter(x=>pt(x.e)<=n2).length;
     if(key!==lastTableKey){lastTableKey=key;renderTable(sched);}
   }
 }
@@ -695,7 +706,8 @@ function init(){
   renderTable(getSched(activeTab));
   updateClock();
   startTicking();
-  if('serviceWorker' in navigator){navigator.serviceWorker.register('/tools/bell-sw.js').catch(()=>{});}
+  // Narrow scope: don't intercept other /tools/ pages (notes registers its own SW at directory scope).
+  if('serviceWorker' in navigator){navigator.serviceWorker.register('/tools/bell-sw.js',{scope:'/tools/bell-schedule.html'}).catch(()=>{});}
 }
 init();
 </script>

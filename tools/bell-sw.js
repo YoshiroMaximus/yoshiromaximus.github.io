@@ -26,6 +26,11 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
+function stash(req, res) {
+  const copy = res.clone();
+  caches.open(VERSION).then(c => c.put(req, copy)).catch(() => {});
+}
+
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
@@ -40,8 +45,7 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(
       fetch(e.request)
         .then(res => {
-          const copy = res.clone();
-          caches.open(VERSION).then(c => c.put(e.request, copy)).catch(() => {});
+          stash(e.request, res);
           return res;
         })
         .catch(() => caches.match(e.request).then(r => r || caches.match('/tools/bell-schedule.html')))
@@ -54,12 +58,9 @@ self.addEventListener('fetch', (e) => {
     caches.match(e.request).then(cached => {
       if (cached) return cached;
       return fetch(e.request).then(res => {
-        if (res.ok && (res.type === 'basic' || res.type === 'cors')) {
-          const copy = res.clone();
-          caches.open(VERSION).then(c => c.put(e.request, copy)).catch(() => {});
-        }
+        if (res.ok && (res.type === 'basic' || res.type === 'cors')) stash(e.request, res);
         return res;
-      }).catch(() => cached);
+      });
     })
   );
 });
