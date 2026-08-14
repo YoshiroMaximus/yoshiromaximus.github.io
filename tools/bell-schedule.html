@@ -161,8 +161,6 @@
   .tab:hover{border-color:var(--red);color:var(--text);}
   .tab.active{background:var(--red);border-color:var(--red);color:white;}
   .tab.today{border-color:rgba(200,16,46,.4);color:var(--text2);font-weight:600;}
-  .tab.final{border-color:rgba(184,134,11,.4);color:var(--gold);}
-  .tab.final.active{background:var(--gold);border-color:var(--gold);color:#1a1300;}
 
   .finals-banner{
     background:var(--card);border:1px solid rgba(184,134,11,.3);border-left:4px solid var(--gold);
@@ -202,7 +200,7 @@
   .nick-hdr{padding:11px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;}
   .nick-hdr:focus-visible{outline:2px solid var(--red);outline-offset:-2px;}
   .nick-hdr h3{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--text);}
-  .nick-hdr .chev{color:var(--muted);font-size:11px;transition:transform .2s;}
+  .nick-hdr .chev{color:var(--muted);font-size:11px;}
   .nick-body{padding:14px 20px;display:none;}
   .nick-body.open{display:block;}
   .nick-body p{font-size:12px;color:var(--muted);margin-bottom:12px;}
@@ -312,7 +310,7 @@ S[5]={label:"Friday",  type:"Regular",   p:S[1].p};
 
 // Date-specific overrides (YYYY-MM-DD). Add finals weeks / special days here as they're announced.
 // Example entry:
-// '2027-01-21':{label:"Thu · Jan 21 · Finals",type:"Finals · 1st & 2nd",isFinal:true,p:[
+// '2027-01-21':{label:"Thu · Jan 21 · Finals",type:"Finals · 1st & 2nd",p:[
 //   {id:"p1",n:"1st Period Final",s:"08:40",e:"10:25",d:105},
 //   {id:"av",n:"Advisory",        s:"10:30",e:"10:55",d:25},
 //   {id:"p2",n:"2nd Period Final",s:"11:00",e:"12:45",d:105},
