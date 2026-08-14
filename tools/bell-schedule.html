@@ -200,6 +200,7 @@
   /* nickname editor */
   .nick-section{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:18px;overflow:hidden;box-shadow:0 1px 4px var(--shadow);}
   .nick-hdr{padding:11px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;}
+  .nick-hdr:focus-visible{outline:2px solid var(--red);outline-offset:-2px;}
   .nick-hdr h3{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--text);}
   .nick-hdr .chev{color:var(--muted);font-size:11px;transition:transform .2s;}
   .nick-body{padding:14px 20px;display:none;}
@@ -256,7 +257,8 @@
   <div id="table"></div>
 
   <div class="nick-section">
-    <div class="nick-hdr" onclick="toggleNick()">
+    <div class="nick-hdr" role="button" tabindex="0" aria-expanded="false" aria-controls="nbody"
+      onclick="toggleNick()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleNick();}">
       <h3>📝 My Classes</h3>
       <span class="chev" id="nchev">▼ show</span>
     </div>
@@ -382,6 +384,11 @@ function applyTheme(){
   const d=theme==='dark';
   document.getElementById('t-icon').textContent=d?'☀️':'🌙';
   document.getElementById('t-lbl').textContent=d?'Light':'Dark';
+  // Keep the browser/status-bar chrome in sync with the page theme, not just the OS theme.
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m=>{
+    m.removeAttribute('media');
+    m.setAttribute('content',d?'#0a0a0a':'#f4f4f6');
+  });
 }
 function toggleTheme(){theme=theme==='dark'?'light':'dark';applyTheme();try{localStorage.setItem('gwhs_theme',theme);}catch(e){}}
 // Track the system theme live until the user picks one manually.
@@ -571,6 +578,7 @@ function toggleNick(){
   nickOpen=!nickOpen;
   document.getElementById('nbody').classList.toggle('open',nickOpen);
   document.getElementById('nchev').textContent=nickOpen?'▲ hide':'▼ show';
+  document.querySelector('.nick-hdr').setAttribute('aria-expanded',nickOpen);
 }
 function renderNickEditor(){
   document.getElementById('ngrid').innerHTML=NKEYS.map(k=>{
@@ -623,8 +631,19 @@ function updateTitle(sched){
 }
 
 let lastTableKey='';
+let curISO=todayISO();
 function tick(){
   updateClock();
+  // Day rollover: an installed PWA can stay alive across midnight; rebuild the
+  // day-scoped UI (tabs, finals, caches) when the date changes.
+  const iso=todayISO();
+  if(iso!==curISO){
+    curISO=iso;
+    activeTab=todayTab();
+    statsKey='';lastTableKey='';
+    renderTabs();renderFinals();
+    renderTable(getSched(activeTab));
+  }
   const sched=todaySched();
   renderMotive(sched);
 
