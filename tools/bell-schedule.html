@@ -209,7 +209,7 @@
   .nick-item{display:flex;align-items:center;gap:8px;}
   .nick-item label{font-size:11px;color:var(--muted);min-width:78px;font-family:'DM Mono',monospace;flex-shrink:0;}
   .nick-item input{
-    flex:1;background:var(--input-bg);border:1px solid var(--border);border-radius:4px;
+    flex:1 1 120px;min-width:0;background:var(--input-bg);border:1px solid var(--border);border-radius:4px;
     padding:5px 9px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;transition:border-color .2s;
   }
   .nick-item input:focus{border-color:var(--red);}
@@ -228,6 +228,8 @@
     .sched-row{grid-template-columns:1fr 110px 40px;padding:9px 12px;}
     .sched-row.cur{padding-left:9px;}
     .hero{padding:16px 18px;}
+    .nick-grid{grid-template-columns:1fr;gap:7px;}
+    .nick-item:not(.nick-class):last-child label{min-width:78px;}
   }
 </style>
 </head>
