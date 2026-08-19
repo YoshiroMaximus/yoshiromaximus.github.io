@@ -678,7 +678,6 @@ function tick(){
   }
 
   renderStats(sched);
-  updateTitle(sched);
   // Re-render the table only when a period boundary is crossed, not every second.
   if(sched&&activeTab===todayTab()){
     const n2=now(),cur=getCur(sched.p);
@@ -687,7 +686,12 @@ function tick(){
   }
 }
 
-// Pause the 1s tick while the tab is hidden; catch up immediately on return.
+// The title countdown runs on its own always-on interval so the tab stays
+// useful while hidden (the browser throttles it, but it keeps ticking).
+function titleTick(){updateTitle(todaySched());}
+titleTick();setInterval(titleTick,1000);
+
+// Pause the 1s UI tick while the tab is hidden; catch up immediately on return.
 let timer=null;
 function startTicking(){if(!timer){tick();timer=setInterval(tick,1000);}}
 document.addEventListener('visibilitychange',()=>{

@@ -3,7 +3,7 @@
 // offline copy (network-first picks up edits online, but the offline fallback
 // only updates after a successful online load).
 
-const VERSION = 'bell-v1';
+const VERSION = 'bell-v2';
 const SHELL = [
   '/tools/bell-schedule.html',
   '/tools/bell.webmanifest',
